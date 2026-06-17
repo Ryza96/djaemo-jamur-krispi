@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#F5EBE0"/>
+  <rect x="80" y="120" width="240" height="160" rx="16" fill="#6B4226" opacity="0.15"/>
+  <circle cx="200" cy="180" r="48" fill="#C8942A" opacity="0.4"/>
+  <text x="200" y="290" text-anchor="middle" fill="#6B5B52" font-family="system-ui,sans-serif" font-size="16">Gambar Produk</text>
+</svg>

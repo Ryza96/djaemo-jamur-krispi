@@ -1,0 +1,85 @@
+import type { Product } from "@/types";
+
+export const products: Product[] = [
+  {
+    id: "produk-1",
+    name: "Jamur Krispi Original",
+    description:
+      "Rasa original yang gurih dengan tekstur renyah sempurna. Varian klasik yang tak pernah ketinggalan.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/1.JPG",
+  },
+  {
+    id: "produk-2",
+    name: "Jamur Krispi BBQ",
+    description:
+      "Rasa BBQ gurih dengan sentuhan smokey yang cocok untuk pencinta rasa bold.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/2.JPG",
+  },
+  {
+    id: "produk-3",
+    name: "Jamur Krispi Pedas Manis",
+    description:
+      "Perpaduan pedas dan gurih yang bikin nagih. Favorit pecinta rasa spicy.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/3.JPG",
+  },
+  {
+    id: "produk-4",
+    name: "Jamur Krispi Balado",
+    description:
+      "Cita rasa balado khas Indonesia dengan jamur premium yang renyah.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/4.JPG",
+  },
+  {
+    id: "produk-5",
+    name: "Jamur Krispi Rumput Laut",
+    description:
+      "Kombinasi unik rumput laut dan jamur yang memberikan rasa umami nikmat.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/5.JPG",
+  },
+  {
+    id: "produk-6",
+    name: "Jamur Krispi Bawang",
+    description:
+      "Aroma bawang yang kuat dan menggugah selera dengan kelezatan yang tak tertahankan.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/6.JPG",
+  },
+  {
+    id: "produk-7",
+    name: "Jamur Krispi Cabe Rawit",
+    description:
+      "Untuk pecinta pedas sejati. Sensasi cabe rawit yang membara namun tetap nikmat.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/7.JPG",
+  },
+  {
+    id: "produk-8",
+    name: "Jamur Krispi Keju",
+    description:
+      "Kelezatan jamur premium dipadukan dengan cita rasa keju yang gurih dan creamy.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/8.JPG",
+  },
+  {
+    id: "produk-9",
+    name: "Jamur Krispi Madu",
+    description:
+      "Sentuhan manis madu natural yang menyeimbangkan rasa gurih jamur krispi.",
+    price: 15000,
+    weight: "100g",
+    image: "/images/produk/9.jpg",
+  },
+];

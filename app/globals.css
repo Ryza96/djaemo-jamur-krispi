@@ -1,26 +1,38 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand — earthy mushroom & golden crisp */
+  --primary: #6b4226;
+  --primary-light: #8b5a3c;
+  --secondary: #c8942a;
+  --secondary-light: #e0ad3a;
+  --accent: #3d6b35;
+  --surface: #fff8f0;
+  --surface-dark: #f5ebe0;
+  --foreground: #2c1810;
+  --muted: #6b5b52;
+  --background: var(--surface);
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-secondary: var(--secondary);
+  --color-secondary-light: var(--secondary-light);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+  --color-surface-dark: var(--surface-dark);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-background: var(--background);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
