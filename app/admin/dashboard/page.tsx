@@ -154,14 +154,23 @@ export default function AdminDashboardPage() {
       const payload = await res.json();
 
       // /api/orders mengembalikan shape: { success: true, data: orders }
-      // Jadi kita harus ekstrak `payload.data` sebelum melakukan filter/slice.
-      const orders = Array.isArray(payload?.data) ? payload.data : [];
+      // Pastikan payload.data selalu array sebelum dipakai .filter/.reduce.
+      const data = payload?.data;
+      const orders = Array.isArray(data) ? data : [];
 
-      // total revenue for orders with status 'paid' — prefer `subtotal`, fall back to `total_amount` or `total`
+      // total revenue untuk transaksi yang sudah benar-benar diproses:
+      // status 'paid' DAN/ATAU 'shipped' (case-insensitive)
+      const revenueStatuses = new Set(['paid', 'shipped']);
+
       const total = orders
-        .filter((r: any) => (r.status || '').toString().toLowerCase() === 'paid')
-        .reduce((s: number, r: any) => s + (Number(r.subtotal ?? r.total_amount ?? r.total ?? 0) || 0), 0);
+        .filter((r: any) => revenueStatuses.has((r?.status ?? '').toString().toLowerCase()))
+        .reduce(
+          (s: number, r: any) =>
+            s + (Number(r.subtotal ?? r.total_amount ?? r.total ?? 0) || 0),
+          0
+        );
       setTotalRevenue(total);
+
 
       // pending count (status 'pending')
       const pendingCnt = orders.filter((r: any) => (r.status || '').toString().toLowerCase() === 'pending').length;
