@@ -1,10 +1,9 @@
-# TODO - Fix 500 PUT /api/products (price string to int + safer image sync)
+# TODO
 
-- [x] A) Review and patch `app/admin/dashboard/page.tsx` → update `handleSaveProduct` to sanitize `formData.price` from formatted Rupiah string to integer (regex).
+## Produk - perbaikan error Supabase schema cache saat PUT
+- [x] Review `app/api/products/route.ts` (GET/POST/PUT/DELETE)
+- [ ] Implement PUT 2 tahap: update whitelist kolom products, lalu sinkronisasi tabel anak `product_images` (delete by product_id, insert objects {product_id, image_url})
+- [ ] Pastikan `PUT` tidak mengirim field gambar ke `.update()` products
+- [x] Jalankan build/lint / uji ulang update produk dari UI
 
-- [x] B) Patch `app/api/products/route.ts` → update `PUT` to sanitize `price` as integer before update.
-- [x] C) Patch `PUT` backend to update `products` first, then sync images to `product_images` by `product_id` (ordered, transactional/clean approach).
-
-- [ ] D) Run `npm run lint` and `npm run build`.
-- [ ] E) Manual test: Edit product in admin dashboard, save, verify no 500 and images sync correctly.
 

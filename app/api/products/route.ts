@@ -66,46 +66,27 @@ export const PUT = async (request: Request) => {
   try {
     const body = await request.json();
 
-    const payload: Record<string, unknown> = { ...body };
-    if ('price' in payload) {
-      payload.price = sanitizePriceToInt(payload.price);
+    const productId = body?.id;
+    if (!productId || typeof productId !== 'string') {
+      return NextResponse.json({ error: 'Missing or invalid product id' }, { status: 400 });
     }
 
+    // =============================
+    // Tahap 1: update tabel induk ONLY kolom yang valid di `products`
+    // =============================
+    const productPayload: Record<string, unknown> = {};
 
-    // fetch existing product to determine removed images
-    const { data: existing, error: fetchErr } = await supabase.from('products').select('*').eq('id', body.id).single();
-    if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    if (typeof body?.name === 'string') productPayload.name = body.name;
+    if (typeof body?.description === 'string') productPayload.description = body.description;
+    if (body?.price !== undefined) productPayload.price = sanitizePriceToInt(body.price);
+    if (typeof body?.weight === 'string') productPayload.weight = body.weight;
 
-    const existingImages: string[] = existing?.images || (existing?.image ? [existing.image] : []);
-    const incomingImages: string[] = payload?.images || (payload?.image ? [payload?.image as any] : []);
+    // update price yang null boleh terjadi untuk kasus input kosong
 
-
-    const toDelete = existingImages.filter((u: string) => !incomingImages.includes(u));
-
-    // remove files from storage for any removed image URLs (if they are Supabase URLs)
-
-    for (const url of toDelete) {
-      try {
-        const parsed = new URL(url);
-        const prefix = `/storage/v1/object/public/products/`;
-        if (parsed.pathname.startsWith(prefix)) {
-          const path = parsed.pathname.slice(prefix.length);
-          await supabase.storage.from('products').remove([path]);
-        }
-      } catch (e) {
-        // ignore malformed URLs or non-supabase urls
-        console.warn('Could not parse image url for deletion', url);
-      }
-    }
-
-    // Remove images fields from parent update payload (sync is handled explicitly below)
-    const { images: _images, image: _image, ...productPayload } = payload as any;
-
-    // 1) Update induk dulu
     const { data: updatedProduct, error: updateErr } = await supabase
       .from('products')
       .update(productPayload)
-      .eq('id', (payload as any).id)
+      .eq('id', productId)
       .select()
       .single();
 
@@ -113,33 +94,46 @@ export const PUT = async (request: Request) => {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
-    // 2) Sinkronisasi gambar (tabel anak) menggunakan product_id
-    //    Disini kita asumsikan tabel product_images punya kolom: product_id, image_url.
-    const productId = (updatedProduct as any)?.id ?? (payload as any).id;
+    // =============================
+    // Tahap 2: sinkronisasi tabel anak `product_images`
+    // =============================
+    // Requirement: hapus baris lama berdasar product_id, lalu insert ulang.
+    const incomingImages: string[] = Array.isArray(body?.images)
+      ? body.images
+      : body?.image
+        ? [body.image]
+        : [];
 
-    // Hapus dulu semua gambar lama, lalu insert yang baru.
-    const { error: deleteImgErr } = await supabase.from('product_images').delete().eq('product_id', productId);
+    const imagesToInsert = incomingImages
+      .filter((u: unknown) => typeof u === 'string')
+      .map((u: string) => u.trim())
+      .filter((u) => u.length > 0);
+
+    const { error: deleteImgErr } = await supabase
+      .from('product_images')
+      .delete()
+      .eq('product_id', productId);
+
     if (deleteImgErr) {
       return NextResponse.json({ error: deleteImgErr.message }, { status: 500 });
     }
 
-    const imagesToInsert = incomingImages.filter((u: string) => typeof u === 'string' && u.length > 0);
-
     if (imagesToInsert.length > 0) {
       const { error: insertImgErr } = await supabase
         .from('product_images')
-        .insert(imagesToInsert.map((image_url: string) => ({ product_id: productId, image_url })));
+        .insert(imagesToInsert.map((image_url) => ({ product_id: productId, image_url })));
+
       if (insertImgErr) {
         return NextResponse.json({ error: insertImgErr.message }, { status: 500 });
       }
     }
 
     return NextResponse.json(updatedProduct ?? null);
-
   } catch (err) {
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
+
 
 export const DELETE = async (request: Request) => {
   try {
