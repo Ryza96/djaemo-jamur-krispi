@@ -45,7 +45,7 @@ export function Header() {
               const isActive =
                 link.href === "/"
                   ? currentPath === "/"
-                  : currentPath.startsWith(link.href);
+                  : (currentPath ?? "").startsWith(link.href);
 
               return (
                 <Link
@@ -74,7 +74,7 @@ export function Header() {
             }
             className={cn(
               "relative inline-flex items-center rounded-full border border-primary/10 bg-white/95 p-2 text-foreground transition-colors hover:border-primary hover:text-primary sm:p-3",
-              currentPath.startsWith("/cart") ? "bg-primary text-white" : "",
+              (currentPath ?? "").startsWith("/cart") ? "bg-primary text-white" : "",
             )}
           >
             <span className="sr-only">Keranjang Belanja</span>
