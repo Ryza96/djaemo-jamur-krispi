@@ -151,23 +151,29 @@ export default function AdminDashboardPage() {
 
       const res = await fetch('/api/orders');
       if (!res.ok) throw new Error(`Failed to fetch /api/orders (${res.status})`);
-      const data = await res.json();
+      const payload = await res.json();
+
+      // /api/orders mengembalikan shape: { success: true, data: orders }
+      // Jadi kita harus ekstrak `payload.data` sebelum melakukan filter/slice.
+      const orders = Array.isArray(payload?.data) ? payload.data : [];
 
       // total revenue for orders with status 'paid' — prefer `subtotal`, fall back to `total_amount` or `total`
-      const total = (data || [])
+      const total = orders
         .filter((r: any) => (r.status || '').toString().toLowerCase() === 'paid')
         .reduce((s: number, r: any) => s + (Number(r.subtotal ?? r.total_amount ?? r.total ?? 0) || 0), 0);
       setTotalRevenue(total);
 
       // pending count (status 'pending')
-      const pendingCnt = (data || []).filter((r: any) => (r.status || '').toString().toLowerCase() === 'pending').length;
+      const pendingCnt = orders.filter((r: any) => (r.status || '').toString().toLowerCase() === 'pending').length;
       setPendingCount(pendingCnt);
 
       // recent orders (API already returns ordered by created_at desc), take latest 8
-      const recent = (data || []).slice(0, 8).map((r: any) => ({
+      const recent = orders.slice(0, 8).map((r: any) => ({
         id: r.id,
         order_id: r.order_id,
-        customer_name: r.customer_name ?? (r.customer_name === undefined ? (r.customer_id ?? '-') : r.customer_name),
+        customer_name:
+          r.customer_name ??
+          (r.customer_name === undefined ? (r.customer_id ?? '-') : r.customer_name),
         subtotal: Number(r.subtotal ?? r.total_amount ?? r.total ?? 0),
         status: r.status ?? 'unknown',
         created_at: r.created_at,
@@ -820,7 +826,23 @@ export default function AdminDashboardPage() {
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setFormData(product);
-    const items = (product.images || (product.image ? [product.image] : [])).map((u, i) => ({ id: `${Date.now()}-${i}`, type: 'existing' as const, src: u }));
+
+    // Type `Product` di project ini hanya punya `image`, bukan `images`.
+    // Untuk kompatibilitas UI, kalau backend suatu saat mengembalikan array gambar,
+    // kita tetap fallback secara aman.
+    const imagesLike: unknown = (product as any).images;
+    const normalized = Array.isArray(imagesLike)
+      ? (imagesLike as string[])
+      : product.image
+        ? [product.image]
+        : [];
+
+    const items = normalized.map((u, i) => ({
+      id: `${Date.now()}-${i}`,
+      type: 'existing' as const,
+      src: u,
+    }));
+
     setPreviewItems(items);
     setRemovedExistingImages([]);
     setShowProductModal(true);
@@ -1051,13 +1073,15 @@ export default function AdminDashboardPage() {
         }
       } else {
 
+        // `Product` type di project ini hanya punya `image`, bukan `images`.
+        // Jadi simpan gambar pertama sebagai primary image.
         const newProduct: Product = {
           id: productId,
           name: formData.name || "",
           description: formData.description || "",
           price: formData.price || 0,
           weight: formData.weight || "",
-          images: imageUrls,
+          image: imageUrls[0] || "",
         };
         const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newProduct) });
         if (!res.ok) {
