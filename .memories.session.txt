@@ -1,0 +1,1 @@
+Admin login button modernized and redirect to /admin/orders on successful auth. Ensure Supabase email OTP settings are correct if OTP still not received.
