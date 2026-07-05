@@ -3,9 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const ADMIN_USERNAME = "1234";
-const ADMIN_PASSWORD = "1234";
-
 export default function AdminPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -28,19 +25,31 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, isCheckingAuth, router]);
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isLoggingIn) return;
     setMessage(null);
 
     setIsLoggingIn(true);
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      localStorage.setItem("admin-authenticated", "true");
-      setIsAuthenticated(true);
-      setMessage("Login berhasil. Mengarahkan ke dashboard...");
-    } else {
-      setMessage("Username atau password salah. Gunakan 1234 / 1234 untuk pengujian sementara.");
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem("admin-authenticated", "true");
+        setIsAuthenticated(true);
+        setMessage("Login berhasil. Mengarahkan ke dashboard...");
+      } else {
+        setMessage(data.error || "Username atau password salah.");
+      }
+    } catch {
+      setMessage("Terjadi kesalahan. Silakan coba lagi.");
     }
 
     setIsLoggingIn(false);
@@ -95,7 +104,7 @@ export default function AdminPage() {
             >
               {isLoggingIn ? "Masuk..." : "Login"}
             </button>
-            <p className="text-center text-sm text-slate-500">Gunakan <strong>1234</strong> sebagai username dan password untuk pengujian sementara.</p>
+            <p className="text-center text-sm text-slate-500">Gunakan kredensial admin yang sudah dikonfigurasi.</p>
             {message && <p className="text-center text-sm text-red-600">{message}</p>}
           </form>
         ) : (
