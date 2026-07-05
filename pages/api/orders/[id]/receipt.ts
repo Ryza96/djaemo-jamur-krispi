@@ -1,3 +1,10 @@
+/**
+ * @deprecated Use GET /api/admin/orders/[id]/receipt instead.
+ * This legacy Pages Router endpoint is kept for reference only.
+ * New code should use the ReceiptService in lib/services/shipping/receipt.service.ts
+ * and the App Router endpoint at app/api/admin/orders/[id]/receipt/route.ts
+ */
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PDFDocument from 'pdfkit';
 import bwipjs from 'bwip-js';
@@ -24,7 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (!order) {
-      console.warn('Receipt: order not found for id', id);
       return res.status(404).json({ error: 'Order tidak ditemukan.' });
     }
 

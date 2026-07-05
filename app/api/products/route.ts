@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getCatalogProducts } from '@/lib/services/product.service';
+import { UPLOAD } from '@/lib/constants/upload';
 
 const sanitizePriceToInt = (raw: unknown): number | null => {
   if (raw === null || raw === undefined) return null;
@@ -8,80 +10,95 @@ const sanitizePriceToInt = (raw: unknown): number | null => {
     return Math.trunc(raw);
   }
   const s = String(raw);
-  // Contoh: "Rp 14.499" -> 14499
   const digits = s.replace(/[^0-9]/g, '');
   if (!digits) return null;
   const n = Number.parseInt(digits, 10);
   return Number.isNaN(n) ? null : n;
 };
 
+const extractImageUrls = (body: Record<string, unknown>): string[] => {
+  const raw = Array.isArray(body.images) ? body.images : [];
+  return raw
+    .filter((u: unknown): u is string => typeof u === 'string')
+    .map((u) => u.trim())
+    .filter((u) => u.length > 0);
+};
+
+const deleteStorageFiles = async (urls: string[]) => {
+  for (const url of urls) {
+    try {
+      const parsed = new URL(url);
+      const prefix = `/storage/v1/object/public/${UPLOAD.STORAGE_BUCKET}/`;
+      if (parsed.pathname.startsWith(prefix)) {
+        const path = parsed.pathname.slice(prefix.length);
+        await supabase.storage.from(UPLOAD.STORAGE_BUCKET).remove([path]);
+      }
+    } catch {
+      // non-fatal — skip invalid url
+    }
+  }
+};
+
 
 export const GET = async () => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, product_images(image_url)')
-      .order('created_at', { ascending: false });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+    const products = await getCatalogProducts();
+    return NextResponse.json(products);
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to read products' }, { status: 500 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to read products' }, { status: 500 });
   }
 }
 
+
 export const POST = async (request: Request) => {
   try {
-    const body = await request.json();
+    const body = await request.json() as Record<string, unknown>;
 
-    // Basic sanitization / normalization to avoid inserting unexpected types
-    const payload: any = { ...body };
-    if (payload.images && Array.isArray(payload.images)) {
-      payload.images = payload.images.filter((u: any) => typeof u === 'string');
-    } else {
-      delete payload.images;
-    }
-    if (payload.image && typeof payload.image !== 'string') delete payload.image;
-    if (payload.price && typeof payload.price === 'string') {
-      const n = parseInt(payload.price, 10);
-      payload.price = Number.isNaN(n) ? null : n;
-    }
+    const payload: Record<string, unknown> = {};
+    if (typeof body?.name === 'string') payload.name = body.name;
+    if (typeof body?.description === 'string') payload.description = body.description;
+    if (body?.price !== undefined) payload.price = sanitizePriceToInt(body.price);
+    if (typeof body?.weight === 'string') payload.weight = body.weight;
+    if (typeof body?.id === 'string') payload.id = body.id;
 
-    // Remove any accidental File objects or large buffers
-    delete payload.file;
-    delete payload.files;
-
-    const { data, error } = await supabase.from('products').insert([payload]).select();
+    const { data: product, error } = await supabase.from('products').insert([payload]).select().single();
     if (error) {
       console.error('Supabase insert error:', error);
       return NextResponse.json({ error: error.message, details: error.details ?? null }, { status: 500 });
     }
-    return NextResponse.json(data?.[0] ?? null, { status: 201 });
+
+    const imagesToInsert = extractImageUrls(body);
+    if (imagesToInsert.length > 0) {
+      const { error: imgErr } = await supabase.from('product_images').insert(
+        imagesToInsert.map((image_url) => ({ product_id: product.id, image_url }))
+      );
+      if (imgErr) {
+        return NextResponse.json({ error: imgErr.message }, { status: 500 });
+      }
+    }
+
+    return NextResponse.json({ ...product, images: imagesToInsert }, { status: 201 });
   } catch (err) {
     console.error('POST /api/products exception', err);
     return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }
 
+
 export const PUT = async (request: Request) => {
   try {
-    const body = await request.json();
+    const body = await request.json() as Record<string, unknown>;
 
     const productId = body?.id;
     if (!productId || typeof productId !== 'string') {
       return NextResponse.json({ error: 'Missing or invalid product id' }, { status: 400 });
     }
 
-    // =============================
-    // Tahap 1: update tabel induk ONLY kolom yang valid di `products`
-    // =============================
     const productPayload: Record<string, unknown> = {};
-
     if (typeof body?.name === 'string') productPayload.name = body.name;
     if (typeof body?.description === 'string') productPayload.description = body.description;
     if (body?.price !== undefined) productPayload.price = sanitizePriceToInt(body.price);
     if (typeof body?.weight === 'string') productPayload.weight = body.weight;
-
-    // update price yang null boleh terjadi untuk kasus input kosong
 
     const { data: updatedProduct, error: updateErr } = await supabase
       .from('products')
@@ -94,20 +111,7 @@ export const PUT = async (request: Request) => {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
-    // =============================
-    // Tahap 2: sinkronisasi tabel anak `product_images`
-    // =============================
-    // Requirement: hapus baris lama berdasar product_id, lalu insert ulang.
-    const incomingImages: string[] = Array.isArray(body?.images)
-      ? body.images
-      : body?.image
-        ? [body.image]
-        : [];
-
-    const imagesToInsert = incomingImages
-      .filter((u: unknown) => typeof u === 'string')
-      .map((u: string) => u.trim())
-      .filter((u) => u.length > 0);
+    const imagesToInsert = extractImageUrls(body);
 
     const { error: deleteImgErr } = await supabase
       .from('product_images')
@@ -128,8 +132,8 @@ export const PUT = async (request: Request) => {
       }
     }
 
-    return NextResponse.json(updatedProduct ?? null);
-  } catch (err) {
+    return NextResponse.json({ ...updatedProduct, images: imagesToInsert });
+  } catch {
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
@@ -140,28 +144,27 @@ export const DELETE = async (request: Request) => {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
-    // fetch product to remove associated files from storage
-    const { data: existing, error: fetchErr } = await supabase.from('products').select('*').eq('id', id).single();
-    if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
 
-    const images: string[] = existing?.images || (existing?.image ? [existing.image] : []);
-    for (const url of images) {
-      try {
-        const parsed = new URL(url);
-        const prefix = `/storage/v1/object/public/products/`;
-        if (parsed.pathname.startsWith(prefix)) {
-          const path = parsed.pathname.slice(prefix.length);
-          await supabase.storage.from('products').remove([path]);
-        }
-      } catch (e) {
-        console.warn('Could not parse image url for deletion', url);
-      }
+    const { data: existingImages } = await supabase
+      .from('product_images')
+      .select('image_url')
+      .eq('product_id', id);
+
+    const urls = (existingImages as Array<{ image_url: string }> | null)?.map((r) => r.image_url) ?? [];
+    await deleteStorageFiles(urls);
+
+    const { error: deleteImgsErr } = await supabase
+      .from('product_images')
+      .delete()
+      .eq('product_id', id);
+    if (deleteImgsErr) {
+      return NextResponse.json({ error: deleteImgsErr.message }, { status: 500 });
     }
 
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }

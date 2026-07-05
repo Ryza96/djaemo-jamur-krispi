@@ -4,12 +4,12 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/sections/Section";
-import { products } from "@/data/products";
+import { ProductCard } from "@/components/produk/ProductCard";
 import { SITE } from "@/lib/constants";
-import { formatPrice } from "@/lib/utils";
+import type { Product } from "@/types";
 
 export default function Home() {
-  const featured = products.slice(0, 3);
+  const [featured, setFeatured] = useState<Product[]>([]);
   const carouselImages = useMemo(
     () => [
       "/images/hero/balado.png",
@@ -28,6 +28,16 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [carouselImages.length]);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        const products = Array.isArray(data) ? data.slice(0, 3) : [];
+        setFeatured(products);
+      })
+      .catch(() => setFeatured([]));
+  }, []);
 
   return (
     <>
@@ -49,6 +59,7 @@ export default function Home() {
               </div>
               <div>
                 <Image
+                  unoptimized={process.env.NODE_ENV === "development"}
                   src={SITE.logo}
                   alt={`Logo ${SITE.name}`}
                   width={120}
@@ -99,33 +110,17 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((product) => (
-            <article
-              key={product.id}
-              className="overflow-hidden rounded-2xl border border-primary/10 bg-white shadow-sm"
-            >
-              <div className="relative overflow-hidden rounded-t-2xl">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  width={480}
-                  height={320}
-                  className="h-48 w-full object-cover"
-                />
-              </div>
-              <div className="p-5">
-                <h3 className="font-semibold text-primary">{product.name}</h3>
-                <p className="mt-1 text-sm text-muted line-clamp-2">
-                  {product.description}
-                </p>
-                <p className="mt-3 text-lg font-bold text-secondary">
-                  {formatPrice(product.price)}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
+        {featured.length > 0 ? (
+          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+            {featured.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-10 text-center text-muted">
+            Belum ada produk unggulan saat ini.
+          </p>
+        )}
 
         <div className="mt-10 text-center">
           <Button href="/produk" variant="outline">

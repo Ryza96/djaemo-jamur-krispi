@@ -1,9 +1,50 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { snap } from "@/lib/midtrans";
 import { supabase } from "@/lib/supabase";
 
+const paymentSchema = z.object({
+  orderId: z.string().min(1, "orderId wajib diisi.").max(50, "orderId maksimal 50 karakter."),
+  items: z
+    .array(
+      z.object({
+        product: z.object({
+          id: z.string(),
+          name: z.string(),
+          price: z.number(),
+        }),
+        quantity: z.number().int().positive(),
+      })
+    )
+    .min(1, "Minimal satu item."),
+  subtotal: z.number().nonnegative(),
+  shippingFee: z.number().nonnegative(),
+  customerName: z.string().min(1, "Nama wajib diisi."),
+  customerPhone: z.string().min(1, "Nomor telepon wajib diisi."),
+  customerEmail: z.string().email("Email tidak valid."),
+  customerAddress: z.string().min(1, "Alamat wajib diisi."),
+  destination: z.any().optional(),
+  shippingService: z.any().optional(),
+});
+
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Request body bukan JSON valid." }, { status: 400 });
+  }
+
+  const parsed = paymentSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message || "Data pembayaran tidak valid." },
+      { status: 400 }
+    );
+  }
+
   const {
     orderId,
     items,
@@ -15,20 +56,7 @@ export async function POST(request: Request) {
     customerAddress,
     destination,
     shippingService,
-  } = body;
-
-  if (
-    !orderId ||
-    !Array.isArray(items) ||
-    typeof subtotal !== "number" ||
-    typeof shippingFee !== "number" ||
-    !customerName ||
-    !customerPhone ||
-    !customerEmail ||
-    !customerAddress
-  ) {
-    return NextResponse.json({ error: "Data pembayaran tidak valid." }, { status: 400 });
-  }
+  } = parsed.data;
 
   const totalAmount = subtotal + shippingFee;
 
@@ -61,7 +89,7 @@ export async function POST(request: Request) {
         total_amount: totalAmount,
         destination,
         shipping_service: shippingService,
-        status: "pending",
+        payment_status: "pending",
       })
       .select()
       .single();
@@ -101,22 +129,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const payloadAmount = itemDetails.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
-
-    console.log("Midtrans payment debug", {
-      orderId,
-      subtotal,
-      shippingFee,
-      totalAmount,
-      payloadAmount,
-      itemDetailsCount: itemDetails.length,
-      midtransServerKeySet: Boolean(process.env.MIDTRANS_SERVER_KEY),
-      midtransClientKeySet: Boolean(process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY),
-    });
-
     const midtransPayload = {
       transaction_details: {
         order_id: orderId,
@@ -135,8 +147,6 @@ export async function POST(request: Request) {
         finish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}`,
       },
     };
-
-    console.log("Midtrans payload", JSON.stringify(midtransPayload, null, 2));
 
     const { token, redirect_url } = await snap.createTransaction(midtransPayload);
 

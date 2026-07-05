@@ -1,0 +1,6 @@
+-- =============================================================
+-- THIS MIGRATION IS SUPERSEDED BY 012.
+-- The NOT VALID approach in 012 renders separate data + schema
+-- migrations unnecessary. All steps (DROP → CREATE NOT VALID →
+-- UPDATE → VALIDATE) are safely contained in a single script.
+-- =============================================================

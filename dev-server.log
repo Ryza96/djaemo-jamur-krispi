@@ -1,0 +1,15 @@
+▲ Next.js 16.2.9 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.13:3000
+- Environments: .env.local
+✓ Ready in 666ms
+
+ GET /admin/orders 200 in 2.7s (next.js: 2.1s, application-code: 602ms)
+Error fetching admin orders: {
+  code: '42703',
+  details: null,
+  hint: null,
+  message: 'column orders.waybill_id does not exist'
+}
+ GET /api/admin/orders?page=1&limit=20&sort=newest 500 in 1963ms (next.js: 1413ms, application-code: 550ms)
+[?25h

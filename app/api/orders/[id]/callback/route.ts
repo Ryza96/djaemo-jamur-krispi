@@ -27,7 +27,6 @@ export async function POST(request: NextRequest, context: { params: any }) {
       .digest("hex");
 
     if (signature !== expectedSignature) {
-      console.warn("Invalid Midtrans signature");
       return NextResponse.json({ error: "Invalid signature." }, { status: 401 });
     }
 
@@ -61,11 +60,11 @@ export async function POST(request: NextRequest, context: { params: any }) {
       paymentMethod = transactionStatus.payment_type;
     }
 
-    // Update order status in database
+    // Update order payment status in database
     const { error: updateError } = await supabase
       .from("orders")
       .update({
-        status: orderStatus,
+        payment_status: orderStatus,
         payment_method: paymentMethod,
         updated_at: new Date().toISOString(),
       })

@@ -8,7 +8,7 @@ export const products: Product[] = [
       "Rasa original yang gurih dengan tekstur renyah sempurna. Varian klasik yang tak pernah ketinggalan.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/1.JPG",
+    images: ["/images/produk/1.JPG"],
   },
   {
     id: "produk-2",
@@ -17,7 +17,7 @@ export const products: Product[] = [
       "Rasa BBQ gurih dengan sentuhan smokey yang cocok untuk pencinta rasa bold.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/2.JPG",
+    images: ["/images/produk/2.JPG"],
   },
   {
     id: "produk-3",
@@ -26,7 +26,7 @@ export const products: Product[] = [
       "Perpaduan pedas dan gurih yang bikin nagih. Favorit pecinta rasa spicy.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/3.JPG",
+    images: ["/images/produk/3.JPG"],
   },
   {
     id: "produk-4",
@@ -35,7 +35,7 @@ export const products: Product[] = [
       "Cita rasa balado khas Indonesia dengan jamur premium yang renyah.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/4.JPG",
+    images: ["/images/produk/4.JPG"],
   },
   {
     id: "produk-5",
@@ -44,7 +44,7 @@ export const products: Product[] = [
       "Kombinasi unik rumput laut dan jamur yang memberikan rasa umami nikmat.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/5.JPG",
+    images: ["/images/produk/5.JPG"],
   },
   {
     id: "produk-6",
@@ -53,7 +53,7 @@ export const products: Product[] = [
       "Aroma bawang yang kuat dan menggugah selera dengan kelezatan yang tak tertahankan.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/6.JPG",
+    images: ["/images/produk/6.JPG"],
   },
   {
     id: "produk-7",
@@ -62,7 +62,7 @@ export const products: Product[] = [
       "Untuk pecinta pedas sejati. Sensasi cabe rawit yang membara namun tetap nikmat.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/7.JPG",
+    images: ["/images/produk/7.JPG"],
   },
   {
     id: "produk-8",
@@ -71,7 +71,7 @@ export const products: Product[] = [
       "Kelezatan jamur premium dipadukan dengan cita rasa keju yang gurih dan creamy.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/8.JPG",
+    images: ["/images/produk/8.JPG"],
   },
   {
     id: "produk-9",
@@ -80,6 +80,6 @@ export const products: Product[] = [
       "Sentuhan manis madu natural yang menyeimbangkan rasa gurih jamur krispi.",
     price: 15000,
     weight: "100g",
-    image: "/images/produk/9.jpg",
+    images: ["/images/produk/9.jpg"],
   },
 ];

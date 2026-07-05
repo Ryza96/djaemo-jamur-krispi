@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     }
 
     if (orderStatus) {
-      query = query.eq("status", orderStatus);
+      query = query.eq("payment_status", orderStatus);
     }
 
     const { data: orders, error } = await query.order("created_at", { ascending: false });

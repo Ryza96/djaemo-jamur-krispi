@@ -3,7 +3,15 @@ import { NextResponse } from 'next/server';
 const BITESHIP_RATES_URL = 'https://api.biteship.com/v1/rates/couriers';
 const API_TIMEOUT_MS = 10000;
 
+const BITESHIP_API_KEY = process.env.BITESHIP_API_KEY;
+
 export const POST = async (request: Request) => {
+  if (!BITESHIP_API_KEY) {
+    return NextResponse.json(
+      { error: "Biteship API key tidak dikonfigurasi." },
+      { status: 500 }
+    );
+  }
   try {
     const body = await request.json();
 
@@ -12,7 +20,6 @@ export const POST = async (request: Request) => {
       origin_longitude,
       destination_latitude,
       destination_longitude,
-      weight,
       items,
       couriers,
     } = body;
@@ -22,7 +29,6 @@ export const POST = async (request: Request) => {
     if (typeof origin_longitude !== 'number') missingFields.push('origin_longitude');
     if (typeof destination_latitude !== 'number') missingFields.push('destination_latitude');
     if (typeof destination_longitude !== 'number') missingFields.push('destination_longitude');
-    if (typeof weight !== 'number' || Number.isNaN(weight) || weight <= 0) missingFields.push('weight');
     if (!Array.isArray(items) || items.length === 0) missingFields.push('items');
     if (typeof couriers !== 'string' || !couriers.trim()) missingFields.push('couriers');
 
@@ -49,18 +55,14 @@ export const POST = async (request: Request) => {
       name: String(item.name || 'item'),
       quantity: Number(item.quantity ?? 1),
       value: Number(item.value ?? 0),
+      weight: Number(item.weight ?? 0),
     }));
 
-    const payload = {
-      origin: {
-        latitude: origin_latitude,
-        longitude: origin_longitude,
-      },
-      destination: {
-        latitude: destination_latitude,
-        longitude: destination_longitude,
-      },
-      weight,
+    const payload: Record<string, unknown> = {
+      origin_latitude,
+      origin_longitude,
+      destination_latitude,
+      destination_longitude,
       items: normalizedItems,
       couriers: courierList.join(','),
     };
@@ -71,7 +73,7 @@ export const POST = async (request: Request) => {
     const response = await fetch(BITESHIP_RATES_URL, {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer biteship_test.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidGVzdEFQSSIsInVzZXJJZCI6IjZhMzdhMzZiNjg4MTdlNzNkYTgxODM0NiIsImlhdCI6MTc4MjE5NTU5N30.E9CmyRZbxsY2ACKLt4BUCxg0vowtXnwajb5IkbRSI-c',
+        Authorization: `Bearer ${BITESHIP_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
@@ -81,6 +83,7 @@ export const POST = async (request: Request) => {
     clearTimeout(timeoutId);
 
     const responseText = await response.text();
+
     let responseData: any = null;
 
     if (responseText) {
@@ -105,24 +108,23 @@ export const POST = async (request: Request) => {
       );
     }
 
-    const rates =
-      responseData?.rates || responseData?.results || responseData?.data || responseData;
+    const pricing = responseData?.pricing;
 
-    if (!Array.isArray(rates)) {
+    if (!Array.isArray(pricing)) {
       return NextResponse.json(
         { error: 'Unexpected response format from Biteship sandbox.', raw: responseData },
         { status: 502 }
       );
     }
 
-    const cleanedRates = rates.map((rate: any) => ({
-      courier: rate.courier_company || rate.courier || rate.courier_name || null,
-      service: rate.service || rate.name || rate.courier_service || null,
+    const cleanedRates = pricing.map((item: any) => ({
+      courier: item.courier_code || item.courier || item.company || null,
+      service: item.courier_service_name || item.courier_service_code || item.service || null,
       price:
-        typeof rate.price === 'number'
-          ? rate.price
-          : Number(rate.price ?? rate.cost ?? rate.amount ?? null),
-      etd: rate.etd || rate.estimated_delivery_time || rate.lead_time || null,
+        typeof item.price === 'number'
+          ? item.price
+          : Number(item.price ?? item.shipping_fee ?? 0),
+      etd: item.duration || item.shipment_duration_range || null,
     }));
 
     return NextResponse.json({ success: true, rates: cleanedRates });

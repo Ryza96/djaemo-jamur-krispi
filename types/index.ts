@@ -4,7 +4,17 @@ export interface Product {
   description: string;
   price: number;
   weight: string;
-  image: string;
+  images: string[];
+}
+
+export interface ProductRow {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  weight: string;
+  created_at?: string;
+  product_images?: Array<{ image_url: string }>;
 }
 
 export interface CartItem {

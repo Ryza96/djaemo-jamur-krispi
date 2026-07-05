@@ -1,45 +1,90 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Section } from "@/components/sections/Section";
-import type { Order } from "@/types";
 
 const ORDER_STORAGE_KEY = "djaemo-last-order";
 
 export default function CheckoutFailedPage() {
   const router = useRouter();
-  const [order, setOrder] = useState<Order | null>(null);
+  const searchParams = useSearchParams();
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const orderIdFromUrl = searchParams?.get("order_id") ?? null;
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      setLoading(false);
-      return;
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const id = orderIdFromUrl || (() => {
+          try {
+            const stored = localStorage.getItem(ORDER_STORAGE_KEY);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              return parsed.orderId || null;
+            }
+          } catch {}
+          return null;
+        })();
+
+        if (!id) {
+          setError("tidak-ada-pesanan");
+          setLoading(false);
+          return;
+        }
+
+        if (!cancelled) setOrderId(id);
+        setLoading(false);
+      } catch {
+        if (!cancelled) setError("Terjadi kesalahan");
+        setLoading(false);
+      }
     }
 
-    try {
-      const stored = window.localStorage.getItem(ORDER_STORAGE_KEY);
-      setOrder(stored ? (JSON.parse(stored) as Order) : null);
-    } catch {
-      setOrder(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const orderId = order?.orderId;
+    load();
+    return () => { cancelled = true; };
+  }, [orderIdFromUrl]);
 
   if (loading) {
     return (
       <Section>
+        <PageHeader title="Pembayaran Gagal" description="Sedang memuat detail pesanan..." />
+        <div className="flex flex-col items-center justify-center gap-6 py-20">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted">Mohon tunggu.</p>
+        </div>
+      </Section>
+    );
+  }
+
+  if (error === "tidak-ada-pesanan") {
+    return (
+      <Section>
         <PageHeader
           title="Pembayaran Gagal"
-          description="Sedang memuat detail pesanan..."
+          description="Tidak ada data pesanan yang ditemukan."
         />
         <div className="rounded-3xl border border-primary/10 bg-white p-12 text-center shadow-sm">
-          <p className="text-sm text-muted">Mohon tunggu.</p>
+          <p className="text-lg font-semibold text-primary">Belum ada pesanan terakhir.</p>
+          <p className="mt-3 text-sm text-muted">
+            Data pesanan tidak ditemukan di penyimpanan browser.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button onClick={() => router.push("/produk")} className="w-full sm:w-auto">
+              Kembali ke Produk
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/cart")} className="w-full sm:w-auto">
+              Lihat Keranjang
+            </Button>
+          </div>
         </div>
       </Section>
     );
@@ -56,7 +101,7 @@ export default function CheckoutFailedPage() {
         <div className="space-y-6 rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-primary">Status Transaksi</h2>
-            <p className="text-sm text-muted">{order?.status || "failed"}</p>
+            <p className="text-sm text-muted">failed</p>
           </div>
 
           {orderId ? (
@@ -77,8 +122,7 @@ export default function CheckoutFailedPage() {
             >
               Kembali ke Keranjang
             </Button>
-            <Button className="w-full" onClick={() => router.push("/produk")}
-            >
+            <Button className="w-full" onClick={() => router.push("/produk")}>
               Pilih Produk Lagi
             </Button>
           </div>
@@ -98,4 +142,3 @@ export default function CheckoutFailedPage() {
     </Section>
   );
 }
-

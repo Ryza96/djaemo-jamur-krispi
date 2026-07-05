@@ -1,7 +1,15 @@
-import { Product } from "@/types";
+export function buildOrderId(): string {
+  const now = new Date();
+  const y = now.getFullYear().toString();
+  const m = (now.getMonth() + 1).toString().padStart(2, "0");
+  const d = now.getDate().toString().padStart(2, "0");
+  const date = `${y}${m}${d}`;
 
-export function buildOrderId(items: { product: Product; quantity: number }[]) {
-  const timestamp = Date.now().toString(36);
-  const summary = items.map((item) => `${item.product.id}-${item.quantity}`).join("-");
-  return `DJ-${timestamp}-${summary}`;
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let random = "";
+  for (let i = 0; i < 8; i++) {
+    random += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  return `DJ-${date}-${random}`;
 }

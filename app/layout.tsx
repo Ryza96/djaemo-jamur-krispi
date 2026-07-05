@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { PublicShell } from "@/components/layout/PublicShell";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
 
@@ -38,9 +37,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <ToastProvider>
           <CartProvider>
-            <Header />
-            <main className="flex flex-1 flex-col">{children}</main>
-            <Footer />
+            <PublicShell>{children}</PublicShell>
           </CartProvider>
         </ToastProvider>
       </body>

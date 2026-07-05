@@ -1,0 +1,6 @@
+Error fetching admin orders: {
+  code: '42703',
+  details: null,
+  hint: null,
+  message: 'column orders.waybill_id does not exist'
+}

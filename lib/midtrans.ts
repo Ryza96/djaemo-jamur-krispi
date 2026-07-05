@@ -14,7 +14,7 @@ if (!serverKey || !clientKey) {
   );
 }
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_ENV === "production";
 
 // Snap API for creating payment transactions
 export const snap = new Midtrans.Snap({

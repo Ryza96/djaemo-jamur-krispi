@@ -22,6 +22,7 @@ export function Logo({
       className={cn("group flex items-center gap-3 transition-opacity hover:opacity-90", className)}
     >
       <Image
+        unoptimized={process.env.NODE_ENV === "development"}
         src={SITE.logo}
         alt={`Logo ${SITE.name}`}
         width={56}

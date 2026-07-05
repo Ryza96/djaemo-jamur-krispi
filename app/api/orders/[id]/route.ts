@@ -6,23 +6,25 @@ export async function GET(request: NextRequest, context: { params: any }) {
   const orderId = params.id;
 
   try {
-    // Try to fetch by order id first (UUID)
     let { data: order, error } = await supabase
       .from("orders")
       .select("*, order_items(*), customers(*)")
       .eq("id", orderId)
-      .single();
+      .maybeSingle();
 
-    // If not found, try by order_id (string identifier)
-    if (error && error.code === "PGRST116") {
+    if (!order) {
       ({ data: order, error } = await supabase
         .from("orders")
         .select("*, order_items(*), customers(*)")
         .eq("order_id", orderId)
-        .single());
+        .maybeSingle());
     }
 
     if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!order) {
       return NextResponse.json({ error: "Order tidak ditemukan." }, { status: 404 });
     }
 
@@ -43,23 +45,25 @@ export async function PUT(request: NextRequest, context: { params: any }) {
   const { status, payment_method, notes } = body;
 
   try {
-    // Get order UUID first
     let { data: order, error: fetchError } = await supabase
       .from("orders")
       .select("id")
       .eq("id", orderId)
-      .single();
+      .maybeSingle();
 
-    // If not found by UUID, try by order_id
-    if (fetchError && fetchError.code === "PGRST116") {
+    if (!order) {
       ({ data: order, error: fetchError } = await supabase
         .from("orders")
         .select("id")
         .eq("order_id", orderId)
-        .single());
+        .maybeSingle());
     }
 
-    if (fetchError || !order) {
+    if (fetchError) {
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    }
+
+    if (!order) {
       return NextResponse.json({ error: "Order tidak ditemukan." }, { status: 404 });
     }
 
@@ -68,7 +72,7 @@ export async function PUT(request: NextRequest, context: { params: any }) {
       updated_at: new Date().toISOString(),
     };
 
-    if (status) updateData.status = status;
+    if (status) updateData.payment_status = status;
     if (payment_method) updateData.payment_method = payment_method;
     if (notes !== undefined) updateData.notes = notes;
 

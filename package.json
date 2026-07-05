@@ -11,6 +11,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
     "bwip-js": "^2.1.3",
+    "kode-wilayah-id": "^1.2.0",
+    "lucide-react": "^1.23.0",
     "midtrans-client": "^1.3.3",
     "next": "16.2.9",
     "pdfkit": "^0.13.0",
