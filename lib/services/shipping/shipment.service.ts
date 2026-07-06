@@ -67,6 +67,14 @@ export const ShipmentService = {
 
       const params = mapOrderToBiteshipRequest(order, shipper, courier.deliveryType);
 
+      console.log("=== CREATE SHIPMENT PARAMS ===");
+      console.log(JSON.stringify({
+        delivery_type: params.deliveryType,
+        courier_company: params.courierCompany,
+        courier_type: params.courierService,
+        destination_postal_code: params.destination.postalCode,
+      }, null, 2));
+
       const response = await biteshipCreateShipment(params);
 
       const result = mapBiteshipResponse(response);
