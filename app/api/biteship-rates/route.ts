@@ -119,7 +119,7 @@ export const POST = async (request: Request) => {
 
     const cleanedRates = pricing.map((item: any) => ({
       courier: item.courier_code || item.courier || item.company || null,
-      service: item.courier_service_name || item.courier_service_code || item.service || null,
+      service: item.courier_service_code || item.service || item.courier_service_name || null,
       price:
         typeof item.price === 'number'
           ? item.price

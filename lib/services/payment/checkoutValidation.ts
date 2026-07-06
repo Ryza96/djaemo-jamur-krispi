@@ -160,9 +160,9 @@ async function validateShippingFee(params: {
   const matchingRate = rates.find((rate) => {
     const courier = String(rate.courier_code || rate.courier || rate.company || "");
     const service = String(
-      rate.courier_service_name ||
-        rate.courier_service_code ||
+      rate.courier_service_code ||
         rate.service ||
+        rate.courier_service_name ||
         "",
     );
     return (
