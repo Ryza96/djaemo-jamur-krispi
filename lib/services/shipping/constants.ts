@@ -44,6 +44,6 @@ export function getCourierConfig() {
   return {
     company: process.env.BITESHIP_COURIER_COMPANY ?? "jne",
     service: process.env.BITESHIP_COURIER_TYPE ?? "reg",
-    deliveryType: (process.env.BITESHIP_DELIVERY_TYPE ?? "later") as "now" | "later" | "scheduled",
+    deliveryType: (process.env.BITESHIP_DELIVERY_TYPE ?? "now") as "now" | "later" | "scheduled",
   };
 }
