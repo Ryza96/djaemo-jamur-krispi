@@ -21,9 +21,6 @@ function validateShipmentReady(order: OrderDetailRow): string | null {
   if (!order.postal_code) {
     return "POSTAL_CODE_REQUIRED";
   }
-  if (!order.destination_area_id) {
-    return "DESTINATION_AREA_ID_REQUIRED";
-  }
   if (!order.shipping_address) {
     return "SHIPPING_ADDRESS_REQUIRED";
   }
