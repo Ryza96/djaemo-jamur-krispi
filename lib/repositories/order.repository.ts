@@ -76,6 +76,7 @@ export interface InsertOrderParams {
   notes: string | null;
   payment_status: PaymentStatus;
   fulfillment_status: FulfillmentStatus;
+  destination_area_id?: string | null;
 }
 
 export interface InsertOrderItemParams {
@@ -287,6 +288,7 @@ export const OrderRepository = {
         notes: params.notes,
         payment_status: params.payment_status,
         fulfillment_status: params.fulfillment_status,
+        destination_area_id: params.destination_area_id ?? null,
       })
       .select()
       .single();

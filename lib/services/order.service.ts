@@ -57,6 +57,7 @@ export const OrderService = {
       notes: params.customerInfo.notes || null,
       payment_status: PAYMENT_STATUS.UNPAID,
       fulfillment_status: FULFILLMENT_STATUS.NEW,
+      destination_area_id: params.shippingAddress.areaId ?? null,
     });
 
     const orderItems = params.items.map((item) => ({
