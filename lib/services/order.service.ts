@@ -54,6 +54,7 @@ export const OrderService = {
       shipping_cost: params.shippingFee,
       customer_phone: params.customerInfo.whatsapp,
       shipping_address: fullAddress,
+      postal_code: params.shippingAddress.postalCode,
       notes: params.customerInfo.notes || null,
       payment_status: PAYMENT_STATUS.UNPAID,
       fulfillment_status: FULFILLMENT_STATUS.NEW,

@@ -73,6 +73,7 @@ export interface InsertOrderParams {
   shipping_cost: number;
   customer_phone: string;
   shipping_address: string;
+  postal_code: string;
   notes: string | null;
   payment_status: PaymentStatus;
   fulfillment_status: FulfillmentStatus;
@@ -285,6 +286,7 @@ export const OrderRepository = {
         shipping_cost: params.shipping_cost,
         customer_phone: params.customer_phone,
         shipping_address: params.shipping_address,
+        postal_code: params.postal_code,
         notes: params.notes,
         payment_status: params.payment_status,
         fulfillment_status: params.fulfillment_status,
