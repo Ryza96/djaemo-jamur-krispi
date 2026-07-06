@@ -55,28 +55,22 @@ export interface CreateShipmentParams {
 
 export interface BiteshipOrderResponse {
   id: string;
-  waybill_id: string;
   courier: {
-    company: string;
-    service: string;
-    link: string;
     tracking_id: string;
     waybill_id: string;
+    company: string;
+    type: string;
+    link: string;
   } | null;
   status: string;
-  order_id: string;
-  destination: Record<string, unknown>;
-  origin: Record<string, unknown>;
-  pickup_time: string | null;
-  delivery_time: string | null;
-  tracking_url: string | null;
-  price: number;
 }
 
 export interface CreateShipmentResult {
   success: boolean;
   shipmentId: string | null;
   waybillId: string | null;
+  trackingId: string | null;
+  trackingLink: string | null;
   error?: string;
 }
 

@@ -43,20 +43,23 @@ export const ShipmentService = {
     try {
       const order = await OrderRepository.findDetailByOrderId(orderId);
       if (!order) {
-        return { success: false, shipmentId: null, waybillId: null, error: "ORDER_NOT_FOUND" };
+        return { success: false, shipmentId: null, waybillId: null, trackingId: null, trackingLink: null, error: "ORDER_NOT_FOUND" };
       }
 
       if (order.shipment_id) {
+        const ord = order as OrderDetailRow & { shipping_tracking_id: string | null };
         return {
           success: true,
           shipmentId: order.shipment_id,
           waybillId: order.waybill_id,
+          trackingId: ord.shipping_tracking_id ?? null,
+          trackingLink: null,
         };
       }
 
       const validationError = validateShipmentReady(order);
       if (validationError) {
-        return { success: false, shipmentId: null, waybillId: null, error: validationError };
+        return { success: false, shipmentId: null, waybillId: null, trackingId: null, trackingLink: null, error: validationError };
       }
 
       const shipper = getShipperConfig();
@@ -71,6 +74,7 @@ export const ShipmentService = {
       await OrderRepository.updateShipmentInfo(order.id, {
         shipment_id: result.shipmentId!,
         waybill_id: result.waybillId!,
+        tracking_id: result.trackingId,
       });
 
       await OrderRepository.updateShippingStatus(order.id, {
@@ -93,7 +97,7 @@ export const ShipmentService = {
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create shipment";
-      return { success: false, shipmentId: null, waybillId: null, error: message };
+      return { success: false, shipmentId: null, waybillId: null, trackingId: null, trackingLink: null, error: message };
     }
   },
 

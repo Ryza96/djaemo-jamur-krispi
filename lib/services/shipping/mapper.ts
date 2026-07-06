@@ -101,7 +101,9 @@ export function mapBiteshipResponse(
   return {
     success: true,
     shipmentId: response.id,
-    waybillId: response.waybill_id,
+    waybillId: response.courier?.waybill_id ?? null,
+    trackingId: response.courier?.tracking_id ?? null,
+    trackingLink: response.courier?.link ?? null,
   };
 }
 

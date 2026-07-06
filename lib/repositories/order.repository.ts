@@ -433,14 +433,19 @@ export const OrderRepository = {
     id: string,
     params: {
       shipment_id: string;
-      waybill_id: string;
+      waybill_id: string | null;
+      tracking_id?: string | null;
     },
   ): Promise<void> {
-    const updates: Record<string, string> = {
+    const updates: Record<string, string | null> = {
       shipment_id: params.shipment_id,
       waybill_id: params.waybill_id,
       updated_at: new Date().toISOString(),
     };
+
+    if (params.tracking_id !== undefined) {
+      updates.shipping_tracking_id = params.tracking_id;
+    }
 
     const { error } = await supabase
       .from("orders")
