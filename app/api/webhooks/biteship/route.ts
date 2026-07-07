@@ -25,11 +25,22 @@ export async function POST(request: Request) {
     );
   }
 
+  console.log("==============================");
+  console.log("BITESHIP WEBHOOK RECEIVED");
+  console.log("==============================");
+  console.log(JSON.stringify(payload, null, 2));
+
+  console.log("HANDLING WEBHOOK");
+
   try {
     await ShipmentService.handleWebhook(payload as unknown as BiteshipWebhookPayload);
 
+    console.log("WEBHOOK HANDLED SUCCESSFULLY");
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
       {
         success: false,
