@@ -4,16 +4,18 @@ import { ShipmentService } from "@/lib/services/shipping/shipment.service";
 
 // TODO: Verify Biteship webhook signature
 
+// Biteship sends empty payload during webhook installation.
 export async function POST(request: Request) {
-  let payload: BiteshipWebhookPayload;
+  let payload: Record<string, unknown>;
 
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
+
+  if (!payload || Object.keys(payload).length === 0) {
+    return NextResponse.json({ success: true }, { status: 200 });
   }
 
   if (!payload.waybill_id || !payload.event) {
@@ -24,12 +26,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    await ShipmentService.handleWebhook(payload);
+    await ShipmentService.handleWebhook(payload as unknown as BiteshipWebhookPayload);
 
-    return NextResponse.json(
-      { success: true },
-      { status: 200 },
-    );
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       {
