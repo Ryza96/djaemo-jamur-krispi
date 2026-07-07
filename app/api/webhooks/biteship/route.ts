@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFileSync } from "fs";
-import { join } from "path";
+import { supabase } from "@/lib/supabase";
 import type { BiteshipWebhookPayload } from "@/lib/services/shipping/types";
 import { ShipmentService } from "@/lib/services/shipping/shipment.service";
 
@@ -9,7 +8,7 @@ import { ShipmentService } from "@/lib/services/shipping/shipment.service";
 // Biteship sends empty payload during webhook installation.
 
 // TEMPORARY DEBUG
-// Capture raw webhook payload from Biteship.
+// Capture raw webhook payload.
 // Remove after Sprint 7 verification.
 
 export async function POST(request: Request) {
@@ -32,10 +31,15 @@ export async function POST(request: Request) {
     );
   }
 
-  writeFileSync(
-    join(process.cwd(), "biteship-webhook.json"),
-    JSON.stringify(payload, null, 2),
-  );
+  try {
+    await supabase.from("webhook_debug_logs").insert({
+      provider: "biteship",
+      event: payload.event,
+      payload,
+    });
+  } catch (err) {
+    console.error("Failed to persist webhook debug log:", err);
+  }
 
   console.log("==============================");
   console.log("BITESHIP WEBHOOK RECEIVED");
