@@ -26,6 +26,7 @@ const FULFILLMENT_EVENT_MAP = {
   [FULFILLMENT_STATUS.SHIPPED]: AuditLogService.events.ORDER_SHIPPED,
   [FULFILLMENT_STATUS.DELIVERED]: AuditLogService.events.ORDER_COMPLETED,
   [FULFILLMENT_STATUS.CANCELLED]: AuditLogService.events.ORDER_CANCELLED,
+  [FULFILLMENT_STATUS.WAITING_FOR_RESTOCK]: AuditLogService.events.ORDER_WAITING_FOR_RESTOCK,
 } as const;
 
 const CUSTOMER_NOTIFIABLE: Partial<Record<FulfillmentStatus, NotificationEvent>> = {
@@ -63,7 +64,17 @@ function normalizeFulfillmentStatus(raw: string | null | undefined): Fulfillment
 
 export const FulfillmentService = {
   async process(orderId: string): Promise<FulfillmentActionResult> {
-    return executeTransition(orderId, FULFILLMENT_STATUS.CONFIRMED);
+    const deductResult = await InventoryService.deductOrderStock(orderId);
+    const targetStatus = deductResult.success
+      ? FULFILLMENT_STATUS.CONFIRMED
+      : FULFILLMENT_STATUS.WAITING_FOR_RESTOCK;
+
+    return executeTransition(
+      orderId,
+      targetStatus,
+      !deductResult.success ? { stockShortage: true } : undefined,
+      true,
+    );
   },
 
   async pack(orderId: string): Promise<FulfillmentActionResult> {
@@ -111,7 +122,8 @@ export const FulfillmentService = {
 async function executeTransition(
   orderId: string,
   targetStatus: FulfillmentStatus,
-  extra?: { waybill_id?: string; cancellation_reason?: string },
+  extra?: Record<string, unknown>,
+  skipInventoryCheck?: boolean,
 ): Promise<FulfillmentActionResult> {
   const order = await OrderRepository.findByOrderId(orderId);
   if (!order) {
@@ -159,7 +171,7 @@ async function executeTransition(
     }
   }
 
-  if (targetStatus === FULFILLMENT_STATUS.CONFIRMED) {
+  if (targetStatus === FULFILLMENT_STATUS.CONFIRMED && !skipInventoryCheck) {
     const result = await InventoryService.deductOrderStock(orderId);
     if (!result.success) {
       return {

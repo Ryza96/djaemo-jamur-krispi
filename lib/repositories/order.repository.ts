@@ -371,7 +371,7 @@ export const OrderRepository = {
   async updateFulfillmentStatus(
     id: string,
     status: FulfillmentStatus,
-    extra?: { waybill_id?: string; cancellation_reason?: string },
+    extra?: Record<string, unknown>,
   ): Promise<void> {
     const updates: Record<string, string | number | null> = {
       fulfillment_status: status,
@@ -389,12 +389,12 @@ export const OrderRepository = {
     if (status === "cancelled") {
       updates.cancelled_at = new Date().toISOString();
       if (extra?.cancellation_reason !== undefined) {
-        updates.cancellation_reason = extra.cancellation_reason;
+        updates.cancellation_reason = extra.cancellation_reason as string;
       }
     }
 
     if (extra?.waybill_id !== undefined) {
-      updates.waybill_id = extra.waybill_id;
+      updates.waybill_id = extra.waybill_id as string;
     }
 
     const { error } = await supabase
