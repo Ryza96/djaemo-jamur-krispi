@@ -18,6 +18,7 @@ export const FULFILLMENT_STATUS = {
   SHIPPED: "shipped",
   DELIVERED: "delivered",
   CANCELLED: "cancelled",
+  WAITING_FOR_RESTOCK: "waiting_for_restock",
 } as const;
 
 export type FulfillmentStatus =
