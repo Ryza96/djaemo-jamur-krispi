@@ -12,7 +12,10 @@ const createPaymentSchema = z.object({
   customerInfo: z.object({
     name: z.string().min(1, "Nama wajib diisi"),
     whatsapp: z.string().min(1, "WhatsApp wajib diisi"),
-    email: z.string().email("Email tidak valid"),
+    email: z.string().refine(
+      (val) => val === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      "Email tidak valid",
+    ),
     notes: z.string().optional(),
   }),
     shippingAddress: z.object({
