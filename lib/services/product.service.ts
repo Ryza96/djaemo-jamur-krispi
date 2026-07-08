@@ -9,6 +9,7 @@ export async function getCatalogProducts(): Promise<Product[]> {
     description: p.description,
     price: p.price,
     weight: p.weight,
+    stock: p.stock,
     images: (p.product_images || []).map((img) => img.image_url),
   }));
 }
@@ -22,6 +23,7 @@ export async function getProductById(id: string): Promise<Product | null> {
     description: data.description,
     price: data.price,
     weight: data.weight,
+    stock: data.stock,
     images: (data.product_images || []).map((img) => img.image_url),
   };
 }

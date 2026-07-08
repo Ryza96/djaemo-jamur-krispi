@@ -60,6 +60,7 @@ export const POST = async (request: Request) => {
     if (body?.price !== undefined) payload.price = sanitizePriceToInt(body.price);
     if (typeof body?.weight === 'string') payload.weight = body.weight;
     if (typeof body?.id === 'string') payload.id = body.id;
+    if (typeof body?.stock === 'number') payload.stock = Math.trunc(body.stock);
 
     const { data: product, error } = await supabase.from('products').insert([payload]).select().single();
     if (error) {
@@ -99,6 +100,7 @@ export const PUT = async (request: Request) => {
     if (typeof body?.description === 'string') productPayload.description = body.description;
     if (body?.price !== undefined) productPayload.price = sanitizePriceToInt(body.price);
     if (typeof body?.weight === 'string') productPayload.weight = body.weight;
+    if (typeof body?.stock === 'number') productPayload.stock = Math.trunc(body.stock);
 
     const { data: updatedProduct, error: updateErr } = await supabase
       .from('products')

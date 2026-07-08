@@ -4,6 +4,7 @@ export interface Product {
   description: string;
   price: number;
   weight: string;
+  stock: number;
   images: string[];
 }
 
@@ -13,6 +14,7 @@ export interface ProductRow {
   description: string;
   price: number;
   weight: string;
+  stock: number;
   created_at?: string;
   product_images?: Array<{ image_url: string }>;
 }

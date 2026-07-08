@@ -51,7 +51,7 @@ export default function AdminProductsPage() {
 
   const handleAddProduct = () => {
     setEditingProduct(null);
-    setFormData({ name: "", description: "", price: 0, weight: "", images: [] });
+    setFormData({ name: "", description: "", price: 0, weight: "", stock: 0, images: [] });
     setShowProductModal(true);
   };
 
@@ -249,6 +249,7 @@ export default function AdminProductsPage() {
           name: formData.name || "",
           description: formData.description || "",
           price: sanitizedPrice || 0,
+          stock: formData.stock ?? 0,
           weight: formData.weight || "",
           images: imageUrls,
         };
@@ -375,6 +376,7 @@ export default function AdminProductsPage() {
               <th className="px-4 py-3 font-medium">ID Produk</th>
               <th className="px-4 py-3 font-medium">Nama Produk</th>
               <th className="px-4 py-3 font-medium">Harga</th>
+              <th className="px-4 py-3 font-medium">Stok</th>
               <th className="px-4 py-3 font-medium">Berat</th>
               <th className="px-4 py-3 font-medium">Deskripsi</th>
               <th className="px-4 py-3 font-medium">Aksi</th>
@@ -386,6 +388,7 @@ export default function AdminProductsPage() {
                 <td className="px-4 py-4 font-medium text-slate-900">{product.id}</td>
                 <td className="px-4 py-4 text-slate-700">{product.name}</td>
                 <td className="px-4 py-4 text-slate-700">Rp {product.price.toLocaleString("id-ID")}</td>
+                <td className="px-4 py-4 text-slate-700">{product.stock}</td>
                 <td className="px-4 py-4 text-slate-700">{product.weight}</td>
                 <td className="px-4 py-4 text-slate-700 truncate max-w-xs">{product.description}</td>
                 <td className="px-4 py-4">
@@ -440,13 +443,24 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Harga (Rp)</label>
                   <input
                     type="number"
                     value={formData.price || 0}
                     onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) })}
+                    placeholder="0"
+                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Stok</label>
+                  <input
+                    type="number"
+                    value={formData.stock ?? 0}
+                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
                     placeholder="0"
                     className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
                   />

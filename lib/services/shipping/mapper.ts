@@ -3,7 +3,6 @@ import type {
   CreateShipmentParams,
   BiteshipOrderResponse,
   CreateShipmentResult,
-  BiteshipWebhookPayload,
   BiteshipShipper,
   BiteshipDestination,
   BiteshipItem,
@@ -104,26 +103,6 @@ export function mapBiteshipResponse(
     waybillId: response.courier?.waybill_id ?? null,
     trackingId: response.courier?.tracking_id ?? null,
     trackingLink: response.courier?.link ?? null,
-  };
-}
-
-export function mapWebhookToAuditPayload(
-  webhook: BiteshipWebhookPayload,
-): {
-  event: string;
-  fromStatus: string;
-  toStatus: string;
-  metadata: Record<string, unknown>;
-} {
-  return {
-    event: `shipment.${webhook.status}`,
-    fromStatus: "waybill_created",
-    toStatus: mapBiteshipStatusToFulfillment(webhook.status),
-    metadata: {
-      shipment_id: webhook.shipment_id,
-      waybill_id: webhook.waybill_id,
-      shipping_status: webhook.status,
-    },
   };
 }
 

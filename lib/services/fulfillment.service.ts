@@ -1,7 +1,10 @@
 import { OrderRepository } from "@/lib/repositories";
 import { AuditLogService } from "./audit-log.service";
+import { InventoryService } from "./inventory.service";
 import { FULFILLMENT_STATUS, PAYMENT_STATUS } from "./payment/types";
+import { getNotificationEngine } from "../notifications/engine-instance";
 import type { FulfillmentStatus } from "./payment/types";
+import type { NotificationEvent } from "../notifications/types";
 
 const VALID_FULFILLMENT_TRANSITIONS: Record<FulfillmentStatus, FulfillmentStatus[]> = {
   [FULFILLMENT_STATUS.NEW]: [FULFILLMENT_STATUS.CONFIRMED, FULFILLMENT_STATUS.CANCELLED],
@@ -23,6 +26,14 @@ const FULFILLMENT_EVENT_MAP = {
   [FULFILLMENT_STATUS.DELIVERED]: AuditLogService.events.ORDER_COMPLETED,
   [FULFILLMENT_STATUS.CANCELLED]: AuditLogService.events.ORDER_CANCELLED,
 } as const;
+
+const CUSTOMER_NOTIFIABLE: Partial<Record<FulfillmentStatus, NotificationEvent>> = {
+  [FULFILLMENT_STATUS.CONFIRMED]: AuditLogService.events.ORDER_CONFIRMED,
+  [FULFILLMENT_STATUS.WAYBILL_CREATED]: AuditLogService.events.ORDER_WAYBILL_CREATED,
+  [FULFILLMENT_STATUS.SHIPPED]: AuditLogService.events.ORDER_SHIPPED,
+  [FULFILLMENT_STATUS.DELIVERED]: AuditLogService.events.ORDER_COMPLETED,
+  [FULFILLMENT_STATUS.CANCELLED]: AuditLogService.events.ORDER_CANCELLED,
+};
 
 export interface FulfillmentActionResult {
   success: boolean;
@@ -67,7 +78,11 @@ export const FulfillmentService = {
   },
 
   async ship(orderId: string, waybillId?: string): Promise<FulfillmentActionResult> {
-    return executeTransition(orderId, FULFILLMENT_STATUS.SHIPPED, { waybill_id: waybillId });
+    return executeTransition(
+      orderId,
+      FULFILLMENT_STATUS.SHIPPED,
+      waybillId ? { waybill_id: waybillId } : undefined,
+    );
   },
 
   async complete(orderId: string): Promise<FulfillmentActionResult> {
@@ -75,7 +90,11 @@ export const FulfillmentService = {
   },
 
   async cancel(orderId: string, reason?: string): Promise<FulfillmentActionResult> {
-    return executeTransition(orderId, FULFILLMENT_STATUS.CANCELLED, { cancellation_reason: reason });
+    return executeTransition(
+      orderId,
+      FULFILLMENT_STATUS.CANCELLED,
+      reason ? { cancellation_reason: reason } : undefined,
+    );
   },
 
   isValidTransition(from: FulfillmentStatus | null, to: FulfillmentStatus): boolean {
@@ -139,6 +158,35 @@ async function executeTransition(
     }
   }
 
+  if (targetStatus === FULFILLMENT_STATUS.CONFIRMED) {
+    const result = await InventoryService.deductOrderStock(orderId);
+    if (!result.success) {
+      return {
+        success: false,
+        orderId,
+        previousStatus: currentFulfillmentStatus,
+        newStatus: targetStatus,
+        message: result.message ?? "INVENTORY_DEDUCT_FAILED",
+      };
+    }
+  }
+
+  if (targetStatus === FULFILLMENT_STATUS.CANCELLED) {
+    const result = await InventoryService.restoreOrderStock(orderId);
+    if (result.message === "PARTIAL_RESTORE_FAILURE") {
+      await AuditLogService.logFulfillmentEvent({
+        orderId,
+        event: AuditLogService.events.ROLLBACK,
+        fromStatus: currentFulfillmentStatus,
+        toStatus: targetStatus,
+        metadata: {
+          partialRestoreFailure: true,
+          items: result.items,
+        },
+      });
+    }
+  }
+
   await OrderRepository.updateFulfillmentStatus(
     order.id,
     targetStatus,
@@ -153,6 +201,11 @@ async function executeTransition(
     toStatus: targetStatus,
     metadata: extra ?? undefined,
   });
+
+  const notificationEvent = CUSTOMER_NOTIFIABLE[targetStatus];
+  if (notificationEvent) {
+    getNotificationEngine().notify(notificationEvent, orderId);
+  }
 
   return {
     success: true,

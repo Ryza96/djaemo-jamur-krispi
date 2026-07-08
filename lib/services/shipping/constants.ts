@@ -4,23 +4,6 @@ export const DEFAULT_COURIERS = "jne,jnt,sicepat,anteraja,idexpress";
 
 export const DEFAULT_ITEM_WEIGHT_GRAMS = 100;
 
-export const BITESHIP_EVENT_TO_AUDIT_EVENT: Record<string, string> = {
-  "order.picking_up": "shipment.picking_up",
-  "order.dropping_off": "shipment.dropping_off",
-  "order.delivered": "shipment.delivered",
-  "order.retry": "shipment.retry",
-  "order.cancelled": "shipment.cancelled",
-};
-
-export const BITESHIP_STATUS_TO_FULFILLMENT: Record<string, string> = {
-  picking_up: "picked_up",
-  dropping_off: "shipped",
-  in_transit: "shipped",
-  delivered: "delivered",
-  cancelled: "cancelled",
-  retry: "shipped",
-};
-
 export function getBiteshipApiKey(): string {
   const key = process.env.BITESHIP_API_KEY;
   if (!key) {

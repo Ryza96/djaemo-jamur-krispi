@@ -1,11 +1,10 @@
 import { OrderRepository } from "@/lib/repositories";
-import { AuditLogService } from "@/lib/services/audit-log.service";
+import { FulfillmentService } from "@/lib/services/fulfillment.service";
 import { createShipment as biteshipCreateShipment } from "./biteship";
 import { getTracking as biteshipGetTracking } from "./biteship";
 import {
   mapOrderToBiteshipRequest,
   mapBiteshipResponse,
-  mapWebhookToAuditPayload,
   mapBiteshipStatusToFulfillment,
 } from "./mapper";
 import { getShipperConfig, getCourierConfig } from "./constants";
@@ -15,7 +14,6 @@ import type {
   TrackingInfo,
 } from "./types";
 import type { OrderDetailRow } from "@/lib/repositories/order.repository";
-import type { FulfillmentStatus } from "@/lib/services/payment/types";
 
 function validateShipmentReady(order: OrderDetailRow): string | null {
   if (!order.postal_code) {
@@ -89,18 +87,10 @@ export const ShipmentService = {
         shipping_status: "confirmed",
       });
 
-      await OrderRepository.updateFulfillmentStatus(order.id, "waybill_created");
-
-      await AuditLogService.logFulfillmentEvent({
-        orderId,
-        event: AuditLogService.events.ORDER_WAYBILL_CREATED,
-        fromStatus: order.fulfillment_status ?? "confirmed",
-        toStatus: "waybill_created",
-        metadata: {
-          shipment_id: result.shipmentId,
-          waybill_id: result.waybillId,
-        },
-      });
+      const waybillResult = await FulfillmentService.createWaybill(orderId);
+      if (!waybillResult.success) {
+        throw new Error(waybillResult.message);
+      }
 
       return result;
     } catch (err) {
@@ -118,22 +108,26 @@ export const ShipmentService = {
       }
 
       const targetStatus = mapBiteshipStatusToFulfillment(payload.status);
-      const audit = mapWebhookToAuditPayload(payload);
 
       await OrderRepository.updateShippingStatus(order.id, {
         shipping_status: payload.status,
         delivered_at: payload.status === "delivered" ? new Date().toISOString() : undefined,
       });
 
-      await OrderRepository.updateFulfillmentStatus(order.id, targetStatus as FulfillmentStatus);
+      const fulfillmentCalls = {
+        picked_up: FulfillmentService.markAsPickedUp,
+        shipped: FulfillmentService.ship,
+        delivered: FulfillmentService.complete,
+        cancelled: FulfillmentService.cancel,
+      };
 
-      await AuditLogService.logFulfillmentEvent({
-        orderId: order.order_id,
-        event: audit.event as never,
-        fromStatus: order.fulfillment_status ?? "waybill_created",
-        toStatus: targetStatus,
-        metadata: audit.metadata,
-      });
+      const fulfillmentCall = fulfillmentCalls[targetStatus as keyof typeof fulfillmentCalls];
+      if (fulfillmentCall) {
+        const r = await fulfillmentCall(order.order_id);
+        if (!r.success) {
+          console.error(`Fulfillment transition failed for ${order.order_id}: ${r.message}`);
+        }
+      }
     } catch (err) {
       console.error("Webhook handler error:", err);
     }

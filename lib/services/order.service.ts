@@ -2,7 +2,9 @@ import { OrderRepository, CustomerRepository } from "@/lib/repositories";
 import { combineAddress, mapMidtransStatus } from "./payment/mapper";
 import { verifyMidtransSignature } from "./payment/verifySignature";
 import { AuditLogService } from "./audit-log.service";
+import { FulfillmentService } from "./fulfillment.service";
 import { PAYMENT_STATUS, FULFILLMENT_STATUS } from "./payment/types";
+import { getNotificationEngine } from "../notifications/engine-instance";
 import type {
   PaymentStatus,
   FulfillmentStatus,
@@ -230,6 +232,25 @@ export const OrderService = {
       payment_method: notification.payment_type || null,
     });
 
+    if (newStatus === PAYMENT_STATUS.FAILED || newStatus === PAYMENT_STATUS.EXPIRED) {
+      const cancelResult = await FulfillmentService.cancel(
+        order_id,
+        newStatus === PAYMENT_STATUS.FAILED ? "payment_failed" : "payment_expired",
+      );
+      if (!cancelResult.success) {
+        await AuditLogService.logPaymentEvent({
+          orderId: order_id,
+          event: AuditLogService.events.ROLLBACK,
+          fromStatus: newStatus,
+          toStatus: newStatus,
+          metadata: {
+            reason: "auto_cancel_failed",
+            detail: cancelResult.message,
+          },
+        });
+      }
+    }
+
     await AuditLogService.logPaymentEvent({
       orderId: order_id,
       event: AuditLogService.events.STATUS_CHANGED,
@@ -241,6 +262,19 @@ export const OrderService = {
         fraud_status: notification.fraud_status,
       },
     });
+
+    const paymentEvent =
+      newStatus === PAYMENT_STATUS.PAID
+        ? "payment.paid"
+        : newStatus === PAYMENT_STATUS.FAILED
+          ? "payment.failed"
+          : newStatus === PAYMENT_STATUS.EXPIRED
+            ? "payment.expired"
+            : null;
+
+    if (paymentEvent) {
+      getNotificationEngine().notify(paymentEvent, order_id);
+    }
 
     return {
       success: true,
