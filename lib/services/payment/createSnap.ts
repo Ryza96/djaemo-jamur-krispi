@@ -69,19 +69,24 @@ export async function createSnapTransaction(
     throw new Error(`ORDER_ID_TOO_LONG: order_id length ${orderId.length} exceeds 50 character limit`);
   }
 
+  const customerDetails: Record<string, unknown> = {
+    first_name: customerInfo.name,
+    phone: customerInfo.whatsapp,
+    billing_address: {
+      address: shippingAddress,
+    },
+  };
+
+  if (customerInfo.email.trim() !== "") {
+    customerDetails.email = customerInfo.email;
+  }
+
   const payload = {
     transaction_details: {
       order_id: orderId,
       gross_amount: grossAmount,
     },
-    customer_details: {
-      first_name: customerInfo.name,
-      email: customerInfo.email,
-      phone: customerInfo.whatsapp,
-      billing_address: {
-        address: shippingAddress,
-      },
-    },
+    customer_details: customerDetails,
     item_details: buildItemDetails(items, shippingFee),
     callbacks: {
       finish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}`,
