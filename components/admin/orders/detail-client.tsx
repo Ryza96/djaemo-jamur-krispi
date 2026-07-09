@@ -21,6 +21,7 @@ import { OrderTimeline } from "./order-timeline";
 import { OrderActions } from "./order-actions";
 import { AdminNotes } from "./admin-notes";
 import { TrackingPanel } from "./tracking-panel";
+import { ActionBanner } from "./action-banner";
 
 function DetailSkeleton() {
   return (
@@ -151,6 +152,11 @@ export function OrderDetailClient({ id }: DetailClientProps) {
             </>
           }
           className="mb-6"
+        />
+
+        <ActionBanner
+          fulfillmentStatus={order.fulfillment_status}
+          items={items}
         />
 
         {/* Two-Column Content */}
