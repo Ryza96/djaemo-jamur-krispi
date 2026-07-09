@@ -12,7 +12,7 @@ import {
   AdminTableRow,
   AdminTableCell,
 } from "@/components/admin/patterns/AdminTable";
-import { paymentBadgeVariant, fulfillmentBadgeVariant } from "./status-maps";
+import { paymentBadgeVariant, fulfillmentBadgeVariant, paymentStatusLabel, fulfillmentStatusLabel } from "./status-maps";
 
 interface OrderTableProps {
   orders: OrderListItem[];
@@ -63,7 +63,7 @@ export function OrderTable({ orders, onView }: OrderTableProps) {
                 variant={paymentBadgeVariant(order.payment_status)}
                 size="sm"
               >
-                {order.payment_status ?? "-"}
+                {paymentStatusLabel(order.payment_status)}
               </AdminBadge>
             </AdminTableCell>
             <AdminTableCell>
@@ -71,7 +71,7 @@ export function OrderTable({ orders, onView }: OrderTableProps) {
                 variant={fulfillmentBadgeVariant(order.fulfillment_status)}
                 size="sm"
               >
-                {order.fulfillment_status ?? "-"}
+                {fulfillmentStatusLabel(order.fulfillment_status)}
               </AdminBadge>
             </AdminTableCell>
             <AdminTableCell className="text-slate-600">

@@ -5,7 +5,7 @@ import { formatPrice } from "@/lib/utils";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminSection } from "@/components/admin/patterns/AdminSection";
-import { paymentBadgeVariant, fulfillmentBadgeVariant } from "./status-maps";
+import { paymentBadgeVariant, fulfillmentBadgeVariant, paymentStatusLabel, fulfillmentStatusLabel } from "./status-maps";
 
 interface OrderCardProps {
   order: OrderListItem;
@@ -55,7 +55,7 @@ export function OrderCard({ order, onView }: OrderCardProps) {
             variant={paymentBadgeVariant(order.payment_status)}
             size="sm"
           >
-            {order.payment_status ?? "-"}
+            {paymentStatusLabel(order.payment_status)}
           </AdminBadge>
         </div>
         <div>
@@ -64,7 +64,7 @@ export function OrderCard({ order, onView }: OrderCardProps) {
             variant={fulfillmentBadgeVariant(order.fulfillment_status)}
             size="sm"
           >
-            {order.fulfillment_status ?? "-"}
+            {fulfillmentStatusLabel(order.fulfillment_status)}
           </AdminBadge>
         </div>
       </div>

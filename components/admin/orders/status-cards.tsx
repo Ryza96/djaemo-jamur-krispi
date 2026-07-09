@@ -6,6 +6,9 @@ import {
   paymentBadgeVariant,
   fulfillmentBadgeVariant,
   shippingBadgeVariant,
+  paymentStatusLabel,
+  fulfillmentStatusLabel,
+  shippingStatusLabel,
 } from "./status-maps";
 
 function formatDate(date: string | null | undefined): string {
@@ -43,7 +46,7 @@ export function StatusCards({
           Payment
         </div>
         <AdminBadge variant={paymentBadgeVariant(paymentStatus)}>
-          {paymentStatus ?? "-"}
+          {paymentStatusLabel(paymentStatus)}
         </AdminBadge>
         {paidAt && (
           <div className="mt-3 text-xs text-slate-400">
@@ -57,7 +60,7 @@ export function StatusCards({
           Fulfillment
         </div>
         <AdminBadge variant={fulfillmentBadgeVariant(fulfillmentStatus)}>
-          {fulfillmentStatus ?? "-"}
+          {fulfillmentStatusLabel(fulfillmentStatus)}
         </AdminBadge>
         {shippedAt && (
           <div className="mt-3 text-xs text-slate-400">
@@ -76,7 +79,7 @@ export function StatusCards({
           Shipping
         </div>
         <AdminBadge variant={shippingBadgeVariant(shippingStatus)}>
-          {shippingStatus ?? "-"}
+          {shippingStatusLabel(shippingStatus)}
         </AdminBadge>
       </AdminSection>
     </div>

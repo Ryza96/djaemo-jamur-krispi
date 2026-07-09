@@ -10,6 +10,9 @@ import {
   paymentBadgeVariant,
   fulfillmentBadgeVariant,
   shippingBadgeVariant,
+  paymentStatusLabel,
+  fulfillmentStatusLabel,
+  shippingStatusLabel,
 } from "./status-maps";
 import { StatusCards } from "./status-cards";
 import { CustomerSection } from "./customer-section";
@@ -137,13 +140,13 @@ export function OrderDetailClient({ id }: DetailClientProps) {
           badges={
             <>
               <AdminBadge variant={paymentBadgeVariant(order.payment_status)}>
-                {order.payment_status ?? "-"}
+                {paymentStatusLabel(order.payment_status)}
               </AdminBadge>
               <AdminBadge variant={fulfillmentBadgeVariant(order.fulfillment_status)}>
-                {order.fulfillment_status ?? "-"}
+                {fulfillmentStatusLabel(order.fulfillment_status)}
               </AdminBadge>
               <AdminBadge variant={shippingBadgeVariant(order.shipping_status)}>
-                {order.shipping_status ?? "-"}
+                {shippingStatusLabel(order.shipping_status)}
               </AdminBadge>
             </>
           }
