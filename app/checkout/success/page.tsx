@@ -74,12 +74,15 @@ export default function CheckoutSuccessPage() {
   const [error, setError] = useState<string | null>(null);
 
   const orderIdFromUrl = searchParams?.get("order_id") ?? null;
+  const tokenFromUrl = searchParams?.get("token") ?? null;
   const transactionStatusFromUrl = searchParams?.get("transaction_status") ?? null;
   const paymentStatus = mapTransactionStatus(transactionStatusFromUrl);
 
-  const fetchOrder = useCallback(async (orderId: string) => {
-    const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}`);
+  const fetchOrder = useCallback(async (orderId: string, token: string) => {
+    const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`);
     if (!res.ok) {
+      if (res.status === 401) throw new Error("Akses ditolak");
+      if (res.status === 403) throw new Error("Token tidak valid");
       if (res.status === 404) throw new Error("Pesanan tidak ditemukan");
       throw new Error("Gagal memuat data pesanan");
     }
@@ -107,17 +110,29 @@ export default function CheckoutSuccessPage() {
           return null;
         })();
 
-        if (!id) {
+        const token = tokenFromUrl || (() => {
+          try {
+            const stored = localStorage.getItem(ORDER_STORAGE_KEY);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              return parsed.accessToken || null;
+            }
+          } catch {}
+          return null;
+        })();
+
+        if (!id || !token) {
           setError("tidak-ada-pesanan");
           setLoading(false);
           return;
         }
 
-        const data = await fetchOrder(id);
+        const data = await fetchOrder(id, token);
 
         if (!cancelled) {
           localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify({
             orderId: data.order_id,
+            accessToken: token,
             totalAmount: data.total_amount,
             createdAt: data.created_at,
             status: data.payment_status,
@@ -137,7 +152,7 @@ export default function CheckoutSuccessPage() {
     load();
 
     return () => { cancelled = true; };
-  }, [orderIdFromUrl, fetchOrder]);
+  }, [orderIdFromUrl, tokenFromUrl, fetchOrder]);
 
   useEffect(() => {
     const orderStatus = order ? mapTransactionStatus(order.payment_status) : null;

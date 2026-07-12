@@ -95,7 +95,7 @@ async function buildPdf(order: OrderDetailRow): Promise<Buffer> {
   })();
 
   const barcodeBuffer = await generateBarcode(waybill);
-  const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ""}/orders/${order.order_id}`;
+  const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ""}/checkout/success?order_id=${order.order_id}&token=${order.access_token}`;
   const qrBuffer = await qrToBuffer(orderUrl || String(order.order_id), { type: "png", width: 140 });
 
   // ── Layout helpers ──

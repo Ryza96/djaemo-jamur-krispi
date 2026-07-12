@@ -4,6 +4,7 @@ import { PAYMENT_STATUS } from "./types";
 
 interface SnapParams {
   orderId: string;
+  accessToken: string;
   grossAmount: number;
   customerInfo: {
     name: string;
@@ -63,7 +64,7 @@ function delay(ms: number): Promise<void> {
 export async function createSnapTransaction(
   params: SnapParams,
 ): Promise<SnapResult> {
-  const { orderId, grossAmount, customerInfo, shippingAddress, items, shippingFee } = params;
+  const { orderId, accessToken, grossAmount, customerInfo, shippingAddress, items, shippingFee } = params;
 
   if (orderId.length > 50) {
     throw new Error(`ORDER_ID_TOO_LONG: order_id length ${orderId.length} exceeds 50 character limit`);
@@ -89,7 +90,7 @@ export async function createSnapTransaction(
     customer_details: customerDetails,
     item_details: buildItemDetails(items, shippingFee),
     callbacks: {
-      finish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}`,
+      finish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}&token=${accessToken}`,
     },
   };
 

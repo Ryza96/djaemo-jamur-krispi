@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { supabase } from "@/lib/supabase";
 import type { PaymentStatus, FulfillmentStatus } from "@/lib/services/payment/types";
 
@@ -36,6 +37,7 @@ export interface OrderRow {
   completed_at: string | null;
   cancelled_at: string | null;
   cancellation_reason: string | null;
+  access_token: string;
   created_at: string;
   updated_at: string | null;
 }
@@ -339,6 +341,7 @@ export const OrderRepository = {
         payment_status: params.payment_status,
         fulfillment_status: params.fulfillment_status,
         destination_area_id: params.destination_area_id ?? null,
+        access_token: crypto.randomUUID(),
       })
       .select()
       .single();

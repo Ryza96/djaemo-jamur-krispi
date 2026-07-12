@@ -15,6 +15,7 @@ import type {
 export interface CreateOrderResult {
   id: string;
   orderId: string;
+  accessToken: string;
 }
 
 export interface ProcessCallbackResult {
@@ -86,7 +87,7 @@ export const OrderService = {
       toStatus: PAYMENT_STATUS.UNPAID,
     });
 
-    return { id: order.id, orderId: params.orderId };
+    return { id: order.id, orderId: params.orderId, accessToken: order.access_token };
   },
 
   async confirmPayment(

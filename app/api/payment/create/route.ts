@@ -115,7 +115,7 @@ export async function POST(request: Request) {
   try {
     logStep(1, "Order inserted", { orderId });
 
-    const { id: orderDbId } = await OrderService.createDraft(parsed.data);
+    const { id: orderDbId, accessToken } = await OrderService.createDraft(parsed.data);
 
     const totalAmount = subtotal + shippingFee;
     const fullAddress = combineAddress(shippingAddress);
@@ -133,6 +133,7 @@ export async function POST(request: Request) {
     try {
       const snapParams = {
         orderId,
+        accessToken,
         grossAmount: totalAmount,
         customerInfo: {
           name: customerInfo.name,
@@ -184,6 +185,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       orderId,
+      accessToken,
       token,
       redirectUrl,
       totalAmount,
