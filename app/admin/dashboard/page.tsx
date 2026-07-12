@@ -3,118 +3,144 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface DashboardStats {
+  revenue: number;
+  pendingOrders: number;
+  totalCustomers: number;
+  lowStockCount: number;
+  lowStockItems: Array<{ name: string; stock: number }>;
+  weeklySales: Array<{ date: string; total: number }>;
+}
+
+const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [pendingCount, setPendingCount] = useState<number>(0);
   const chartRef = useRef<HTMLCanvasElement | null>(null);
-  const [totalRevenue, setTotalRevenue] = useState<number>(0);
-  const [revenueLoading, setRevenueLoading] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const summaryCards = useMemo(
-    () => [
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/admin/dashboard/stats");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!cancelled && json.success) {
+          setStats(json.data);
+        }
+      } catch (err) {
+        console.error("Dashboard stats error:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const summaryCards = useMemo(() => {
+    const revenue = stats?.revenue ?? 0;
+    const pending = stats?.pendingOrders ?? 0;
+    const lowStock = stats?.lowStockCount ?? 0;
+    const customers = stats?.totalCustomers ?? 0;
+
+    return [
       {
         title: "Total Penjualan",
-        value: revenueLoading ? "Loading..." : `Rp ${totalRevenue.toLocaleString('id-ID')}`,
+        value: loading ? "Loading..." : `Rp ${revenue.toLocaleString("id-ID")}`,
         description: "Bulan ini",
         accent: "bg-emerald-50 text-emerald-700",
       },
       {
         title: "Pesanan Baru",
-        value: pendingCount.toString(),
+        value: loading ? "..." : pending.toString(),
         description: "Menunggu konfirmasi",
         accent: "bg-sky-50 text-sky-700",
       },
       {
         title: "Stok Menipis",
-        value: "4 Produk",
+        value: loading ? "..." : `${lowStock} Produk`,
         description: "Segera restock",
         accent: "bg-amber-50 text-amber-700",
       },
       {
         title: "Total Pelanggan",
-        value: "1.540",
+        value: loading ? "..." : customers.toLocaleString("id-ID"),
         description: "Terdaftar aktif",
         accent: "bg-violet-50 text-violet-700",
       },
-    ],
-    [totalRevenue, revenueLoading, pendingCount]
-  );
-
-  // Fetch dashboard stats: total revenue (paid) and pending count
-  const fetchDashboardData = async () => {
-    try {
-      setRevenueLoading(true);
-
-      const res = await fetch('/api/orders');
-      if (!res.ok) throw new Error(`Failed to fetch /api/orders (${res.status})`);
-      const payload = await res.json();
-
-      // /api/orders mengembalikan shape: { success: true, data: orders }
-      // Pastikan payload.data selalu array sebelum dipakai .filter/.reduce.
-      const data = payload?.data;
-      const orders = Array.isArray(data) ? data : [];
-
-      // total revenue untuk transaksi yang sudah dibayar
-      const revenueStatuses = new Set(['paid']);
-
-      const total = orders
-        .filter((r: any) => revenueStatuses.has((r?.payment_status ?? '').toString().toLowerCase()))
-        .reduce(
-          (s: number, r: any) =>
-            s + (Number(r.subtotal ?? r.total_amount ?? r.total ?? 0) || 0),
-          0
-        );
-      setTotalRevenue(total);
-
-
-      // pending count (payment_status 'pending')
-      const pendingCnt = orders.filter((r: any) => (r.payment_status || '').toString().toLowerCase() === 'pending').length;
-      setPendingCount(pendingCnt);
-
-    } catch (err: any) {
-      console.error('fetchDashboardData error:', err);
-    } finally {
-      setRevenueLoading(false);
-    }
-  };
+    ];
+  }, [stats, loading]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    const canvas = chartRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!ctx || !canvas || !stats?.weeklySales?.length) return;
 
-  useEffect(() => {
-    const ctx = chartRef.current?.getContext("2d");
-    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
 
-    // Placeholder init Chart.js. Replace dengan Chart.js real implementation.
-    // import("chart.js").then(({ Chart, registerables }) => {
-    //   Chart.register(...registerables);
-    //   new Chart(ctx, {
-    //     type: "line",
-    //     data: {
-    //       labels: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"],
-    //       datasets: [
-    //         {
-    //           label: "Penjualan",
-    //           data: [1500000, 2300000, 1800000, 2100000, 2500000, 2200000, 2700000],
-    //           tension: 0.4,
-    //           borderColor: "#4f46e5",
-    //           backgroundColor: "rgba(79, 70, 229, 0.18)",
-    //         },
-    //       ],
-    //     },
-    //     options: {
-    //       responsive: true,
-    //       plugins: {
-    //         legend: { display: false },
-    //       },
-    //       scales: {
-    //         y: { beginAtZero: true },
-    //       },
-    //     },
-    //   });
-    // });
-  }, []);
+    const W = rect.width;
+    const H = rect.height;
+    const PAD = { top: 20, right: 20, bottom: 40, left: 70 };
+    const chartW = W - PAD.left - PAD.right;
+    const chartH = H - PAD.top - PAD.bottom;
+
+    const values = stats.weeklySales.map((d) => d.total);
+    const maxVal = Math.max(...values, 1);
+    const labels = stats.weeklySales.map((d) => {
+      const date = new Date(d.date + "T00:00:00");
+      return DAY_NAMES[date.getDay()];
+    });
+
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillRect(PAD.left, PAD.top + chartH, chartW, 1);
+
+    const step = chartW / values.length;
+    const barW = step * 0.5;
+
+    values.forEach((val, i) => {
+      const x = PAD.left + i * step + (step - barW) / 2;
+      const barH = (val / maxVal) * chartH;
+      const y = PAD.top + chartH - barH;
+
+      ctx.fillStyle = "rgba(79, 70, 229, 0.18)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, barH, 4);
+      ctx.fill();
+
+      ctx.fillStyle = "#4f46e5";
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, Math.min(barH, 4), 4);
+      ctx.fill();
+
+      ctx.fillStyle = "#64748b";
+      ctx.font = "11px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(labels[i], x + barW / 2, PAD.top + chartH + 20);
+
+      if (val > 0) {
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "bold 10px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        const label = val >= 1_000_000
+          ? `${(val / 1_000_000).toFixed(1)}jt`
+          : val >= 1_000
+            ? `${(val / 1_000).toFixed(0)}rb`
+            : String(val);
+        ctx.fillText(label, x + barW / 2, y - 6);
+      }
+    });
+  }, [stats]);
 
   return (
     <>
@@ -139,10 +165,6 @@ export default function AdminDashboardPage() {
           </div>
           <div className="rounded-4xl border border-slate-200 bg-slate-50 p-4">
             <canvas ref={chartRef} className="h-80 w-full" aria-label="Penjualan mingguan" />
-            <div className="mt-4 rounded-3xl bg-white p-4 text-sm text-slate-500 shadow-sm shadow-slate-100">
-              <p className="font-medium text-slate-900">Chart.js placeholder</p>
-              <p className="mt-2">Script Chart.js bisa dihubungkan di sini, lalu gunakan data penjualan mingguan untuk menampilkan tren.</p>
-            </div>
           </div>
         </div>
 
@@ -155,21 +177,23 @@ export default function AdminDashboardPage() {
             <button className="rounded-2xl bg-slate-950 px-4 py-2 text-sm text-white transition hover:bg-slate-800">Kelola Stok</button>
           </div>
           <div className="space-y-4">
-            {[
-              { label: "Jamur Krispi Balado 100g", stock: "12 paket" },
-              { label: "Jamur Krispi Original 150g", stock: "8 paket" },
-              { label: "Jamur Krispi Keju 100g", stock: "6 paket" },
-            ].map((item) => (
-              <div key={item.label} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-slate-900">{item.label}</p>
-                    <p className="mt-1 text-sm text-slate-500">Sisa stok kritis</p>
+            {loading ? (
+              <p className="text-sm text-slate-500">Memuat data stok...</p>
+            ) : stats?.lowStockItems && stats.lowStockItems.length > 0 ? (
+              stats.lowStockItems.map((item) => (
+                <div key={item.name} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-slate-900">{item.name}</p>
+                      <p className="mt-1 text-sm text-slate-500">Sisa stok kritis</p>
+                    </div>
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700">{item.stock} paket</span>
                   </div>
-                  <span className="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700">{item.stock}</span>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">Semua stok aman.</p>
+            )}
           </div>
         </div>
       </section>
@@ -181,19 +205,19 @@ export default function AdminDashboardPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <button
-            onClick={() => router.push('/admin/orders')}
+            onClick={() => router.push("/admin/orders")}
             className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-sky-200 hover:bg-sky-50"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-lg">📦</span>
               <div>
                 <p className="font-semibold text-slate-900 group-hover:text-sky-700">Pesanan Baru</p>
-                <p className="text-sm text-slate-500">{pendingCount} menunggu konfirmasi</p>
+                <p className="text-sm text-slate-500">{stats?.pendingOrders ?? 0} menunggu konfirmasi</p>
               </div>
             </div>
           </button>
           <button
-            onClick={() => router.push('/admin/orders')}
+            onClick={() => router.push("/admin/orders")}
             className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-amber-200 hover:bg-amber-50"
           >
             <div className="flex items-center gap-3">
@@ -205,19 +229,19 @@ export default function AdminDashboardPage() {
             </div>
           </button>
           <button
-            onClick={() => router.push('/admin/products')}
+            onClick={() => router.push("/admin/products")}
             className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-rose-200 hover:bg-rose-50"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-lg">⚠️</span>
               <div>
                 <p className="font-semibold text-slate-900 group-hover:text-rose-700">Stok Menipis</p>
-                <p className="text-sm text-slate-500">Segera restock</p>
+                <p className="text-sm text-slate-500">{stats?.lowStockCount ?? 0} produk perlu restock</p>
               </div>
             </div>
           </button>
           <button
-            onClick={() => router.push('/admin/orders')}
+            onClick={() => router.push("/admin/orders")}
             className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-red-200 hover:bg-red-50"
           >
             <div className="flex items-center gap-3">

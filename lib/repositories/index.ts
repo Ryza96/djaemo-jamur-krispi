@@ -3,3 +3,4 @@ export { CustomerRepository } from "./customer.repository";
 export { AuditLogRepository } from "./audit-log.repository";
 export { InventoryRepository } from "./inventory.repository";
 export { NotificationLogRepository } from "./notification-log.repository";
+export { DashboardRepository } from "./dashboard.repository";
