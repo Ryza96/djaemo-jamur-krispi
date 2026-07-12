@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { AlertCircle, PackageX, Printer } from "lucide-react";
 import { useOrderDetail } from "@/hooks/use-order-detail";
+import { useOrderActions } from "@/hooks/use-order-actions";
 import { formatPrice } from "@/lib/utils";
+import { useToast } from "@/components/ui/Toast";
 import { AdminBadge, AdminButton, AdminKeyValue } from "@/components/admin/ui";
 import { AdminSection, AdminPageHeader, AdminEmptyLayout } from "@/components/admin/patterns";
 import {
@@ -67,11 +69,24 @@ interface DetailClientProps {
 
 export function OrderDetailClient({ id }: DetailClientProps) {
   const { order, loading, error, refresh } = useOrderDetail(id);
+  const { execute: executeAction, loading: actionLoading } = useOrderActions();
+  const { showToast } = useToast();
   const [timelineKey, setTimelineKey] = useState(0);
 
   const handleOrderUpdate = () => {
     refresh();
     setTimelineKey((k) => k + 1);
+  };
+
+  const handleResume = async () => {
+    if (!order) return;
+    const result = await executeAction(order.order_id, "confirm");
+    if (result.success) {
+      showToast("Pesanan berhasil dilanjutkan.", "success");
+      handleOrderUpdate();
+    } else {
+      showToast(result.error ?? "Gagal melanjutkan pesanan.", "error");
+    }
   };
 
   if (loading) return <DetailSkeleton />;
@@ -156,7 +171,14 @@ export function OrderDetailClient({ id }: DetailClientProps) {
 
         <ActionBanner
           fulfillmentStatus={order.fulfillment_status}
-          items={items}
+          items={items.map((item) => ({
+            id: item.id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            stock: item.products?.stock ?? 0,
+          }))}
+          onResume={handleResume}
+          loading={actionLoading}
         />
 
         {/* Two-Column Content */}

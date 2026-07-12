@@ -1,6 +1,8 @@
 import { InventoryRepository } from "@/lib/repositories/inventory.repository";
 import { OrderRepository } from "@/lib/repositories";
 import { AuditLogService } from "./audit-log.service";
+import { MOVEMENT_REASON } from "@/lib/inventory/types";
+import type { AdjustStockParams, StockInfo } from "@/lib/inventory/types";
 
 export interface OrderStockItem {
   productId: string;
@@ -83,10 +85,12 @@ export const InventoryService = {
 
     for (const item of order.order_items) {
       try {
-        const newStock = await InventoryRepository.deductStock(
-          item.product_id,
-          item.quantity,
-        );
+        const newStock = await InventoryRepository.deductStock({
+          productId: item.product_id,
+          quantity: item.quantity,
+          reason: MOVEMENT_REASON.ORDER_CONFIRM,
+          actor: "system",
+        });
 
         succeeded.push({
           productId: item.product_id,
@@ -119,10 +123,12 @@ export const InventoryService = {
 
     for (const item of order.order_items) {
       try {
-        const newStock = await InventoryRepository.restoreStock(
-          item.product_id,
-          item.quantity,
-        );
+        const newStock = await InventoryRepository.restoreStock({
+          productId: item.product_id,
+          quantity: item.quantity,
+          reason: MOVEMENT_REASON.ORDER_CANCEL,
+          actor: "system",
+        });
 
         items.push({
           productId: item.product_id,
@@ -154,18 +160,61 @@ export const InventoryService = {
     };
   },
 
-  async adjustProductStock(
-    productId: string,
-    quantity: number,
-  ): Promise<void> {
-    await InventoryRepository.adjustStock(productId, quantity);
+  async adjustProductStock(params: AdjustStockParams): Promise<void> {
+    await InventoryRepository.adjustStock(params);
+  },
+
+  async resumeOrderStock(orderId: string): Promise<DeductOrderStockResult> {
+    const order = await OrderRepository.findDetailByOrderId(orderId);
+
+    if (!order || !order.order_items.length) {
+      throw new Error("ORDER_NOT_FOUND");
+    }
+
+    const succeeded: DeductOrderStockItem[] = [];
+
+    for (const item of order.order_items) {
+      try {
+        const newStock = await InventoryRepository.deductStock({
+          productId: item.product_id,
+          quantity: item.quantity,
+          reason: MOVEMENT_REASON.RESUME_FULFILLMENT,
+          actor: "system",
+        });
+
+        succeeded.push({
+          productId: item.product_id,
+          productName: item.product_name,
+          deducted: item.quantity,
+          newStock,
+        });
+      } catch (err) {
+        await rollbackDeduct(succeeded);
+        return {
+          success: false,
+          items: succeeded,
+          message: err instanceof Error ? err.message : "RESUME_FAILED",
+        };
+      }
+    }
+
+    return { success: true, items: succeeded };
+  },
+
+  async getStock(productId: string): Promise<StockInfo> {
+    return InventoryRepository.getStock(productId);
   },
 };
 
 async function rollbackDeduct(succeeded: DeductOrderStockItem[]): Promise<void> {
   for (const s of succeeded) {
     try {
-      await InventoryRepository.restoreStock(s.productId, s.deducted);
+      await InventoryRepository.restoreStock({
+        productId: s.productId,
+        quantity: s.deducted,
+        reason: MOVEMENT_REASON.DEDUCT_ROLLBACK,
+        actor: "system",
+      });
     } catch {
       // Restore failure during rollback must not block the rollback
       // of other items. Manual intervention required for this item.

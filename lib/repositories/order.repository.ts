@@ -50,6 +50,7 @@ export interface OrderDetailRow extends OrderRow {
     subtotal: number;
     weight_grams: number | null;
     created_at: string;
+    products: { stock: number } | null;
   }>;
   customers: {
     id: number;
@@ -256,7 +257,30 @@ export const OrderRepository = {
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    const items = data.order_items ?? [];
+    const productIds = [...new Set(items.map((item: { product_id: string }) => item.product_id))];
+
+    if (productIds.length === 0) return data as OrderDetailRow;
+
+    const { data: products, error: productsError } = await supabase
+      .from("products")
+      .select("id, stock")
+      .in("id", productIds);
+
+    if (productsError) throw productsError;
+
+    const stockMap = new Map((products ?? []).map((p: { id: string; stock: number }) => [p.id, p.stock]));
+
+    const enrichedItems = items.map((item: Record<string, unknown>) => ({
+      ...item,
+      products: stockMap.get(item.product_id as string) !== undefined
+        ? { stock: stockMap.get(item.product_id as string) }
+        : null,
+    }));
+
+    return { ...data, order_items: enrichedItems } as OrderDetailRow;
   },
 
   async findDetailById(id: string): Promise<OrderDetailRow | null> {
@@ -267,7 +291,30 @@ export const OrderRepository = {
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    const items = data.order_items ?? [];
+    const productIds = [...new Set(items.map((item: { product_id: string }) => item.product_id))];
+
+    if (productIds.length === 0) return data as OrderDetailRow;
+
+    const { data: products, error: productsError } = await supabase
+      .from("products")
+      .select("id, stock")
+      .in("id", productIds);
+
+    if (productsError) throw productsError;
+
+    const stockMap = new Map((products ?? []).map((p: { id: string; stock: number }) => [p.id, p.stock]));
+
+    const enrichedItems = items.map((item: Record<string, unknown>) => ({
+      ...item,
+      products: stockMap.get(item.product_id as string) !== undefined
+        ? { stock: stockMap.get(item.product_id as string) }
+        : null,
+    }));
+
+    return { ...data, order_items: enrichedItems } as OrderDetailRow;
   },
 
   async insert(params: InsertOrderParams): Promise<OrderRow> {

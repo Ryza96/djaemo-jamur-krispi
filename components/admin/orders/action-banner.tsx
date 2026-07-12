@@ -6,15 +6,25 @@ interface BannerItem {
   id: number;
   product_name: string;
   quantity: number;
+  stock: number;
 }
 
 interface ActionBannerProps {
   fulfillmentStatus: string | null;
   items: BannerItem[];
+  onResume?: () => void;
+  loading?: boolean;
 }
 
-export function ActionBanner({ fulfillmentStatus, items }: ActionBannerProps) {
+export function ActionBanner({ fulfillmentStatus, items, onResume, loading }: ActionBannerProps) {
   if (fulfillmentStatus !== "waiting_for_restock") return null;
+
+  const itemsWithShortage = items.map((item) => ({
+    ...item,
+    shortage: Math.max(0, item.quantity - item.stock),
+  }));
+
+  const canResume = itemsWithShortage.every((item) => item.stock >= item.quantity);
 
   return (
     <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
@@ -33,13 +43,13 @@ export function ActionBanner({ fulfillmentStatus, items }: ActionBannerProps) {
         </div>
       </div>
 
-      {items.length > 0 && (
+      {itemsWithShortage.length > 0 && (
         <div className="mt-4 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-amber-800">
             Produk yang membutuhkan restock
           </p>
           <ul className="space-y-2">
-            {items.map((item) => (
+            {itemsWithShortage.map((item) => (
               <li
                 key={item.id}
                 className="rounded-2xl border border-amber-200 bg-white px-4 py-3"
@@ -49,8 +59,10 @@ export function ActionBanner({ fulfillmentStatus, items }: ActionBannerProps) {
                 </p>
                 <div className="mt-1 space-y-0.5 text-xs text-slate-500">
                   <p>Dibutuhkan : {item.quantity}</p>
-                  <p>Stok tersedia : —</p>
-                  <p>Kekurangan : —</p>
+                  <p>Stok tersedia : {item.stock}</p>
+                  {item.shortage > 0 && (
+                    <p className="font-medium text-amber-700">Kekurangan : {item.shortage}</p>
+                  )}
                 </div>
               </li>
             ))}
@@ -58,20 +70,23 @@ export function ActionBanner({ fulfillmentStatus, items }: ActionBannerProps) {
         </div>
       )}
 
-      <p className="mt-3 text-xs text-amber-600/60">
-        Informasi stok akan ditampilkan setelah modul Inventory selesai.
-      </p>
-
       <div className="mt-4 flex items-center gap-3">
         <button
-          disabled
-          className="cursor-not-allowed rounded-2xl bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-400"
+          disabled={!canResume || loading}
+          onClick={onResume}
+          className={`rounded-2xl px-5 py-2.5 text-sm font-semibold transition-colors ${
+            canResume && !loading
+              ? "bg-slate-900 text-white hover:bg-slate-800"
+              : "cursor-not-allowed bg-slate-200 text-slate-400"
+          }`}
         >
           Resume Fulfillment
         </button>
-        <span className="text-xs text-slate-400">
-          Resume Fulfillment akan tersedia pada sprint berikutnya.
-        </span>
+        {!canResume && (
+          <span className="text-xs text-slate-400">
+            Stok belum mencukupi untuk melanjutkan.
+          </span>
+        )}
       </div>
     </div>
   );
