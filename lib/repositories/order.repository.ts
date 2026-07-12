@@ -23,6 +23,7 @@ export interface OrderRow {
   admin_notes: string | null;
   waybill_id: string | null;
   shipment_id: string | null;
+  shipping_tracking_id: string | null;
   destination_area_id: string | null;
   shipping_status: string | null;
   shipment_error: string | null;

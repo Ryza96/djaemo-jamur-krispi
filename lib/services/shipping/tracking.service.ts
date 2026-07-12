@@ -55,7 +55,11 @@ export const TrackingService = {
         return { success: false, error: "NO_WAYBILL" };
       }
 
-      const tracking = await biteshipGetTracking(order.waybill_id);
+      if (!order.shipping_tracking_id) {
+        return { success: false, error: "NO_TRACKING_ID" };
+      }
+
+      const tracking = await biteshipGetTracking(order.shipping_tracking_id);
 
       const previousTrackingPayload = order.tracking_payload as { history?: Array<{ status: string }> } | null;
       const previousHistory = previousTrackingPayload?.history ?? [];

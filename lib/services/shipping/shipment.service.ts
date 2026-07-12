@@ -45,12 +45,11 @@ export const ShipmentService = {
       }
 
       if (order.shipment_id) {
-        const ord = order as OrderDetailRow & { shipping_tracking_id: string | null };
         return {
           success: true,
           shipmentId: order.shipment_id,
           waybillId: order.waybill_id,
-          trackingId: ord.shipping_tracking_id ?? null,
+          trackingId: order.shipping_tracking_id ?? null,
           trackingLink: null,
         };
       }
@@ -144,7 +143,11 @@ export const ShipmentService = {
         return { error: "NO_WAYBILL" };
       }
 
-      const tracking = await biteshipGetTracking(order.waybill_id);
+      if (!order.shipping_tracking_id) {
+        return { error: "NO_TRACKING_ID" };
+      }
+
+      const tracking = await biteshipGetTracking(order.shipping_tracking_id);
 
       return {
         status: tracking.status,

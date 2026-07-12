@@ -80,9 +80,9 @@ export async function createShipment(
 }
 
 export async function getTracking(
-  waybillId: string,
+  trackingId: string,
 ): Promise<BiteshipTrackingResponse> {
   return fetchBiteship<BiteshipTrackingResponse>(
-    `/orders/${encodeURIComponent(waybillId)}/tracking`,
+    `/trackings/${encodeURIComponent(trackingId)}`,
   );
 }
