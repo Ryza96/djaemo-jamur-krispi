@@ -413,7 +413,19 @@ export default function CheckoutSuccessPage() {
           )}
 
           <div className="flex flex-col gap-3">
-            <Button className="w-full" onClick={() => router.push("/")}>
+            {effectiveStatus === "success" && orderIdFromUrl && tokenFromUrl && (
+              <Button
+                className="w-full"
+                href={`/track-order/${encodeURIComponent(orderIdFromUrl)}?token=${encodeURIComponent(tokenFromUrl)}`}
+              >
+                Lacak Pesanan
+              </Button>
+            )}
+            <Button
+              variant={effectiveStatus === "success" && orderIdFromUrl && tokenFromUrl ? "outline" : "primary"}
+              className="w-full"
+              onClick={() => router.push("/")}
+            >
               Kembali ke Beranda
             </Button>
             {(effectiveStatus === "failed" || effectiveStatus === "expired") && (

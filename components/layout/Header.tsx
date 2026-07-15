@@ -65,6 +65,18 @@ export function Header() {
                   </Link>
                 );
               })}
+
+              <Link
+                href="/track-order"
+                className={cn(
+                  "rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4",
+                  (currentPath ?? "").startsWith("/track-order")
+                    ? "bg-primary text-white"
+                    : "text-foreground hover:bg-primary/10 hover:text-primary",
+                )}
+              >
+                Lacak Pesanan
+              </Link>
             </div>
 
             <button
@@ -112,6 +124,18 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              <Link
+                href="/track-order"
+                className={cn(
+                  "block rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+                  (currentPath ?? "").startsWith("/track-order")
+                    ? "bg-primary text-white"
+                    : "text-foreground hover:bg-primary/10 hover:text-primary",
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                Lacak Pesanan
+              </Link>
             </nav>
           </div>
         )}
