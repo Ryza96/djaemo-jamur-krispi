@@ -76,7 +76,11 @@ export const OrderService = {
     try {
       await OrderRepository.insertItems(orderItems);
     } catch {
-      await OrderRepository.deleteById(order.id);
+      try {
+        await OrderRepository.deleteById(order.id);
+      } catch {
+        // rollback failure is non-blocking; original error is preserved
+      }
       throw new Error("ORDER_ITEMS_FAILED");
     }
 
