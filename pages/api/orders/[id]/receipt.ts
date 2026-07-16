@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // QR code pointing to order tracking URL
-    const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/checkout/success?order_id=${order.order_id}&token=${order.access_token || ''}`;
+    const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ''}/checkout/success?order_id=${order.order_id}`;
     const qrBuffer = await QRCode.toBuffer(orderUrl || String(order.order_id), { type: 'png', width: 140 });
 
     // Header area

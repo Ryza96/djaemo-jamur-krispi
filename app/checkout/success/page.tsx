@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Check, Copy } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Section } from "@/components/sections/Section";
@@ -72,6 +73,7 @@ export default function CheckoutSuccessPage() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const orderIdFromUrl = searchParams?.get("order_id") ?? null;
   const tokenFromUrl = searchParams?.get("token") ?? null;
@@ -165,6 +167,14 @@ export default function CheckoutSuccessPage() {
       clearCart();
     }
   }, [transactionStatusFromUrl, order, clearCart]);
+
+  function handleCopyOrderId() {
+    if (!order?.order_id) return;
+    navigator.clipboard.writeText(order.order_id).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   const formattedDate = order
     ? new Date(order.created_at).toLocaleString("id-ID", {
@@ -300,9 +310,19 @@ export default function CheckoutSuccessPage() {
                 <p className="text-sm text-muted">Nomor Pesanan</p>
                 <p className="font-semibold text-foreground">{order.order_id}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted">Dibuat pada</p>
-                <p className="font-semibold text-foreground">{formattedDate}</p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleCopyOrderId}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Tersalin!" : "Salin Nomor Pesanan"}
+                </button>
+                <div>
+                  <p className="text-sm text-muted">Dibuat pada</p>
+                  <p className="font-semibold text-foreground">{formattedDate}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -413,16 +433,16 @@ export default function CheckoutSuccessPage() {
           )}
 
           <div className="flex flex-col gap-3">
-            {effectiveStatus === "success" && orderIdFromUrl && tokenFromUrl && (
+            {effectiveStatus === "success" && orderIdFromUrl && (
               <Button
                 className="w-full"
-                href={`/track-order/${encodeURIComponent(orderIdFromUrl)}?token=${encodeURIComponent(tokenFromUrl)}`}
+                href={`/track-order/${encodeURIComponent(orderIdFromUrl)}`}
               >
                 Lacak Pesanan
               </Button>
             )}
             <Button
-              variant={effectiveStatus === "success" && orderIdFromUrl && tokenFromUrl ? "outline" : "primary"}
+              variant={effectiveStatus === "success" && orderIdFromUrl ? "outline" : "primary"}
               className="w-full"
               onClick={() => router.push("/")}
             >

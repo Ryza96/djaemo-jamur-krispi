@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Section } from "@/components/sections/Section";
 import { formatPrice } from "@/lib/utils";
@@ -108,95 +108,57 @@ const TIMELINE_ORDER: CustomerStatus[] = [
 
 export default function TrackOrderDetailPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
 
   const orderId = params?.orderId as string;
-  const token = searchParams?.get("token");
 
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      if (!orderId) {
-        setError("Nomor pesanan tidak valid.");
-        setLoading(false);
-        return;
-      }
-
-      if (!token) {
-        setError("token-hilang");
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await fetch(
-          `/api/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`
-        );
-
-        if (!res.ok) {
-          if (res.status === 401) throw new Error("Token akses diperlukan.");
-          if (res.status === 403) throw new Error("Token akses tidak valid.");
-          if (res.status === 404) throw new Error("Pesanan tidak ditemukan.");
-          throw new Error("Gagal memuat data pesanan.");
-        }
-
-        const json = await res.json();
-        if (!json.success || !json.data) throw new Error("Data pesanan tidak valid.");
-
-        if (!cancelled) {
-          setOrder(json.data as OrderData);
-          setLastUpdated(new Date());
-          setLoading(false);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId, token]);
-
-  function handleRefresh() {
-    setLoading(true);
-    setError(null);
-
-    if (!orderId || !token) {
-      setError("Token akses diperlukan.");
+  const loadOrder = useCallback(async () => {
+    if (!orderId) {
+      setError("Nomor pesanan tidak valid.");
       setLoading(false);
       return;
     }
 
-    fetch(`/api/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Gagal memuat data pesanan.");
-        return res.json();
-      })
-      .then((json) => {
-        if (!json.success || !json.data) throw new Error("Data pesanan tidak valid.");
-        setOrder(json.data as OrderData);
-        setLastUpdated(new Date());
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
-        setLoading(false);
-      });
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(
+        `/api/orders/${encodeURIComponent(orderId)}`
+      );
+
+      if (!res.ok) {
+        if (res.status === 404) throw new Error("Pesanan tidak ditemukan.");
+        throw new Error("Gagal memuat data pesanan.");
+      }
+
+      const json = await res.json();
+      if (!json.success || !json.data) throw new Error("Data pesanan tidak valid.");
+
+      setOrder(json.data as OrderData);
+      setLastUpdated(new Date());
+      setLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
+
+  function handleCopyOrderId() {
+    if (!order?.order_id) return;
+    navigator.clipboard.writeText(order.order_id).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   if (loading && !order) {
@@ -206,27 +168,6 @@ export default function TrackOrderDetailPage() {
         <div className="flex flex-col items-center justify-center gap-6 py-20">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="text-sm text-muted">Sedang mencari pesanan Anda...</p>
-        </div>
-      </Section>
-    );
-  }
-
-  if (error === "token-hilang") {
-    return (
-      <Section>
-        <PageHeader
-          title="Token Diperlukan"
-          description="Akses tracking memerlukan token akses yang valid."
-        />
-        <div className="mx-auto max-w-md rounded-3xl border border-primary/10 bg-white p-8 text-center shadow-sm sm:p-12">
-          <p className="text-sm text-muted">
-            Token akses tidak ditemukan. Silakan masukkan nomor pesanan dan token akses Anda.
-          </p>
-          <div className="mt-8">
-            <Button href="/track-order" className="w-full">
-              Masukkan Token
-            </Button>
-          </div>
         </div>
       </Section>
     );
@@ -242,7 +183,7 @@ export default function TrackOrderDetailPage() {
         <div className="mx-auto max-w-md rounded-3xl border border-border bg-white p-8 text-center shadow-sm sm:p-12">
           <p className="text-sm text-muted">{error || "Data pesanan tidak tersedia."}</p>
           <div className="mt-8 flex flex-col gap-3">
-            <Button onClick={handleRefresh} className="w-full">
+            <Button onClick={loadOrder} className="w-full">
               Coba Lagi
             </Button>
             <Button variant="outline" href="/track-order" className="w-full">
@@ -291,6 +232,24 @@ export default function TrackOrderDetailPage() {
             {statusConfig.title}
           </h2>
           <p className="mt-2 text-sm text-muted">{statusConfig.message}</p>
+        </div>
+
+        <div className="rounded-3xl border border-primary/10 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-xs text-muted">Nomor Pesanan</p>
+              <p className="truncate font-mono text-sm font-semibold text-foreground">
+                {order.order_id}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyOrderId}
+              className="shrink-0 rounded-xl border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              {copied ? "Tersalin!" : "Salin Nomor Pesanan"}
+            </button>
+          </div>
         </div>
 
         <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
@@ -373,13 +332,16 @@ export default function TrackOrderDetailPage() {
           <Button
             variant="outline"
             className="w-full"
-            onClick={handleRefresh}
+            onClick={loadOrder}
             disabled={loading}
           >
             {loading ? "Memuat..." : "Muat Ulang Status"}
           </Button>
           <Button variant="outline" className="w-full" href="/track-order">
             Lacak Pesanan Lain
+          </Button>
+          <Button variant="outline" className="w-full" href="/">
+            Kembali ke Beranda
           </Button>
         </div>
       </div>
