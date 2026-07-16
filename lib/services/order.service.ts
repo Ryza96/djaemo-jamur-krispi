@@ -4,7 +4,7 @@ import { verifyMidtransSignature } from "./payment/verifySignature";
 import { AuditLogService } from "./audit-log.service";
 import { FulfillmentService } from "./fulfillment.service";
 import { PAYMENT_STATUS, FULFILLMENT_STATUS } from "./payment/types";
-import { getNotificationEngine } from "../notifications/engine-instance";
+
 import type {
   PaymentStatus,
   FulfillmentStatus,
@@ -267,19 +267,6 @@ export const OrderService = {
         fraud_status: notification.fraud_status,
       },
     });
-
-    const paymentEvent =
-      newStatus === PAYMENT_STATUS.PAID
-        ? "payment.paid"
-        : newStatus === PAYMENT_STATUS.FAILED
-          ? "payment.failed"
-          : newStatus === PAYMENT_STATUS.EXPIRED
-            ? "payment.expired"
-            : null;
-
-    if (paymentEvent) {
-      getNotificationEngine().notify(paymentEvent, order_id);
-    }
 
     return {
       success: true,

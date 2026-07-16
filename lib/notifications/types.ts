@@ -1,7 +1,6 @@
 import type { AuditEvent } from "@/lib/services/audit-log.service";
 
-export type PaymentNotificationEvent = "payment.paid" | "payment.failed" | "payment.expired";
-export type NotificationEvent = AuditEvent | PaymentNotificationEvent;
+export type NotificationEvent = AuditEvent;
 
 export interface RecipientInfo {
   name: string;

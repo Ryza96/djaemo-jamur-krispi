@@ -5,10 +5,6 @@ import type { EmailTemplate } from "./types";
 function detectCategory(payload: NotificationPayload): string {
   const e = payload.event;
 
-  if (e === "payment.paid") return "paid";
-  if (e === "payment.failed") return "failed";
-  if (e === "payment.expired") return "expired";
-
   if (e === AuditLogService.events.ORDER_CONFIRMED) return "confirmed";
   if (e === AuditLogService.events.ORDER_WAYBILL_CREATED) return "waybill";
   if (e === AuditLogService.events.ORDER_SHIPPED) return "shipped";

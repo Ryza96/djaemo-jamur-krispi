@@ -31,10 +31,6 @@ const FULFILLMENT_EVENT_MAP = {
 
 const CUSTOMER_NOTIFIABLE: Partial<Record<FulfillmentStatus, NotificationEvent>> = {
   [FULFILLMENT_STATUS.CONFIRMED]: AuditLogService.events.ORDER_CONFIRMED,
-  [FULFILLMENT_STATUS.WAYBILL_CREATED]: AuditLogService.events.ORDER_WAYBILL_CREATED,
-  [FULFILLMENT_STATUS.SHIPPED]: AuditLogService.events.ORDER_SHIPPED,
-  [FULFILLMENT_STATUS.DELIVERED]: AuditLogService.events.ORDER_COMPLETED,
-  [FULFILLMENT_STATUS.CANCELLED]: AuditLogService.events.ORDER_CANCELLED,
 };
 
 export interface FulfillmentActionResult {

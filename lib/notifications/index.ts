@@ -11,3 +11,6 @@ export type {
 
 export { createEmailChannel, createMockEmailProvider, formatEmail, resolveTemplate } from "./channels/email";
 export type { EmailMessage, EmailProvider, EmailSendResult, EmailTemplate } from "./channels/email";
+
+export { createWhatsAppChannel, createFonnteProvider, createMockWhatsAppProvider, formatWaMessage } from "./channels/whatsapp";
+export type { WhatsAppMessage, WhatsAppProvider, WhatsAppSendResult } from "./channels/whatsapp";
