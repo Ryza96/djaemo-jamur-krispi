@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Section } from "@/components/sections/Section";
 import { formatPrice } from "@/lib/utils";
-
-const ORDER_STORAGE_KEY = "djaemo-last-order";
 
 interface OrderItem {
   product_name: string;
@@ -108,30 +106,12 @@ const TIMELINE_ORDER: CustomerStatus[] = [
   "delivered",
 ];
 
-function readStoredToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const stored = localStorage.getItem(ORDER_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed.accessToken || null;
-    }
-  } catch {}
-  return null;
-}
-
-function subscribeStoredToken(): () => void {
-  return () => {};
-}
-
 export default function TrackOrderDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
 
   const orderId = params?.orderId as string;
-  const tokenFromUrl = searchParams?.get("token");
-  const storedToken = useSyncExternalStore(subscribeStoredToken, readStoredToken, () => null);
-  const token = tokenFromUrl ?? storedToken;
+  const token = searchParams?.get("token");
 
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);

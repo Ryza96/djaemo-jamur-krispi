@@ -1,41 +1,19 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Section } from "@/components/sections/Section";
 
-const ORDER_STORAGE_KEY = "djaemo-last-order";
-
-function readStoredOrder(): { orderId: string; accessToken: string } | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const stored = localStorage.getItem(ORDER_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return {
-        orderId: parsed.orderId || "",
-        accessToken: parsed.accessToken || "",
-      };
-    }
-  } catch {}
-  return null;
-}
-
-function subscribeStoredOrder(): () => void {
-  return () => {};
-}
-
 export default function TrackOrderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const stored = useSyncExternalStore(subscribeStoredOrder, readStoredOrder, () => null);
 
   const orderIdFromUrl = searchParams?.get("orderId") ?? null;
   const tokenFromUrl = searchParams?.get("token") ?? null;
 
-  const [orderId, setOrderId] = useState(orderIdFromUrl ?? stored?.orderId ?? "");
-  const [token, setToken] = useState(tokenFromUrl ?? stored?.accessToken ?? "");
+  const [orderId, setOrderId] = useState(orderIdFromUrl ?? "");
+  const [token, setToken] = useState(tokenFromUrl ?? "");
   const [step, setStep] = useState<"order-id" | "token">(tokenFromUrl ? "token" : "order-id");
   const [error, setError] = useState<string | null>(null);
 
