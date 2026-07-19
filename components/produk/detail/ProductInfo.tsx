@@ -1,5 +1,5 @@
 import type { Product } from "@/types";
-import { ProductPrice } from "./ProductPrice";
+import { PromoPrice, PromoBadge, PromoCountdown } from "@/components/promo";
 import { ProductWeight } from "./ProductWeight";
 import { ProductActions } from "./ProductActions";
 
@@ -15,15 +15,24 @@ const checklist = [
 ] as const;
 
 export function ProductInfo({ product }: ProductInfoProps) {
+  const showPromo = product.has_active_promo;
+
   return (
     <div className="flex flex-col">
       <h1 className="text-2xl font-bold text-primary sm:text-3xl">
         {product.name}
       </h1>
 
-      <div className="mt-2">
-        <ProductPrice price={product.price} />
+      <div className="mt-2 flex items-center gap-2">
+        <PromoPrice data={product} variant="detail" />
+        {showPromo && (
+          <PromoBadge data={product} variant="full" />
+        )}
       </div>
+
+      {showPromo && (
+        <PromoCountdown data={product} variant="detail" className="mt-1" />
+      )}
 
       <div className="mt-2 flex items-center gap-1.5">
         <div className="flex" aria-label="Rating 4.8 dari 5">

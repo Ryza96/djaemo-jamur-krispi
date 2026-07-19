@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Section } from "@/components/sections/Section";
 import { Button } from "@/components/ui/Button";
 import { HomepagePromoSection } from "@/components/home/HomepagePromoSection";
+import { PromoPrice } from "@/components/promo";
 import { getCatalogProducts } from "@/lib/services/product.service";
 import type { Product } from "@/types";
 
@@ -165,9 +166,7 @@ function HomepageProductCard({ product }: { product: Product }) {
         <h3 className="text-base font-semibold text-primary">{product.name}</h3>
 
         <div className="mt-3">
-          <p className="text-2xl font-bold text-secondary">
-            {product.final_price.toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })}
-          </p>
+          <PromoPrice data={product} variant="inline" className="items-center" />
         </div>
 
         <div className="mt-4">

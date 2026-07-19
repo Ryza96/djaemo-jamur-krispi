@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import { PromoPrice, PromoBadge } from "@/components/promo";
 
 interface ProductCardProps {
   product: Product;
@@ -10,6 +10,8 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const imageSrc = product.images?.[0] || "/images/produk/placeholder.svg";
   const productUrl = `/produk/${product.id}`;
+  const showPromo = product.has_active_promo && product.promo_status !== "upcoming";
+  const displayData = showPromo ? product : { ...product, has_active_promo: false };
 
   return (
     <Link
@@ -27,6 +29,11 @@ export function ProductCard({ product }: ProductCardProps) {
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
+          {showPromo && (
+            <div className="absolute left-3 top-3">
+              <PromoBadge data={displayData} variant="compact" />
+            </div>
+          )}
         </div>
 
         <div className="mt-8 sm:mt-10">
@@ -38,9 +45,9 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.weight}
             </span>
           </div>
-          <p className="mt-4 text-2xl font-bold text-secondary sm:text-3xl">
-            {formatPrice(product.price)}
-          </p>
+          <div className="mt-4">
+            <PromoPrice data={displayData} variant="inline" />
+          </div>
         </div>
 
         <div className="mt-8">
