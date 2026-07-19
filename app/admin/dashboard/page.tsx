@@ -10,6 +10,7 @@ interface DashboardStats {
   lowStockCount: number;
   lowStockItems: Array<{ name: string; stock: number }>;
   weeklySales: Array<{ date: string; total: number }>;
+  periodLabel: string;
 }
 
 const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -47,12 +48,13 @@ export default function AdminDashboardPage() {
     const pending = stats?.pendingOrders ?? 0;
     const lowStock = stats?.lowStockCount ?? 0;
     const customers = stats?.totalCustomers ?? 0;
+    const period = stats?.periodLabel ?? "Bulan ini";
 
     return [
       {
         title: "Total Penjualan",
         value: loading ? "Loading..." : `Rp ${revenue.toLocaleString("id-ID")}`,
-        description: "Bulan ini",
+        description: period,
         accent: "bg-emerald-50 text-emerald-700",
       },
       {

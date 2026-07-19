@@ -3,6 +3,26 @@ import { supabase } from "@/lib/supabase";
 const LOW_STOCK_THRESHOLD = 10;
 const LOW_STOCK_LIMIT = 5;
 const WEEKLY_SALES_DAYS = 7;
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+const WIB_MONTH_NAMES = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
+
+function getWIBMonthStartUTC(now: Date): string {
+  const wibNow = new Date(now.getTime() + WIB_OFFSET_MS);
+  const year = wibNow.getUTCFullYear();
+  const month = wibNow.getUTCMonth();
+  const wibMonthStart = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+  return new Date(wibMonthStart.getTime() - WIB_OFFSET_MS).toISOString();
+}
+
+function getWIBPeriodLabel(now: Date): string {
+  const wibNow = new Date(now.getTime() + WIB_OFFSET_MS);
+  const month = WIB_MONTH_NAMES[wibNow.getUTCMonth()];
+  return `1 ${month} - sekarang (WIB)`;
+}
 
 export interface DashboardStats {
   revenue: number;
@@ -11,6 +31,7 @@ export interface DashboardStats {
   lowStockCount: number;
   lowStockItems: Array<{ name: string; stock: number }>;
   weeklySales: Array<{ date: string; total: number }>;
+  periodLabel: string;
 }
 
 export const DashboardRepository = {
@@ -20,17 +41,21 @@ export const DashboardRepository = {
     weekAgo.setDate(weekAgo.getDate() - WEEKLY_SALES_DAYS);
     const weekAgoISO = weekAgo.toISOString();
 
+    const wibMonthStartUTC = getWIBMonthStartUTC(now);
+
     const [revenueResult, pendingResult, customerResult, lowStockCountResult, lowStockItemsResult, weeklySalesResult] =
       await Promise.all([
         supabase
           .from("orders")
           .select("subtotal", { count: "exact" })
-          .eq("payment_status", "paid"),
+          .eq("payment_status", "paid")
+          .gte("paid_at", wibMonthStartUTC),
 
         supabase
           .from("orders")
           .select("id", { count: "exact", head: true })
-          .eq("payment_status", "pending"),
+          .eq("payment_status", "paid")
+          .eq("fulfillment_status", "new"),
 
         supabase
           .from("customers")
@@ -93,6 +118,7 @@ export const DashboardRepository = {
       lowStockCount: lowStockCountResult.count ?? 0,
       lowStockItems: lowStockItemsResult.data ?? [],
       weeklySales,
+      periodLabel: getWIBPeriodLabel(now),
     };
   },
 };
