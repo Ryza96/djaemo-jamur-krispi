@@ -6,6 +6,20 @@ export interface Product {
   weight: string;
   stock: number;
   images: string[];
+  has_active_promo: boolean;
+  normal_price: number;
+  final_price: number;
+  promo_price: number | null;
+  discount_amount: number;
+  promo_name: string | null;
+  promo_status: string | null;
+  promo_countdown: {
+    value: number;
+    unit: "hari" | "jam" | "menit" | "detik";
+    direction: "lagi" | "yang lalu";
+    type: "upcoming" | "active" | "ended" | "cancelled";
+    display: string;
+  } | null;
 }
 
 export interface ProductRow {

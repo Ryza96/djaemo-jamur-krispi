@@ -1,168 +1,181 @@
-"use client";
-
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/sections/Section";
-import { ProductCard } from "@/components/produk/ProductCard";
-import { SITE } from "@/lib/constants";
+import { Button } from "@/components/ui/Button";
+import { HomepagePromoSection } from "@/components/home/HomepagePromoSection";
+import { getCatalogProducts } from "@/lib/services/product.service";
 import type { Product } from "@/types";
 
-export default function Home() {
-  const [featured, setFeatured] = useState<Product[]>([]);
-  const carouselImages = useMemo(
-    () => [
-      "/images/hero/balado.png",
-      "/images/hero/bbq.png",
-      "/images/hero/pedasmanis.png",
-    ],
-    [],
-  );
-  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
-  const activeCarouselImage = carouselImages[activeCarouselIndex];
+const REASONS = [
+  { title: "Bahan Alami", description: "Jamur pilihan tanpa pengawet berlebihan." },
+  { title: "Tekstur Renyah", description: "Kerenyahan terjaga sampai ke gigitan terakhir." },
+  { title: "Rasa Autentik", description: "Diracik khusus untuk lidah Indonesia." },
+  { title: "Kemasan Rapi", description: "Tetap segar dan higienis." },
+] as const;
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveCarouselIndex((current) => (current + 1) % carouselImages.length);
-    }, 3000);
+function groupProductsByPromo(products: Product[]) {
+  const promoGroups = new Map<string, Product[]>();
+  const nonPromoProducts: Product[] = [];
 
-    return () => clearInterval(interval);
-  }, [carouselImages.length]);
+  for (const product of products) {
+    if (product.has_active_promo && product.promo_name) {
+      const existing = promoGroups.get(product.promo_name) || [];
+      existing.push(product);
+      promoGroups.set(product.promo_name, existing);
+    } else {
+      nonPromoProducts.push(product);
+    }
+  }
 
-  useEffect(() => {
-    fetch("/api/products")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        const products = Array.isArray(data) ? data.slice(0, 3) : [];
-        setFeatured(products);
-      })
-      .catch(() => setFeatured([]));
-  }, []);
+  return { promoGroups, nonPromoProducts };
+}
+
+export default async function Home() {
+  const products = await getCatalogProducts();
+  const { promoGroups, nonPromoProducts } = groupProductsByPromo(products);
 
   return (
     <>
-      <section className="relative overflow-hidden text-white min-h-128 sm:min-h-144">
-        <div className="absolute inset-0">
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat brightness-110 contrast-110"
-            style={{ backgroundImage: "url('/images/hero/hero.jpg')" }}
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden bg-[#2c1810] text-white">
+        <div className="absolute inset-0 opacity-30">
+          <Image
+            src="/images/hero/hero.jpg"
+            alt=""
+            fill
+            className="object-cover"
+            priority
           />
-          <div className="absolute inset-0 bg-black/70" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white/75 backdrop-blur-sm">
-                <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-                Delapan Cakra Indonesia
-              </div>
-              <div>
-                <Image
-                  unoptimized={process.env.NODE_ENV === "development"}
-                  src={SITE.logo}
-                  alt={`Logo ${SITE.name}`}
-                  width={120}
-                  height={120}
-                  priority
-                  className="mb-6 h-24 w-24 object-contain sm:h-28 sm:w-28"
-                />
-                <p className="text-sm font-medium uppercase tracking-widest text-secondary-light">
-                  Camilan Alami
-                </p>
-                <h1 className="mt-3 max-w-2xl text-4xl font-bold leading-tight sm:text-5xl">
-                  {SITE.name}
-                </h1>
-                <p className="mt-4 max-w-xl text-lg text-white/80 sm:text-xl">
-                  Real Mushroom, Real Crunch
-                </p>
-              </div>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Button href="/produk" variant="secondary">
-                  Lihat Produk
-                </Button>
-                <Button
-                  href="/tentang"
-                  variant="outline"
-                  className="border-white text-white hover:bg-[#dbc81a]! hover:text-black!"
-                >
-                  Tentang Kami
+        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 md:py-28">
+          <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+            <div className="space-y-6 text-center md:text-left">
+              <p className="text-sm font-medium uppercase tracking-widest text-secondary-light">
+                D&apos;JAEMO Jamur Krispi Premium
+              </p>
+              <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
+                Renyah. Gurih. Berkualitas.
+              </h1>
+              <div className="pt-2">
+                <Button href="/produk" variant="secondary" className="px-8 py-3 text-base">
+                  Beli Sekarang
                 </Button>
               </div>
             </div>
 
-            <div className="rounded-4xl border border-white/10 bg-white/10 p-6 shadow-2xl shadow-black/20 backdrop-blur-md">
-              <div className="overflow-hidden rounded-3xl border border-white/10">
-                <div className="h-72 bg-cover bg-center sm:h-96 md:h-112" style={{ backgroundImage: `url('${activeCarouselImage}')` }} />
-              </div>
+            <div className="relative mx-auto aspect-square w-full max-w-sm md:mx-0 md:max-w-none">
+              <Image
+                src="/images/hero/balado.png"
+                alt="D'JAEMO Jamur Krispi"
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 80vw, 40vw"
+                priority
+              />
             </div>
           </div>
         </div>
       </section>
 
+      {/* ── Promo Sections ── */}
+      {Array.from(promoGroups.entries()).map(([promoName, promoProducts]) => {
+        const countdown = promoProducts[0]?.promo_countdown;
+        return (
+          <HomepagePromoSection
+            key={promoName}
+            promoName={promoName}
+            countdown={countdown}
+            products={promoProducts}
+          />
+        );
+      })}
+
+      {/* ── Produk Normal ── */}
+      {nonPromoProducts.length > 0 && (
+        <Section>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-primary sm:text-3xl">
+              Produk Kami
+            </h2>
+          </div>
+          <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {nonPromoProducts.map((product) => (
+              <HomepageProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* ── Mengapa D'JAEMO ── */}
+      <Section className="bg-surface-dark">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-primary sm:text-3xl">
+            Mengapa D&apos;JAEMO?
+          </h2>
+        </div>
+        <div className="mx-auto mt-10 grid max-w-3xl gap-6 sm:grid-cols-2">
+          {REASONS.map((reason) => (
+            <div
+              key={reason.title}
+              className="rounded-2xl border border-primary/10 bg-white p-6 text-center shadow-sm"
+            >
+              <p className="font-semibold text-primary">{reason.title}</p>
+              <p className="mt-2 text-sm text-muted">{reason.description}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── Testimoni Customer ── */}
       <Section>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-primary sm:text-3xl">
-            Produk Unggulan
+            Testimoni Customer
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-muted">
-            Tiga varian favorit pelanggan kami — renyah, gurih, dan penuh rasa.
-          </p>
         </div>
-
-        {featured.length > 0 ? (
-          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
-            {featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        ) : (
-          <p className="mt-10 text-center text-muted">
-            Belum ada produk unggulan saat ini.
-          </p>
-        )}
-
-        <div className="mt-10 text-center">
-          <Button href="/produk" variant="outline">
-            Lihat Semua Produk
-          </Button>
-        </div>
-      </Section>
-
-      <Section className="bg-surface-dark">
-        <div className="grid items-center gap-8 md:grid-cols-2">
-          <div>
-            <h2 className="text-2xl font-bold text-primary sm:text-3xl">
-              Kenapa Pilih Kami?
-            </h2>
-            <ul className="mt-6 space-y-4 text-muted">
-              <li className="flex gap-3">
-                <span className="mt-1 size-2 shrink-0 rounded-full bg-accent" />
-                Bahan jamur alami berkualitas tinggi
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1 size-2 shrink-0 rounded-full bg-accent" />
-                Tekstur renyah di setiap kemasan
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1 size-2 shrink-0 rounded-full bg-accent" />
-                Varian rasa untuk selera Indonesia
-              </li>
-            </ul>
-          </div>
-          <div className="rounded-2xl border border-primary/10 bg-white p-8 text-center shadow-sm">
-            <p className="text-lg font-semibold text-primary">
-              Siap memesan?
-            </p>
-            <p className="mt-2 text-sm text-muted">
-              Hubungi kami via WhatsApp untuk pemesanan cepat.
-            </p>
-            <Button href="/kontak" className="mt-6">
-              Hubungi Kami
-            </Button>
-          </div>
-        </div>
+        <p className="mt-4 text-center text-lg font-semibold text-primary">
+          100+ Customer telah mempercayai D&apos;JAEMO
+        </p>
       </Section>
     </>
+  );
+}
+
+function HomepageProductCard({ product }: { product: Product }) {
+  const imageSrc = product.images?.[0] || "/images/produk/placeholder.svg";
+  const productUrl = `/produk/${product.id}`;
+
+  return (
+    <a
+      href={productUrl}
+      className="group block rounded-2xl border border-primary/10 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    >
+      <div className="relative aspect-square overflow-hidden rounded-xl">
+        <Image
+          unoptimized={process.env.NODE_ENV === "development"}
+          src={imageSrc}
+          alt={product.name}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
+      </div>
+
+      <div className="mt-4 text-center">
+        <h3 className="text-base font-semibold text-primary">{product.name}</h3>
+
+        <div className="mt-3">
+          <p className="text-2xl font-bold text-secondary">
+            {product.final_price.toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })}
+          </p>
+        </div>
+
+        <div className="mt-4">
+          <span className="inline-block rounded-full border border-primary/20 px-5 py-2 text-xs font-medium text-primary/60 transition-colors duration-200 group-hover:border-primary/40 group-hover:text-primary">
+            Lihat Produk
+          </span>
+        </div>
+      </div>
+    </a>
   );
 }
