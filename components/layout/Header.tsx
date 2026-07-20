@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Logo } from "@/components/layout/Logo";
 import { NAV_LINKS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,18 @@ export function Header() {
   const { totalItems } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const navLinks = NAV_LINKS.filter((link) => link.href !== "/cart");
 
@@ -103,6 +115,41 @@ export function Header() {
                 </span>
               )}
             </button>
+
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                title="Akun Saya"
+                aria-label="Akun Saya"
+                aria-expanded={userMenuOpen}
+                className="inline-flex items-center rounded-full border border-primary/10 bg-white/95 p-2 text-foreground transition-colors hover:border-primary hover:text-primary sm:p-3"
+              >
+                <span className="sr-only">Akun Saya</span>
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+                  <path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z" />
+                </svg>
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-primary/10 bg-white py-2 shadow-lg">
+                  <Link
+                    href="/login"
+                    className="block px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    Masuk
+                  </Link>
+                  <Link
+                    href="/partner"
+                    className="block px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    Daftar Menjadi Partner
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -136,6 +183,22 @@ export function Header() {
               >
                 Lacak Pesanan
               </Link>
+              <div className="border-t border-primary/10 pt-2 mt-2">
+                <Link
+                  href="/login"
+                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Masuk
+                </Link>
+                <Link
+                  href="/partner"
+                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Daftar Menjadi Partner
+                </Link>
+              </div>
             </nav>
           </div>
         )}
