@@ -1,5 +1,6 @@
 import type { Product } from "@/types";
-import { PromoPrice, PromoBadge, PromoCountdown } from "@/components/promo";
+import { PromoBadge, PromoCountdown } from "@/components/promo";
+import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
 import { ProductWeight } from "./ProductWeight";
 import { ProductActions } from "./ProductActions";
 
@@ -24,7 +25,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       </h1>
 
       <div className="mt-2 flex items-center gap-2">
-        <PromoPrice data={product} variant="detail" />
+        <PartnerPriceDisplay product={product} variant="detail" />
         {showPromo && (
           <PromoBadge data={product} variant="full" />
         )}

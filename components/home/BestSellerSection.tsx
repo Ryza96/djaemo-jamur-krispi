@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Section } from "@/components/sections/Section";
 import { Button } from "@/components/ui/Button";
-import { PromoPrice } from "@/components/promo";
+import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
 import type { Product } from "@/types";
 
 interface BestSellerSectionProps {
@@ -33,7 +33,7 @@ function BestSellerCard({ product }: { product: Product }) {
         <h3 className="text-base font-semibold text-primary sm:text-lg">{product.name}</h3>
 
         <div className="mt-3">
-          <PromoPrice data={product} variant="inline" className="items-center" />
+          <PartnerPriceDisplay product={product} variant="inline" className="items-center" />
         </div>
 
         <div className="mt-4">

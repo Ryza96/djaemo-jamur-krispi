@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Section } from "@/components/sections/Section";
-import { PromoSectionHeader, PromoPrice, PromoBadge } from "@/components/promo";
+import { PromoSectionHeader, PromoBadge } from "@/components/promo";
+import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
 import type { Product } from "@/types";
 
 interface PromoSectionProps {
@@ -54,7 +55,7 @@ function HomepageProductCard({ product }: { product: Product }) {
         <h3 className="text-base font-semibold text-primary">{product.name}</h3>
 
         <div className="mt-3">
-          <PromoPrice data={product} variant="inline" className="items-center" />
+          <PartnerPriceDisplay product={product} variant="inline" className="items-center" />
         </div>
 
         {product.has_active_promo && (

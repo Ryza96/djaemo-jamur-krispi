@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types";
-import { PromoPrice, PromoBadge } from "@/components/promo";
+import { PromoBadge } from "@/components/promo";
+import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
 
 interface ProductCardProps {
   product: Product;
@@ -46,7 +47,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
           <div className="mt-4">
-            <PromoPrice data={displayData} variant="inline" />
+            <PartnerPriceDisplay product={product} variant="inline" />
           </div>
         </div>
 
