@@ -7,6 +7,7 @@ import type { Product } from "@/types";
 
 interface BestSellerSectionProps {
   products: Product[];
+  embedded?: boolean;
 }
 
 function BestSellerCard({ product }: { product: Product }) {
@@ -46,13 +47,13 @@ function BestSellerCard({ product }: { product: Product }) {
   );
 }
 
-export function BestSellerSection({ products }: BestSellerSectionProps) {
+export function BestSellerSection({ products, embedded = false }: BestSellerSectionProps) {
   const bestSellers = products.slice(0, 3);
 
   if (bestSellers.length === 0) return null;
 
-  return (
-    <Section>
+  const content = (
+    <>
       <div className="text-center">
         <p className="text-sm font-medium uppercase tracking-widest text-secondary">
           Terlaris
@@ -76,6 +77,10 @@ export function BestSellerSection({ products }: BestSellerSectionProps) {
           Lihat Semua Produk
         </Button>
       </div>
-    </Section>
+    </>
   );
+
+  if (embedded) return content;
+
+  return <Section className="-mt-8">{content}</Section>;
 }

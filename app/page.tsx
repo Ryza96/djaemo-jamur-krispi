@@ -3,6 +3,7 @@ import {
   HeroSection,
   BestSellerSection,
   MarketingBanner,
+  BestSellerPromoLayout,
   WhyDjaemoSection,
   TestimoniSection,
 } from "@/components/home";
@@ -15,9 +16,10 @@ export default async function Home() {
     <>
       <HeroSection />
 
-      <BestSellerSection products={activeProducts} />
-
-      <MarketingBanner />
+      <BestSellerPromoLayout
+        bestSeller={<BestSellerSection products={activeProducts} embedded />}
+        promo={<MarketingBanner />}
+      />
 
       <WhyDjaemoSection />
 
