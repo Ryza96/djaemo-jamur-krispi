@@ -14,9 +14,9 @@ export async function buildPayload(
     timestamp: new Date().toISOString(),
 
     customer: {
-      name: order.customers?.name ?? "Pelanggan",
-      email: order.customers?.email ?? null,
-      phone: order.customer_phone ?? order.customers?.phone ?? null,
+      name: order.customer_name ?? "Pelanggan",
+      email: order.customer_email ?? null,
+      phone: order.customer_phone ?? null,
     },
 
     order: {

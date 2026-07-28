@@ -58,7 +58,6 @@ export function mapOrderToBiteshipRequest(
   shipper: BiteshipShipper,
   deliveryType: "now" | "later" | "scheduled",
 ): CreateShipmentParams {
-  const customer = order.customers;
   const items: BiteshipItem[] = (order.order_items ?? []).map((item) => {
     if (item.weight_grams == null) {
       throw new Error("PRODUCT_WEIGHT_REQUIRED");
@@ -77,9 +76,9 @@ export function mapOrderToBiteshipRequest(
   }
 
   const destination: BiteshipDestination = {
-    contactName: customer?.name ?? "Penerima",
-    contactPhone: order.customer_phone ?? customer?.phone ?? "",
-    address: order.shipping_address ?? customer?.address ?? "",
+    contactName: order.customer_name ?? "Penerima",
+    contactPhone: order.customer_phone ?? "",
+    address: order.shipping_address ?? "",
     postalCode: Number(postalCodeStr),
     areaId: order.destination_area_id ?? undefined,
   };

@@ -42,10 +42,10 @@ export function OrderTable({ orders, onView }: OrderTableProps) {
             </AdminTableCell>
             <AdminTableCell>
               <div className="font-medium text-slate-900">
-                {order.customers?.name ?? "-"}
+                {order.customer_name ?? "-"}
               </div>
               <div className="text-xs text-slate-500">
-                {order.customers?.email ?? ""}
+                {order.customer_email ?? ""}
               </div>
             </AdminTableCell>
             <AdminTableCell className="whitespace-nowrap text-slate-600">

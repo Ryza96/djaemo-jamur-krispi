@@ -6,6 +6,9 @@ export interface OrderRow {
   id: string;
   order_id: string;
   customer_id: number;
+  customer_name: string | null;
+  customer_phone: string | null;
+  customer_email: string | null;
   transaction_id: string | null;
   subtotal: number;
   shipping_fee: number;
@@ -19,7 +22,6 @@ export interface OrderRow {
   shipping_cost: number | null;
   postal_code: string | null;
   shipping_address: string | null;
-  customer_phone: string | null;
   notes: string | null;
   admin_notes: string | null;
   waybill_id: string | null;
@@ -55,18 +57,14 @@ export interface OrderDetailRow extends OrderRow {
     created_at: string;
     products: { stock: number } | null;
   }>;
-  customers: {
-    id: number;
-    email: string;
-    name: string;
-    phone: string;
-    address: string;
-  } | null;
 }
 
 export interface InsertOrderParams {
   order_id: string;
   customer_id: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
   subtotal: number;
   shipping_fee: number;
   total_amount: number;
@@ -75,7 +73,6 @@ export interface InsertOrderParams {
   courier_company: string;
   courier_type: string;
   shipping_cost: number;
-  customer_phone: string;
   shipping_address: string;
   postal_code: string;
   notes: string | null;
@@ -104,15 +101,12 @@ export interface PaginatedOrdersParams {
   limit: number;
 }
 
-interface OrderCustomerRef {
-  name: string;
-  email: string;
-}
-
 export interface PaginatedOrderItem {
   id: string;
   order_id: string;
   customer_id: number;
+  customer_name: string | null;
+  customer_email: string | null;
   total_amount: number;
   subtotal: number;
   shipping_fee: number;
@@ -121,7 +115,6 @@ export interface PaginatedOrderItem {
   payment_method: string | null;
   waybill_id: string | null;
   created_at: string;
-  customers: OrderCustomerRef | null;
 }
 
 export interface PaginatedOrdersResult {
@@ -175,19 +168,15 @@ export const OrderRepository = {
     let countQuery = supabase.from("orders").select("id", { count: "exact", head: true });
     let dataQuery = supabase
       .from("orders")
-      .select("id, order_id, customer_id, total_amount, subtotal, shipping_fee, payment_status, fulfillment_status, payment_method, waybill_id, created_at, customers(name, email)");
+      .select("id, order_id, customer_id, customer_name, customer_email, total_amount, subtotal, shipping_fee, payment_status, fulfillment_status, payment_method, waybill_id, created_at");
 
     if (search) {
       const searchFilter = `%${search}%`;
-      const conditions = [`order_id.ilike.${searchFilter}`];
-      const { data: matchingCustomers } = await supabase
-        .from("customers")
-        .select("id")
-        .or(`name.ilike.${searchFilter},email.ilike.${searchFilter}`);
-      const customerIds = (matchingCustomers ?? []).map((c) => c.id).filter(Boolean);
-      if (customerIds.length > 0) {
-        conditions.push(`customer_id.in.(${customerIds.join(",")})`);
-      }
+      const conditions = [
+        `order_id.ilike.${searchFilter}`,
+        `customer_name.ilike.${searchFilter}`,
+        `customer_email.ilike.${searchFilter}`,
+      ];
       countQuery = countQuery.or(conditions.join(","));
       dataQuery = dataQuery.or(conditions.join(","));
     }
@@ -221,27 +210,21 @@ export const OrderRepository = {
 
     if (error) throw error;
 
-    const data: PaginatedOrderItem[] = (rawData ?? []).map((item: Record<string, unknown>) => {
-      const customers = item.customers;
-      return {
-        id: item.id as string,
-        order_id: item.order_id as string,
-        customer_id: item.customer_id as number,
-        total_amount: item.total_amount as number,
-        subtotal: item.subtotal as number,
-        shipping_fee: item.shipping_fee as number,
-        payment_status: item.payment_status as string | null,
-        fulfillment_status: item.fulfillment_status as string | null,
-        payment_method: item.payment_method as string | null,
-        waybill_id: item.waybill_id as string | null,
-        created_at: item.created_at as string,
-        customers: !customers
-          ? null
-          : Array.isArray(customers)
-            ? ((customers as OrderCustomerRef[])[0] ?? null)
-            : (customers as OrderCustomerRef),
-      };
-    });
+    const data: PaginatedOrderItem[] = (rawData ?? []).map((item: Record<string, unknown>) => ({
+      id: item.id as string,
+      order_id: item.order_id as string,
+      customer_id: item.customer_id as number,
+      customer_name: item.customer_name as string | null,
+      customer_email: item.customer_email as string | null,
+      total_amount: item.total_amount as number,
+      subtotal: item.subtotal as number,
+      shipping_fee: item.shipping_fee as number,
+      payment_status: item.payment_status as string | null,
+      fulfillment_status: item.fulfillment_status as string | null,
+      payment_method: item.payment_method as string | null,
+      waybill_id: item.waybill_id as string | null,
+      created_at: item.created_at as string,
+    }));
 
     return {
       data,
@@ -255,7 +238,7 @@ export const OrderRepository = {
   async findDetailByOrderId(orderId: string): Promise<OrderDetailRow | null> {
     const { data, error } = await supabase
       .from("orders")
-      .select("*, order_items(*), customers(*)")
+      .select("*, order_items(*)")
       .eq("order_id", orderId)
       .maybeSingle();
 
@@ -289,7 +272,7 @@ export const OrderRepository = {
   async findDetailById(id: string): Promise<OrderDetailRow | null> {
     const { data, error } = await supabase
       .from("orders")
-      .select("*, order_items(*), customers(*)")
+      .select("*, order_items(*)")
       .eq("id", id)
       .maybeSingle();
 
@@ -326,6 +309,9 @@ export const OrderRepository = {
       .insert({
         order_id: params.order_id,
         customer_id: params.customer_id,
+        customer_name: params.customer_name,
+        customer_phone: params.customer_phone,
+        customer_email: params.customer_email,
         subtotal: params.subtotal,
         shipping_fee: params.shipping_fee,
         total_amount: params.total_amount,
@@ -334,7 +320,6 @@ export const OrderRepository = {
         courier_company: params.courier_company,
         courier_type: params.courier_type,
         shipping_cost: params.shipping_cost,
-        customer_phone: params.customer_phone,
         shipping_address: params.shipping_address,
         postal_code: params.postal_code,
         notes: params.notes,

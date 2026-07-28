@@ -133,7 +133,6 @@ export function OrderDetailClient({ id }: DetailClientProps) {
 
   if (!order) return null;
 
-  const customer = order.customers;
   const items = order.order_items ?? [];
 
   const createdDate = (() => {
@@ -150,7 +149,7 @@ export function OrderDetailClient({ id }: DetailClientProps) {
       <div className="mx-auto max-w-[1600px] px-4 py-6 md:px-8">
         <AdminPageHeader
           title={order.order_id}
-          subtitle={`${customer?.name ?? "-"} \u00B7 ${createdDate}`}
+          subtitle={`${order.customer_name ?? "-"} \u00B7 ${createdDate}`}
           backHref="/admin/orders"
           backLabel="Back to Orders"
           badges={
@@ -197,7 +196,9 @@ export function OrderDetailClient({ id }: DetailClientProps) {
 
             {/* Customer + Shipping */}
             <CustomerSection
-              customer={customer}
+              customerName={order.customer_name}
+              customerEmail={order.customer_email}
+              customerPhone={order.customer_phone}
               shippingAddress={order.shipping_address}
             />
 

@@ -46,7 +46,6 @@ async function buildPdf(order: OrderDetailRow): Promise<Buffer> {
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
 
   const shipper = getShipperConfig();
-  const customer = order.customers;
   const items = order.order_items ?? [];
   const waybill = order.waybill_id ?? order.order_id;
 
@@ -211,8 +210,8 @@ async function buildPdf(order: OrderDetailRow): Promise<Buffer> {
   }
 
   function buildRecipient() {
-    const name = customer?.name ?? "-";
-    const addr = order.shipping_address ?? customer?.address ?? "-";
+    const name = order.customer_name ?? "-";
+    const addr = order.shipping_address ?? "-";
 
     doc.fontSize(FONT.recipientLabel).font("Helvetica-Bold");
     const labelH = doc.heightOfString("PENERIMA", { width: PAGE_W });

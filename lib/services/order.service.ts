@@ -47,6 +47,9 @@ export const OrderService = {
     const order = await OrderRepository.insert({
       order_id: params.orderId,
       customer_id: customer.id,
+      customer_name: params.customerInfo.name,
+      customer_phone: params.customerInfo.whatsapp,
+      customer_email: params.customerInfo.email,
       subtotal: params.subtotal,
       shipping_fee: params.shippingFee,
       total_amount: totalAmount,
@@ -55,7 +58,6 @@ export const OrderService = {
       courier_company: params.shippingCourier,
       courier_type: params.shippingService,
       shipping_cost: params.shippingFee,
-      customer_phone: params.customerInfo.whatsapp,
       shipping_address: fullAddress,
       postal_code: params.shippingAddress.postalCode,
       notes: params.customerInfo.notes || null,

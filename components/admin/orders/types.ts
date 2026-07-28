@@ -1,12 +1,9 @@
-export interface OrderListCustomer {
-  name: string;
-  email: string;
-}
-
 export interface OrderListItem {
   id: string;
   order_id: string;
   customer_id: number;
+  customer_name: string | null;
+  customer_email: string | null;
   total_amount: number;
   subtotal: number;
   shipping_fee: number;
@@ -15,7 +12,6 @@ export interface OrderListItem {
   payment_method: string | null;
   waybill_id: string | null;
   created_at: string;
-  customers: OrderListCustomer | null;
 }
 
 export interface OrderListResponse {

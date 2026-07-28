@@ -2,31 +2,34 @@
 
 import { AdminKeyValue } from "@/components/admin/ui";
 import { AdminSection } from "@/components/admin/patterns";
-import type { OrderDetailRow } from "@/lib/repositories/order.repository";
 
 interface CustomerSectionProps {
-  customer: OrderDetailRow["customers"];
+  customerName: string | null;
+  customerEmail: string | null;
+  customerPhone: string | null;
   shippingAddress: string | null;
 }
 
 export function CustomerSection({
-  customer,
+  customerName,
+  customerEmail,
+  customerPhone,
   shippingAddress,
 }: CustomerSectionProps) {
   return (
     <>
       <AdminSection title="Customer Information">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <AdminKeyValue label="Nama" value={customer?.name ?? "-"} />
-          <AdminKeyValue label="Email" value={customer?.email ?? "-"} />
-          <AdminKeyValue label="WhatsApp" value={customer?.phone ?? "-"} />
+          <AdminKeyValue label="Nama" value={customerName ?? "-"} />
+          <AdminKeyValue label="Email" value={customerEmail ?? "-"} />
+          <AdminKeyValue label="WhatsApp" value={customerPhone ?? "-"} />
         </div>
       </AdminSection>
 
       <AdminSection title="Shipping Address">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <AdminKeyValue label="Nama Penerima" value={customer?.name ?? "-"} />
+            <AdminKeyValue label="Nama Penerima" value={customerName ?? "-"} />
           </div>
           <div className="sm:col-span-2">
             <AdminKeyValue label="Alamat Lengkap" value={shippingAddress ?? "-"} />

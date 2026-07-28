@@ -21,7 +21,7 @@ export function OrderCard({ order, onView }: OrderCardProps) {
             {order.order_id}
           </div>
           <div className="mt-0.5 font-medium text-slate-900">
-            {order.customers?.name ?? "-"}
+            {order.customer_name ?? "-"}
           </div>
         </div>
         <AdminButton
