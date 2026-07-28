@@ -1,4 +1,6 @@
 import { findById } from "@/lib/repositories/product.repository";
+import { rowToProduct } from "@/lib/services/product.service";
+import { resolveTransactionPrice } from "@/lib/services/pricing-authority";
 import { BITESHIP_API_BASE_URL, DEFAULT_COURIERS, getBiteshipApiKey } from "@/lib/services/shipping/constants";
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
 import type { CreatePaymentRequest } from "./types";
@@ -189,12 +191,15 @@ export async function validateCheckoutRequest(
   const items: ValidatedCheckoutItem[] = [];
 
   for (const item of params.items) {
-    const product = await findById(item.product.id);
-    if (!product) {
+    const row = await findById(item.product.id);
+    if (!row) {
       throw new CheckoutValidationError("Produk tidak ditemukan.");
     }
 
-    if (item.product.price !== product.price) {
+    const product = rowToProduct(row);
+    const resolution = await resolveTransactionPrice(product);
+
+    if (item.product.price !== resolution.final_price) {
       throw new CheckoutValidationError("Harga produk tidak valid.");
     }
 
@@ -202,7 +207,7 @@ export async function validateCheckoutRequest(
       product: {
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: resolution.final_price,
         weight: product.weight,
       },
       quantity: item.quantity,

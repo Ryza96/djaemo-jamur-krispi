@@ -79,7 +79,7 @@ export function CheckoutForm() {
               product: {
                 id: item.product.id,
                 name: item.product.name,
-                price: item.product.price,
+                price: item.product.final_price,
               },
               quantity: item.quantity,
             })),

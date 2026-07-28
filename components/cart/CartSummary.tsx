@@ -15,7 +15,7 @@ export function CartSummary({ items }: CartSummaryProps) {
   );
 
   const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    () => items.reduce((sum, item) => sum + item.product.final_price * item.quantity, 0),
     [items],
   );
 

@@ -6,6 +6,10 @@ import { combineAddress } from "@/lib/services/payment/mapper";
 import { AuditLogService } from "@/lib/services/audit-log.service";
 import { OrderRepository } from "@/lib/repositories";
 import { PAYMENT_STATUS } from "@/lib/services/payment/types";
+import {
+  validateCheckoutRequest,
+  CheckoutValidationError,
+} from "@/lib/services/payment/checkoutValidation";
 
 const createPaymentSchema = z.object({
   orderId: z.string().min(1, "orderId wajib diisi").max(50, "orderId maksimal 50 karakter"),
@@ -107,20 +111,46 @@ export async function POST(request: Request) {
     shippingAddress,
     shippingCourier,
     shippingService,
-    shippingFee,
-    items,
-    subtotal,
   } = parsed.data;
 
   try {
-    logStep(1, "Order inserted", { orderId });
+    logStep(1, "Validating checkout request");
 
-    const { id: orderDbId, accessToken } = await OrderService.createDraft(parsed.data);
+    let validated;
+    try {
+      validated = await validateCheckoutRequest(parsed.data);
+    } catch (validationError) {
+      if (validationError instanceof CheckoutValidationError) {
+        return NextResponse.json(
+          { error: validationError.message },
+          { status: validationError.status },
+        );
+      }
+      throw validationError;
+    }
 
-    const totalAmount = subtotal + shippingFee;
+    logStep(2, "Creating order draft with server-validated prices");
+
+    const orderRequest: typeof parsed.data = {
+      ...parsed.data,
+      items: validated.items.map((item) => ({
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+        },
+        quantity: item.quantity,
+      })),
+      subtotal: validated.subtotal,
+      shippingFee: validated.shippingFee,
+    };
+
+    const { id: orderDbId, accessToken } = await OrderService.createDraft(orderRequest);
+
+    const totalAmount = validated.totalAmount;
     const fullAddress = combineAddress(shippingAddress);
 
-    const snapItems = items.map((item) => ({
+    const snapItems = validated.items.map((item) => ({
       id: item.product.id,
       name: item.product.name,
       price: item.product.price,
@@ -142,7 +172,7 @@ export async function POST(request: Request) {
         },
         shippingAddress: fullAddress,
         items: snapItems,
-        shippingFee,
+        shippingFee: validated.shippingFee,
       };
 
       const result = await createSnapTransaction(snapParams);

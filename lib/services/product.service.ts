@@ -1,53 +1,8 @@
 import { findCatalog, findById } from "@/lib/repositories/product.repository";
-import { PromoEngine } from "@/lib/services/promo-engine";
+import { resolveTransactionPrice } from "@/lib/services/pricing-authority";
 import type { Product, ProductRow } from "@/types";
 
-type ProductCountdown = NonNullable<Product["promo_countdown"]>;
-
-async function enrichProductWithPromo(product: Product): Promise<Product> {
-  const promo = await PromoEngine.getActivePromo(product.id);
-
-  if (!promo) {
-    return {
-      ...product,
-      has_active_promo: false,
-      normal_price: product.price,
-      final_price: product.price,
-      promo_price: null,
-      discount_amount: 0,
-      promo_name: null,
-      promo_status: null,
-      promo_countdown: null,
-    };
-  }
-
-  const promoProduct = promo.promo_products.find((pp) => pp.product_id === product.id);
-  const promoPrice = promoProduct?.promo_price ?? product.price;
-  const statusResult = PromoEngine.getPromoStatus(promo);
-  const countdown = PromoEngine.getCountdown(promo);
-
-  const countdownData: ProductCountdown = {
-    value: countdown.value,
-    unit: countdown.unit,
-    direction: countdown.direction,
-    type: countdown.type,
-    display: countdown.display,
-  };
-
-  return {
-    ...product,
-    has_active_promo: true,
-    normal_price: product.price,
-    final_price: promoPrice,
-    promo_price: promoPrice,
-    discount_amount: product.price - promoPrice,
-    promo_name: promo.name,
-    promo_status: statusResult.status,
-    promo_countdown: countdownData,
-  };
-}
-
-function rowToProduct(row: ProductRow): Product {
+export function rowToProduct(row: ProductRow): Product {
   return {
     id: row.id,
     name: row.name,
@@ -67,15 +22,20 @@ function rowToProduct(row: ProductRow): Product {
   };
 }
 
+async function enrichProduct(product: Product): Promise<Product> {
+  const resolution = await resolveTransactionPrice(product);
+  return { ...product, ...resolution };
+}
+
 export async function getCatalogProducts(): Promise<Product[]> {
   const data: ProductRow[] = await findCatalog();
   const products = data.map(rowToProduct);
-  return Promise.all(products.map(enrichProductWithPromo));
+  return Promise.all(products.map(enrichProduct));
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
   const data = await findById(id);
   if (!data) return null;
   const product = rowToProduct(data);
-  return enrichProductWithPromo(product);
+  return enrichProduct(product);
 }

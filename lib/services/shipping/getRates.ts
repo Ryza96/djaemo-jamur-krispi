@@ -110,7 +110,7 @@ export async function getRates(
       items: items.map((item) => ({
         name: item.product.name,
         quantity: item.quantity,
-        value: item.product.price * item.quantity,
+        value: item.product.final_price * item.quantity,
         weight: extractWeight(item.product),
       })),
       couriers: DEFAULT_COURIERS,

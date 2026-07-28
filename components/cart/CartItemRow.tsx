@@ -18,7 +18,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove, compact }: CartI
           {item.product.name}
         </h3>
         <p className="mt-0.5 text-xs text-muted">
-          {formatPrice(item.product.price)}
+          {formatPrice(item.product.final_price)}
         </p>
       </div>
 
@@ -51,7 +51,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove, compact }: CartI
         </div>
 
         <span className="min-w-[4.5rem] text-right text-sm font-medium text-foreground">
-          {formatPrice(item.product.price * item.quantity)}
+          {formatPrice(item.product.final_price * item.quantity)}
         </span>
 
         {!compact && (

@@ -31,11 +31,11 @@ export function OrderSummary() {
                     {item.product.name}
                   </p>
                   <p className="text-xs text-muted">
-                    {item.quantity}x {formatPrice(item.product.price)}
+                    {item.quantity}x {formatPrice(item.product.final_price)}
                   </p>
                 </div>
                 <p className="whitespace-nowrap font-semibold text-secondary">
-                  {formatPrice(item.product.price * item.quantity)}
+                  {formatPrice(item.product.final_price * item.quantity)}
                 </p>
               </div>
             ))}
