@@ -29,14 +29,14 @@ export const CustomerRepository = {
           )
           .select()
           .single()
-      : await supabase
-          .from("customers")
-          .insert({
-            email: params.email,
-            name: params.name,
-            phone: params.phone,
-            address: params.address,
-          })
+        : await supabase
+            .from("customers")
+            .insert({
+              email: params.email || null,
+              name: params.name,
+              phone: params.phone,
+              address: params.address,
+            })
           .select()
           .single();
 
