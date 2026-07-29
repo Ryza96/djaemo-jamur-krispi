@@ -62,6 +62,16 @@ function logStep(step: number, message: string, data?: unknown) {
 }
 
 function logFail(step: number, error: unknown) {
+  console.log(`\n[STEP ${step} FAILED — RAW ERROR]`);
+  console.log("  typeof:", typeof error);
+  console.log("  constructor:", (error as object)?.constructor?.name ?? "N/A");
+  console.log("  keys:", Object.keys(error as object));
+  try { console.log("  JSON:", JSON.stringify(error, null, 2)); } catch {}
+  if (error instanceof Error) {
+    console.log("  message:", error.message);
+    console.log("  stack:", error.stack ?? "N/A");
+  }
+
   const err = error instanceof Error ? error : new Error(String(error));
   const httpErr = error as Record<string, unknown>;
   const apiResponse = httpErr.ApiResponse
