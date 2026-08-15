@@ -28,6 +28,7 @@ export interface ProcessCallbackResult {
 export const OrderService = {
   async createDraft(
     params: CreatePaymentRequest,
+    initialFulfillmentStatus: FulfillmentStatus = FULFILLMENT_STATUS.NEW,
   ): Promise<CreateOrderResult> {
     const existing = await OrderRepository.findByOrderId(params.orderId);
     if (existing) {
@@ -62,7 +63,7 @@ export const OrderService = {
       postal_code: params.shippingAddress.postalCode,
       notes: params.customerInfo.notes || null,
       payment_status: PAYMENT_STATUS.UNPAID,
-      fulfillment_status: FULFILLMENT_STATUS.NEW,
+      fulfillment_status: initialFulfillmentStatus,
       destination_area_id: params.shippingAddress.areaId ?? null,
     });
 

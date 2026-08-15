@@ -56,6 +56,7 @@ export const FULFILLMENT_STATUS_OPTIONS = [
   { value: "shipped", label: "Shipped" },
   { value: "delivered", label: "Delivered" },
   { value: "cancelled", label: "Cancelled" },
+  { value: "waiting_for_restock", label: "Waiting For Restock" },
 ] as const;
 
 export const LIMIT_OPTIONS = [10, 20, 50, 100] as const;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PromoService } from "@/lib/services/promo.service";
+import { requireAdmin } from "@/lib/services/admin-auth.service";
 
 type PromoErrorType =
   | "validation"
@@ -102,6 +103,9 @@ function validateCreatePromoPayload(body: unknown): string | null {
 
 export async function GET() {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const promos = await PromoService.getAllPromos();
     return NextResponse.json({ success: true, data: promos });
   } catch (error) {
@@ -115,6 +119,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const body = await request.json();
 
     const payloadError = validateCreatePromoPayload(body);

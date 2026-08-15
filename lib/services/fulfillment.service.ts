@@ -33,6 +33,13 @@ const CUSTOMER_NOTIFIABLE: Partial<Record<FulfillmentStatus, NotificationEvent>>
   [FULFILLMENT_STATUS.CONFIRMED]: AuditLogService.events.ORDER_CONFIRMED,
 };
 
+const STOCK_DEDUCTED_STATUSES = new Set<FulfillmentStatus>([
+  FULFILLMENT_STATUS.CONFIRMED,
+  FULFILLMENT_STATUS.PACKING,
+  FULFILLMENT_STATUS.WAYBILL_CREATED,
+  FULFILLMENT_STATUS.PICKED_UP,
+]);
+
 export interface FulfillmentActionResult {
   success: boolean;
   orderId: string;
@@ -180,7 +187,10 @@ async function executeTransition(
     }
   }
 
-  if (targetStatus === FULFILLMENT_STATUS.CANCELLED) {
+  if (
+    targetStatus === FULFILLMENT_STATUS.CANCELLED &&
+    STOCK_DEDUCTED_STATUSES.has(currentFulfillmentStatus)
+  ) {
     const result = await InventoryService.restoreOrderStock(orderId);
     if (result.message === "PARTIAL_RESTORE_FAILURE") {
       await AuditLogService.logFulfillmentEvent({

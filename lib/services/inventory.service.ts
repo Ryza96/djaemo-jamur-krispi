@@ -2,7 +2,11 @@ import { InventoryRepository } from "@/lib/repositories/inventory.repository";
 import { OrderRepository } from "@/lib/repositories";
 import { AuditLogService } from "./audit-log.service";
 import { MOVEMENT_REASON } from "@/lib/inventory/types";
-import type { AdjustStockParams, StockInfo } from "@/lib/inventory/types";
+import type {
+  AdjustStockParams,
+  CheckoutStockItem,
+  StockInfo,
+} from "@/lib/inventory/types";
 
 export interface OrderStockItem {
   productId: string;
@@ -61,6 +65,30 @@ export const InventoryService = {
         return {
           productId: item.product_id,
           productName: item.product_name,
+          requested: item.quantity,
+          available: currentStock,
+          sufficient: available,
+        };
+      }),
+    );
+
+    return {
+      valid: items.every((i) => i.sufficient),
+      items,
+    };
+  },
+
+  async validateCheckoutStock(
+    checkoutItems: CheckoutStockItem[],
+  ): Promise<ValidateOrderStockResult> {
+    const items: OrderStockItem[] = await Promise.all(
+      checkoutItems.map(async (item) => {
+        const { available, currentStock } =
+          await InventoryRepository.validateStock(item.productId, item.quantity);
+
+        return {
+          productId: item.productId,
+          productName: item.productName,
           requested: item.quantity,
           available: currentStock,
           sufficient: available,

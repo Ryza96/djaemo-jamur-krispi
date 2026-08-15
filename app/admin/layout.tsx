@@ -22,15 +22,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const auth = localStorage.getItem("admin-authenticated") === "true";
-    setIsAuthenticated(auth);
-    setIsCheckingAuth(false);
+    let cancelled = false;
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/admin/session", { cache: "no-store" });
+        if (!cancelled) setIsAuthenticated(res.ok);
+      } catch {
+        if (!cancelled) setIsAuthenticated(false);
+      } finally {
+        if (!cancelled) setIsCheckingAuth(false);
+      }
+    }
+    checkSession();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
     if (!isCheckingAuth && !isAuthenticated) {
-      router.push("/admin");
+      router.replace("/admin");
     }
   }, [isAuthenticated, isCheckingAuth, router]);
 
@@ -52,8 +61,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return null;
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin-authenticated");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch {
+      // non-fatal — cookie is best-effort cleared server-side
+    }
     router.push("/admin");
   };
 

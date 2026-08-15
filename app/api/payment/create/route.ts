@@ -5,7 +5,7 @@ import { createSnapTransaction } from "@/lib/services/payment/createSnap";
 import { combineAddress } from "@/lib/services/payment/mapper";
 import { AuditLogService } from "@/lib/services/audit-log.service";
 import { OrderRepository } from "@/lib/repositories";
-import { PAYMENT_STATUS } from "@/lib/services/payment/types";
+import { PAYMENT_STATUS, FULFILLMENT_STATUS } from "@/lib/services/payment/types";
 import {
   validateCheckoutRequest,
   CheckoutValidationError,
@@ -155,7 +155,14 @@ export async function POST(request: Request) {
       shippingFee: validated.shippingFee,
     };
 
-    const { id: orderDbId, accessToken } = await OrderService.createDraft(orderRequest);
+    const initialFulfillmentStatus = validated.stock.valid
+      ? FULFILLMENT_STATUS.NEW
+      : FULFILLMENT_STATUS.WAITING_FOR_RESTOCK;
+
+    const { id: orderDbId, accessToken } = await OrderService.createDraft(
+      orderRequest,
+      initialFulfillmentStatus,
+    );
 
     const totalAmount = validated.totalAmount;
     const fullAddress = combineAddress(shippingAddress);

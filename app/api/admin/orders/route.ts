@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { OrderRepository } from "@/lib/repositories";
 import { paginatedOrdersSchema } from "@/lib/validation/admin-orders";
+import { requireAdmin } from "@/lib/services/admin-auth.service";
 
 export async function GET(request: Request) {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const { searchParams } = new URL(request.url);
     const parsed = paginatedOrdersSchema.safeParse({
       search: searchParams.get("search") || undefined,

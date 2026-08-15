@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/services/admin-auth.service';
 
 /**
  * GET /api/analytics/revenue
@@ -11,6 +12,9 @@ import { supabase } from '@/lib/supabase';
  */
 export async function GET(request: Request) {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'paid';
     const months = parseInt(searchParams.get('months') || '1', 10);

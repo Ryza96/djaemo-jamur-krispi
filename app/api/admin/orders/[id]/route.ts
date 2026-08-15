@@ -1,8 +1,12 @@
 import { NextResponse, NextRequest } from "next/server";
 import { OrderRepository } from "@/lib/repositories";
+import { requireAdmin } from "@/lib/services/admin-auth.service";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const { id } = await context.params;
 
     let order = await OrderRepository.findDetailByOrderId(id);

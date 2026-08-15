@@ -26,3 +26,11 @@ export const adminNotesSchema = z.object({
     .min(10, "Catatan minimal 10 karakter")
     .max(2000, "Catatan maksimal 2000 karakter"),
 });
+
+export const restockSchema = z.object({
+  quantity: z
+    .number()
+    .int("Jumlah harus bilangan bulat")
+    .min(1, "Jumlah minimal 1")
+    .max(100000, "Jumlah terlalu besar"),
+});

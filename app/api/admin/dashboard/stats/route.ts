@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { DashboardRepository } from "@/lib/repositories";
+import { requireAdmin } from "@/lib/services/admin-auth.service";
 
 export async function GET() {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const stats = await DashboardRepository.getDashboardStats();
     return NextResponse.json({ success: true, data: stats });
   } catch (error) {

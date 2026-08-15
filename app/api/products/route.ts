@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getCatalogProducts } from '@/lib/services/product.service';
 import { UPLOAD } from '@/lib/constants/upload';
+import { requireAdmin } from '@/lib/services/admin-auth.service';
 
 const sanitizePriceToInt = (raw: unknown): number | null => {
   if (raw === null || raw === undefined) return null;
@@ -52,6 +53,9 @@ export const GET = async () => {
 
 export const POST = async (request: Request) => {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const body = await request.json() as Record<string, unknown>;
 
     const payload: Record<string, unknown> = {};
@@ -88,6 +92,9 @@ export const POST = async (request: Request) => {
 
 export const PUT = async (request: Request) => {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const body = await request.json() as Record<string, unknown>;
 
     const productId = body?.id;
@@ -143,6 +150,9 @@ export const PUT = async (request: Request) => {
 
 export const DELETE = async (request: Request) => {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });

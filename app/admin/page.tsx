@@ -13,15 +13,24 @@ export default function AdminPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const auth = localStorage.getItem("admin-authenticated") === "true";
-    setIsAuthenticated(auth);
-    setIsCheckingAuth(false);
+    let cancelled = false;
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/admin/session", { cache: "no-store" });
+        if (!cancelled) setIsAuthenticated(res.ok);
+      } catch {
+        if (!cancelled) setIsAuthenticated(false);
+      } finally {
+        if (!cancelled) setIsCheckingAuth(false);
+      }
+    }
+    checkSession();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
     if (!isCheckingAuth && isAuthenticated) {
-      router.push("/admin/dashboard");
+      router.replace("/admin/dashboard");
     }
   }, [isAuthenticated, isCheckingAuth, router]);
 
@@ -42,7 +51,6 @@ export default function AdminPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        localStorage.setItem("admin-authenticated", "true");
         setIsAuthenticated(true);
         setMessage("Login berhasil. Mengarahkan ke dashboard...");
       } else {
@@ -55,8 +63,12 @@ export default function AdminPage() {
     setIsLoggingIn(false);
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem("admin-authenticated");
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch {
+      // non-fatal — cookie is best-effort cleared server-side
+    }
     setIsAuthenticated(false);
     setUsername("");
     setPassword("");

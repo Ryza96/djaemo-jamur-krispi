@@ -1,6 +1,10 @@
 import { findById } from "@/lib/repositories/product.repository";
 import { rowToProduct } from "@/lib/services/product.service";
 import { resolveTransactionPrice } from "@/lib/services/pricing-authority";
+import {
+  InventoryService,
+  type ValidateOrderStockResult,
+} from "@/lib/services/inventory.service";
 import { BITESHIP_API_BASE_URL, DEFAULT_COURIERS, getBiteshipApiKey } from "@/lib/services/shipping/constants";
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
 import type { CreatePaymentRequest } from "./types";
@@ -21,6 +25,7 @@ export interface ValidatedCheckout {
   subtotal: number;
   shippingFee: number;
   totalAmount: number;
+  stock: ValidateOrderStockResult;
 }
 
 export class CheckoutValidationError extends Error {
@@ -218,6 +223,15 @@ export async function validateCheckoutRequest(
     (total, item) => total + item.product.price * item.quantity,
     0,
   );
+
+  const stockResult = await InventoryService.validateCheckoutStock(
+    items.map((item) => ({
+      productId: item.product.id,
+      productName: item.product.name,
+      quantity: item.quantity,
+    })),
+  );
+
   const shippingFee = await validateShippingFee({ request: params, items });
 
   assertClientTotalsMatch(params, subtotal, shippingFee);
@@ -233,5 +247,6 @@ export async function validateCheckoutRequest(
     subtotal,
     shippingFee,
     totalAmount: subtotal + shippingFee,
+    stock: stockResult,
   };
 }

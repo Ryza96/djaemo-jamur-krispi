@@ -60,6 +60,12 @@ export interface RestoreStockParams {
   metadata?: Record<string, unknown>;
 }
 
+export interface CheckoutStockItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+}
+
 export interface OrderStockItem {
   productId: string;
   productName: string;

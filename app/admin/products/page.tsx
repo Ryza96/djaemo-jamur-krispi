@@ -21,6 +21,11 @@ export default function AdminProductsPage() {
   const [showPipeline, setShowPipeline] = useState(false);
   const [pipelineError, setPipelineError] = useState<string | null>(null);
   const [fileUploadStatuses, setFileUploadStatuses] = useState<FileUploadStatusItem[]>([]);
+  const [restockProduct, setRestockProduct] = useState<Product | null>(null);
+  const [restockQty, setRestockQty] = useState("");
+  const [restockLoading, setRestockLoading] = useState(false);
+  const [restockError, setRestockError] = useState<string | null>(null);
+  const [restockSuccess, setRestockSuccess] = useState<string | null>(null);
 
   const pipelineLabels = [
     { id: 1, label: 'Validasi Data Produk' },
@@ -354,6 +359,64 @@ export default function AdminProductsPage() {
     }
   };
 
+  const openRestockModal = (product: Product) => {
+    setRestockProduct(product);
+    setRestockQty("");
+    setRestockError(null);
+    setRestockSuccess(null);
+  };
+
+  const closeRestockModal = () => {
+    if (restockLoading) return;
+    setRestockProduct(null);
+    setRestockQty("");
+    setRestockError(null);
+    setRestockSuccess(null);
+  };
+
+  const handleRestock = async () => {
+    if (!restockProduct) return;
+
+    const parsedQty = Number(restockQty);
+    if (!Number.isInteger(parsedQty) || parsedQty < 1 || parsedQty > 100000) {
+      setRestockError("Jumlah harus bilangan bulat antara 1 dan 100000.");
+      return;
+    }
+
+    setRestockLoading(true);
+    setRestockError(null);
+    setRestockSuccess(null);
+
+    try {
+      const res = await fetch(
+        `/api/admin/products/${encodeURIComponent(restockProduct.id)}/restock`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: parsedQty }),
+        },
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
+      setRestockSuccess(
+        `Stok "${restockProduct.name}" berhasil ditambah ${parsedQty}: ${data.previousStock} → ${data.newStock}.`,
+      );
+      setRestockProduct((prev) =>
+        prev ? { ...prev, stock: data.newStock } : prev,
+      );
+
+      const listRes = await fetch('/api/products');
+      const listData = await listRes.json();
+      if (Array.isArray(listData)) setProducts(listData);
+    } catch (err) {
+      setRestockError(err instanceof Error ? err.message : "Gagal menambah stok.");
+    } finally {
+      setRestockLoading(false);
+    }
+  };
+
   return (
     <section className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -398,6 +461,12 @@ export default function AdminProductsPage() {
                       className="rounded-2xl bg-sky-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-400"
                     >
                       Edit
+                    </button>
+                    <button
+                      onClick={() => openRestockModal(product)}
+                      className="rounded-2xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                    >
+                      Restock
                     </button>
                     <button
                       onClick={() => handleDeleteProduct(product.id)}
@@ -508,6 +577,58 @@ export default function AdminProductsPage() {
       )}
 
       <ProgressModal steps={pipelineSteps} error={pipelineError} isOpen={showPipeline} fileStatuses={fileUploadStatuses} />
+
+      {restockProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+            <h2 className="mb-6 text-2xl font-semibold text-slate-900">Tambah Stok</h2>
+
+            <p className="mb-1 text-sm font-medium text-slate-700">Produk</p>
+            <p className="mb-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-900">{restockProduct.name}</p>
+
+            <div className="mb-4 flex items-baseline gap-2">
+              <span className="text-sm text-slate-500">Stok saat ini:</span>
+              <span className="text-lg font-semibold text-slate-900">{restockProduct.stock}</span>
+            </div>
+
+            <label className="mb-2 block text-sm font-medium text-slate-700">Jumlah Ditambah</label>
+            <input
+              type="number"
+              min="1"
+              value={restockQty}
+              onChange={(e) => setRestockQty(e.target.value)}
+              placeholder="Contoh: 10"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10"
+            />
+
+            {restockError && (
+              <p className="mt-3 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{restockError}</p>
+            )}
+            {restockSuccess && (
+              <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{restockSuccess}</p>
+            )}
+
+            <div className="mt-8 flex gap-4">
+              <button
+                onClick={closeRestockModal}
+                disabled={restockLoading}
+                className="flex-1 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Tutup
+              </button>
+              <button
+                onClick={handleRestock}
+                disabled={restockLoading}
+                className={`flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  restockSuccess ? "pointer-events-none" : ""
+                }`}
+              >
+                {restockLoading ? "Menambah..." : "Tambah Stok"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

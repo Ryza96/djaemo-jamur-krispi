@@ -27,6 +27,10 @@ export default function AdminDashboardPage() {
     async function load() {
       try {
         const res = await fetch("/api/admin/dashboard/stats");
+        if (res.status === 401) {
+          router.replace("/admin");
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!cancelled && json.success) {
@@ -41,7 +45,7 @@ export default function AdminDashboardPage() {
 
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [router]);
 
   const summaryCards = useMemo(() => {
     const revenue = stats?.revenue ?? 0;

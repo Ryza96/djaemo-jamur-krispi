@@ -10,6 +10,7 @@ import type {
   StockMovement,
   MovementQueryOptions,
   AdjustStockParams,
+  CheckoutStockItem,
 } from "./types";
 
 /**
@@ -89,6 +90,10 @@ export interface IStockMovementRepository {
  */
 export interface IInventoryService {
   validateOrderStock(orderId: string): Promise<ValidateOrderStockResult>;
+
+  validateCheckoutStock(
+    items: CheckoutStockItem[],
+  ): Promise<ValidateOrderStockResult>;
 
   deductOrderStock(orderId: string): Promise<DeductOrderStockResult>;
 
