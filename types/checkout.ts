@@ -31,6 +31,13 @@ export interface ShippingRate {
   etd: string | null;
 }
 
+export interface CheckoutResume {
+  orderId: string;
+  accessToken: string;
+  token: string;
+  redirectUrl: string;
+}
+
 export interface CheckoutState {
   customerInfo: CustomerInfo;
   shippingAddress: ShippingAddress;
@@ -38,6 +45,7 @@ export interface CheckoutState {
   shippingService: string;
   shippingFee: number;
   voucher: Voucher | null;
+  resume: CheckoutResume | null;
   isSubmitting: boolean;
   error: string | null;
 }
@@ -49,6 +57,7 @@ export type CheckoutAction =
   | { type: "SET_SHIPPING_FEE"; payload: number }
   | { type: "SET_SHIPPING_COURIER"; payload: string }
   | { type: "SET_VOUCHER"; payload: Voucher | null }
+  | { type: "SET_RESUME"; payload: CheckoutResume | null }
   | { type: "SET_SUBMITTING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "RESET" };

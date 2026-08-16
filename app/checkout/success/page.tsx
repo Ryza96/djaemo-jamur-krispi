@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { PageHeader, Section } from "@/components/sections/Section";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/components/cart/CartProvider";
+import { buildSnapRedirectUrl, decideResume } from "@/lib/checkout/resumeOrder";
 
 const ORDER_STORAGE_KEY = "djaemo-last-order";
 
@@ -32,6 +33,7 @@ interface OrderData {
   destination: string;
   customer_phone: string;
   payment_method: string | null;
+  transaction_id: string | null;
   created_at: string;
   customers: {
     name: string;
@@ -50,6 +52,7 @@ function mapTransactionStatus(status: string | null): PaymentStatus {
       return "success";
     case "pending":
     case "pending_payment":
+    case "unpaid":
     case "challenge":
     case "authorize":
       return "pending";
@@ -74,6 +77,8 @@ export default function CheckoutSuccessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [resuming, setResuming] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   const orderIdFromUrl = searchParams?.get("order_id") ?? null;
   const tokenFromUrl = searchParams?.get("token") ?? null;
@@ -168,6 +173,30 @@ export default function CheckoutSuccessPage() {
     }
   }, [transactionStatusFromUrl, order, clearCart]);
 
+  const handleResumePayment = useCallback(async () => {
+    if (resuming) return;
+    setResumeError(null);
+    setResuming(true);
+    try {
+      const resume = await decideResume();
+      const redirectUrl =
+        resume.kind === "resume"
+          ? resume.redirectUrl
+          : order?.transaction_id
+            ? buildSnapRedirectUrl(order.transaction_id)
+            : null;
+
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+        return;
+      }
+
+      setResumeError("Tidak dapat melanjutkan pembayaran. Silakan hubungi layanan pelanggan.");
+    } finally {
+      setResuming(false);
+    }
+  }, [resuming, order]);
+
   function handleCopyOrderId() {
     if (!order?.order_id) return;
     navigator.clipboard.writeText(order.order_id).then(() => {
@@ -186,7 +215,7 @@ export default function CheckoutSuccessPage() {
   if (loading) {
     return (
       <Section>
-        <PageHeader title="Checkout Berhasil" description="Memuat detail pesanan Anda..." />
+        <PageHeader title="Memuat Status Pesanan" description="Memeriksa status pembayaran pesanan Anda..." />
         <div className="flex flex-col items-center justify-center gap-6 py-20">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="text-sm text-muted">Sedang memeriksa status pembayaran...</p>
@@ -242,10 +271,11 @@ export default function CheckoutSuccessPage() {
     );
   }
 
+  const serverPaymentStatus = mapTransactionStatus(order.payment_status);
   const effectiveStatus: PaymentStatus =
-    transactionStatusFromUrl
-      ? paymentStatus
-      : mapTransactionStatus(order.payment_status);
+    serverPaymentStatus !== "unknown"
+      ? serverPaymentStatus
+      : paymentStatus;
 
   const statusConfig: Record<PaymentStatus, { icon: string; title: string; description: string; color: string }> = {
     success: {
@@ -280,13 +310,36 @@ export default function CheckoutSuccessPage() {
     },
   };
 
+  const headerConfig: Record<PaymentStatus, { title: string; description: string }> = {
+    success: {
+      title: "Pembayaran Berhasil",
+      description: "Pembayaran Anda telah diterima. Pesanan akan segera diproses oleh tim kami.",
+    },
+    pending: {
+      title: "Pesanan Berhasil Dibuat",
+      description: "Pesanan Anda telah tersimpan. Silakan selesaikan pembayaran untuk memproses pesanan.",
+    },
+    failed: {
+      title: "Pembayaran Gagal",
+      description: "Pembayaran tidak berhasil diproses. Silakan lakukan checkout kembali.",
+    },
+    expired: {
+      title: "Pembayaran Kedaluwarsa",
+      description: "Waktu pembayaran telah habis. Silakan lakukan checkout ulang.",
+    },
+    unknown: {
+      title: "Status Pembayaran Tidak Diketahui",
+      description: "Status pembayaran tidak dapat ditentukan. Silakan hubungi layanan pelanggan.",
+    },
+  };
+
   const status = statusConfig[effectiveStatus];
 
   return (
     <Section>
       <PageHeader
-        title="Checkout Berhasil"
-        description="Terima kasih, pesanan Anda telah kami terima."
+        title={headerConfig[effectiveStatus].title}
+        description={headerConfig[effectiveStatus].description}
       />
 
       <div className="grid gap-10 xl:grid-cols-[2fr_1fr]">
@@ -433,6 +486,20 @@ export default function CheckoutSuccessPage() {
           )}
 
           <div className="flex flex-col gap-3">
+            {effectiveStatus === "pending" && (
+              <div className="space-y-2">
+                <Button
+                  className="w-full"
+                  onClick={handleResumePayment}
+                  disabled={resuming}
+                >
+                  {resuming ? "Memproses..." : "Lanjutkan Pembayaran"}
+                </Button>
+                {resumeError && (
+                  <p className="text-center text-xs text-red-600">{resumeError}</p>
+                )}
+              </div>
+            )}
             {effectiveStatus === "success" && orderIdFromUrl && (
               <Button
                 className="w-full"
@@ -442,7 +509,12 @@ export default function CheckoutSuccessPage() {
               </Button>
             )}
             <Button
-              variant={effectiveStatus === "success" && orderIdFromUrl ? "outline" : "primary"}
+              variant={
+                effectiveStatus === "pending" ||
+                (effectiveStatus === "success" && orderIdFromUrl)
+                  ? "outline"
+                  : "primary"
+              }
               className="w-full"
               onClick={() => router.push("/")}
             >

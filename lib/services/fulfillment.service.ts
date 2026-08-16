@@ -67,6 +67,28 @@ function normalizeFulfillmentStatus(raw: string | null | undefined): Fulfillment
 
 export const FulfillmentService = {
   async process(orderId: string): Promise<FulfillmentActionResult> {
+    const order = await OrderRepository.findByOrderId(orderId);
+    if (!order) {
+      return {
+        success: false,
+        orderId,
+        previousStatus: null,
+        newStatus: FULFILLMENT_STATUS.CONFIRMED,
+        message: "ORDER_NOT_FOUND",
+      };
+    }
+
+    const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
+    if (paymentStatus !== PAYMENT_STATUS.PAID) {
+      return {
+        success: false,
+        orderId,
+        previousStatus: normalizeFulfillmentStatus(order.fulfillment_status),
+        newStatus: FULFILLMENT_STATUS.CONFIRMED,
+        message: `Cannot process: payment is not paid (current: ${paymentStatus})`,
+      };
+    }
+
     const deductResult = await InventoryService.deductOrderStock(orderId);
     const targetStatus = deductResult.success
       ? FULFILLMENT_STATUS.CONFIRMED
@@ -161,7 +183,7 @@ async function executeTransition(
     };
   }
 
-  if (targetStatus === FULFILLMENT_STATUS.SHIPPED) {
+  if (targetStatus !== FULFILLMENT_STATUS.CANCELLED) {
     const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
     if (paymentStatus !== PAYMENT_STATUS.PAID) {
       return {
@@ -169,7 +191,7 @@ async function executeTransition(
         orderId,
         previousStatus: currentFulfillmentStatus,
         newStatus: targetStatus,
-        message: `Cannot ship: payment is not paid (current: ${paymentStatus})`,
+        message: `Cannot transition: payment is not paid (current: ${paymentStatus})`,
       };
     }
   }

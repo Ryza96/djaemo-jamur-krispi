@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/cart/CartProvider";
 import { CartItemRow } from "@/components/cart/CartItemRow";
 import { CartSummary } from "@/components/cart/CartSummary";
+import { decideResume } from "@/lib/checkout/resumeOrder";
 
 interface CartDrawerProps {
   open: boolean;
@@ -48,6 +49,24 @@ function useFocusTray(ref: React.RefObject<HTMLElement | null>, open: boolean) {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, updateQuantity, removeFromCart, totalItems, subtotal } = useCart();
   const drawerRef = useRef<HTMLDivElement>(null);
+  const [resuming, setResuming] = useState(false);
+
+  const handleResumeClick = useCallback(
+    async (e: React.MouseEvent<HTMLAnchorElement>) => {
+      setResuming(true);
+      try {
+        const resume = await decideResume();
+        if (resume.kind === "resume") {
+          e.preventDefault();
+          window.location.href = resume.redirectUrl;
+        }
+      } finally {
+        onClose();
+        setResuming(false);
+      }
+    },
+    [onClose],
+  );
 
   useFocusTray(drawerRef, open);
 
@@ -152,10 +171,13 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               <div className="mt-5 space-y-3">
                 <Link
                   href="/checkout"
-                  onClick={onClose}
-                  className="flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light"
+                  onClick={handleResumeClick}
+                  aria-disabled={resuming}
+                  className={`flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light ${
+                    resuming ? "pointer-events-none opacity-70" : ""
+                  }`}
                 >
-                  Lanjutkan Pembayaran
+                  {resuming ? "Mengalihkan..." : "Lanjutkan Pembayaran"}
                 </Link>
                 <Link
                   href="/cart"

@@ -49,6 +49,11 @@ export function AreaSelect({
   ...inputProps
 }: AreaSelectProps) {
   const [query, setQuery] = useState(value);
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setQuery(value);
+  }
   const [options, setOptions] = useState<AreaOption[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

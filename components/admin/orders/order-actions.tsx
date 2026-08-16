@@ -27,6 +27,18 @@ function getActions(
 ): ActionDef[] {
   switch (status?.toLowerCase()) {
     case "new":
+      if (paymentStatus !== "paid") {
+        return [
+          {
+            action: "cancel",
+            label: "Batalkan Pesanan",
+            description:
+              "Batalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.",
+            variant: "danger",
+          },
+        ];
+      }
+
       return [
         {
           action: "confirm",

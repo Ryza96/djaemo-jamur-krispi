@@ -5,9 +5,12 @@ const TRACKING_FIELDS =
   "order_id, payment_status, fulfillment_status, total_amount, created_at, order_items(id, product_name, price, quantity, subtotal)";
 
 const FULL_FIELDS =
-  "id, order_id, payment_status, fulfillment_status, subtotal, shipping_fee, total_amount, destination, shipping_service, customer_phone, shipping_address, payment_method, created_at, access_token, order_items(id, product_name, price, quantity, subtotal), customers(name, email, phone)";
+  "id, order_id, payment_status, fulfillment_status, subtotal, shipping_fee, total_amount, destination, shipping_service, customer_name, customer_email, customer_phone, shipping_address, shipping_cost, courier_company, courier_type, postal_code, destination_area_id, notes, payment_method, transaction_id, created_at, access_token, order_items(id, product_name, price, quantity, subtotal), customers(name, email, phone)";
 
-export async function GET(request: NextRequest, context: { params: any }) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
   const params = await context.params;
   const orderId = params.id;
   const { searchParams } = new URL(request.url);

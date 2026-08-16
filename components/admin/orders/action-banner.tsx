@@ -11,12 +11,13 @@ interface BannerItem {
 
 interface ActionBannerProps {
   fulfillmentStatus: string | null;
+  paymentStatus: string | null;
   items: BannerItem[];
   onResume?: () => void;
   loading?: boolean;
 }
 
-export function ActionBanner({ fulfillmentStatus, items, onResume, loading }: ActionBannerProps) {
+export function ActionBanner({ fulfillmentStatus, paymentStatus, items, onResume, loading }: ActionBannerProps) {
   if (fulfillmentStatus !== "waiting_for_restock") return null;
 
   const itemsWithShortage = items.map((item) => ({
@@ -24,7 +25,9 @@ export function ActionBanner({ fulfillmentStatus, items, onResume, loading }: Ac
     shortage: Math.max(0, item.quantity - item.stock),
   }));
 
-  const canResume = itemsWithShortage.every((item) => item.stock >= item.quantity);
+  const canResume =
+    paymentStatus === "paid" &&
+    itemsWithShortage.every((item) => item.stock >= item.quantity);
 
   return (
     <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
@@ -84,7 +87,9 @@ export function ActionBanner({ fulfillmentStatus, items, onResume, loading }: Ac
         </button>
         {!canResume && (
           <span className="text-xs text-slate-400">
-            Stok belum mencukupi untuk melanjutkan.
+            {paymentStatus !== "paid"
+              ? "Pembayaran belum selesai."
+              : "Stok belum mencukupi untuk melanjutkan."}
           </span>
         )}
       </div>

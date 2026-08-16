@@ -1,5 +1,6 @@
 import { OrderRepository } from "@/lib/repositories";
 import { FulfillmentService } from "@/lib/services/fulfillment.service";
+import { PAYMENT_STATUS } from "@/lib/services/payment/types";
 import { createShipment as biteshipCreateShipment } from "./biteship";
 import { getTracking as biteshipGetTracking } from "./biteship";
 import {
@@ -51,6 +52,18 @@ export const ShipmentService = {
           waybillId: order.waybill_id,
           trackingId: order.shipping_tracking_id ?? null,
           trackingLink: null,
+        };
+      }
+
+      const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
+      if (paymentStatus !== PAYMENT_STATUS.PAID) {
+        return {
+          success: false,
+          shipmentId: null,
+          waybillId: null,
+          trackingId: null,
+          trackingLink: null,
+          error: `Payment must be completed before creating a shipment (current: ${paymentStatus})`,
         };
       }
 

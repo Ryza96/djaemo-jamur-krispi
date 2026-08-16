@@ -17,7 +17,11 @@ export function CheckoutActions() {
         className="w-full"
         disabled={state.isSubmitting || isEmpty}
       >
-        {state.isSubmitting ? "Memproses..." : "Buat Pesanan"}
+        {state.isSubmitting
+          ? "Memproses..."
+          : state.resume
+            ? "Lanjutkan Pembayaran"
+            : "Buat Pesanan"}
       </Button>
       <Button href="/cart" variant="outline" className="w-full">
         Kembali ke Keranjang

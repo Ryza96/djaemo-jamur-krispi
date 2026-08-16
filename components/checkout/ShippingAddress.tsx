@@ -37,11 +37,6 @@ export function ShippingAddress() {
     Partial<Record<keyof ShippingAddressInput, string>>
   >({});
 
-  const [provinceQuery, setProvinceQuery] = useState("");
-  const [cityQuery, setCityQuery] = useState("");
-  const [districtQuery, setDistrictQuery] = useState("");
-  const [villageQuery, setVillageQuery] = useState("");
-
   const [provinceId, setProvinceId] = useState("");
   const [regencyId, setRegencyId] = useState("");
   const [districtId, setDistrictId] = useState("");
@@ -133,11 +128,7 @@ export function ShippingAddress() {
           longitude: 0,
         },
       });
-      setProvinceQuery(option.name);
       setProvinceId(pid);
-      setCityQuery("");
-      setDistrictQuery("");
-      setVillageQuery("");
       setRegencyId("");
       setDistrictId("");
       resetShipping();
@@ -161,10 +152,7 @@ export function ShippingAddress() {
           longitude: coords?.lng ?? 0,
         },
       });
-      setCityQuery(option.name);
       setRegencyId(rid);
-      setDistrictQuery("");
-      setVillageQuery("");
       setDistrictId("");
       resetShipping();
     }
@@ -186,9 +174,7 @@ export function ShippingAddress() {
           longitude: coords?.lng ?? shippingAddress.longitude,
         },
       });
-      setDistrictQuery(option.name);
       setDistrictId(did);
-      setVillageQuery("");
       resetShipping();
     }
   }
@@ -202,7 +188,6 @@ export function ShippingAddress() {
           postalCode: option.postalCode || "",
         },
       });
-      setVillageQuery(option.name);
     }
   }
 
@@ -236,7 +221,7 @@ export function ShippingAddress() {
       <AreaSelect
         key={`province-${shippingAddress.province}`}
         label="Provinsi"
-        value={provinceQuery}
+        value={shippingAddress.province}
         onChange={handleProvinceSelect}
         fetchOptions={fetchProvinces}
         placeholder="Ketik minimal 3 huruf (contoh: Jaw, Ace)"
@@ -246,7 +231,7 @@ export function ShippingAddress() {
       <AreaSelect
         key={`city-${shippingAddress.province}`}
         label="Kota"
-        value={cityQuery}
+        value={shippingAddress.city}
         onChange={handleCitySelect}
         fetchOptions={fetchCities}
         placeholder={
@@ -261,7 +246,7 @@ export function ShippingAddress() {
       <AreaSelect
         key={`district-${shippingAddress.city}`}
         label="Kecamatan"
-        value={districtQuery}
+        value={shippingAddress.kecamatan}
         onChange={handleDistrictSelect}
         fetchOptions={fetchDistricts}
         placeholder={
@@ -276,7 +261,7 @@ export function ShippingAddress() {
       <AreaSelect
         key={`village-${shippingAddress.kecamatan}`}
         label="Kelurahan"
-        value={villageQuery}
+        value={shippingAddress.kelurahan}
         onChange={handleVillageSelect}
         fetchOptions={fetchVillages}
         placeholder={

@@ -170,6 +170,7 @@ export function OrderDetailClient({ id }: DetailClientProps) {
 
         <ActionBanner
           fulfillmentStatus={order.fulfillment_status}
+          paymentStatus={order.payment_status}
           items={items.map((item) => ({
             id: item.id,
             product_name: item.product_name,

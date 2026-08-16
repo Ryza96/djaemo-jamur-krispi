@@ -53,6 +53,28 @@ function ShippingSelectorInner() {
     isAddressComplete,
   ]);
 
+  useEffect(() => {
+    if (
+      state.shippingCourier &&
+      state.shippingService &&
+      shippingState.rates.length > 0 &&
+      !shippingState.selectedId
+    ) {
+      const match = shippingState.rates.find(
+        (r) =>
+          r.courier === state.shippingCourier &&
+          r.service === state.shippingService,
+      );
+      if (match) selectRate(match.id);
+    }
+  }, [
+    state.shippingCourier,
+    state.shippingService,
+    shippingState.rates,
+    shippingState.selectedId,
+    selectRate,
+  ]);
+
   function handleSelect(rateId: string) {
     selectRate(rateId);
     const rate = shippingState.rates.find((r) => r.id === rateId);

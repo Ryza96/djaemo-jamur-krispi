@@ -14,6 +14,7 @@ import {
   shippingAddressSchema,
 } from "@/lib/validation/checkout";
 import { buildOrderId } from "@/lib/order";
+import { decideResume } from "@/lib/checkout/resumeOrder";
 
 export function CheckoutForm() {
   const { state, dispatch } = useCheckout();
@@ -27,6 +28,12 @@ export function CheckoutForm() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       dispatch({ type: "SET_ERROR", payload: null });
+
+      const resume = await decideResume();
+      if (resume.kind === "resume") {
+        window.location.href = resume.redirectUrl;
+        return;
+      }
 
       const customerResult = customerInfoSchema.safeParse(
         state.customerInfo,
@@ -99,6 +106,7 @@ export function CheckoutForm() {
               ORDER_STORAGE_KEY,
               JSON.stringify({
                 orderId: data.orderId,
+                accessToken: data.accessToken,
                 totalAmount: data.totalAmount,
                 createdAt: new Date().toISOString(),
                 status: "pending_payment",
