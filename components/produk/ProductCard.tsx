@@ -88,7 +88,7 @@ export function ProductCard({ product }: ProductCardProps) {
             disabled={isAdding}
             className="min-w-0 rounded-full bg-red px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-red/90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isAdding ? "Menambahkan..." : "Pesan Sekarang"}
+            {isAdding ? "Adding..." : "Add To Cart"}
           </button>
         </div>
       </div>
