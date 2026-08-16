@@ -61,7 +61,7 @@ const REASONS = [
 
 function IconWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-gold/30 bg-gold/10 text-gold-bright">
       {children}
     </div>
   );
@@ -69,12 +69,12 @@ function IconWrapper({ children }: { children: React.ReactNode }) {
 
 export function WhyDjaemoSection() {
   return (
-    <Section className="bg-surface-dark">
+    <Section className="bg-teal-deep">
       <div className="text-center">
-        <p className="text-sm font-medium uppercase tracking-widest text-secondary">
+        <p className="font-mono text-sm font-medium uppercase tracking-widest text-gold-bright">
           Keunggulan Kami
         </p>
-        <h2 className="mt-2 text-2xl font-bold text-primary sm:text-3xl">
+        <h2 className="mt-2 font-display text-2xl font-semibold text-cream sm:text-3xl">
           Mengapa D&apos;JAEMO?
         </h2>
       </div>
@@ -83,15 +83,15 @@ export function WhyDjaemoSection() {
         {REASONS.map((reason) => (
           <div
             key={reason.title}
-            className="rounded-2xl border border-primary/10 bg-white p-6 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+            className="rounded-2xl border border-gold/20 bg-white/5 p-6 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-gold/50 hover:shadow-lg"
           >
             <div className="mb-4">
               <IconWrapper>
                 <reason.icon />
               </IconWrapper>
             </div>
-            <h3 className="font-semibold text-primary">{reason.title}</h3>
-            <p className="mt-2 text-sm text-muted">{reason.description}</p>
+            <h3 className="font-semibold text-cream">{reason.title}</h3>
+            <p className="mt-2 text-sm text-cream/70">{reason.description}</p>
           </div>
         ))}
       </div>

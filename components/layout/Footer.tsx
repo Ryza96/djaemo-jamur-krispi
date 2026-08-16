@@ -26,7 +26,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-slate-200 bg-slate-950 text-slate-100">
+    <footer className="mt-auto border-t border-teal-line bg-teal-deep text-cream">
       <div className="mx-auto grid max-w-6xl gap-12 px-4 py-12 sm:px-6 lg:grid-cols-3">
         <div className="space-y-4">
           <Logo
@@ -34,25 +34,25 @@ export function Footer() {
             imageClassName="h-14 w-14 sm:h-16 sm:w-16"
             className="inline-flex"
           />
-          <p className="max-w-sm text-sm leading-6 text-slate-400">
+          <p className="max-w-sm text-sm leading-6 text-cream/70">
             {SITE.tagline} Kami hadir sebagai pilihan terpercaya untuk camilan jamur premium di Indonesia.
           </p>
-          <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+          <div className="flex flex-wrap gap-3 text-xs text-cream/60">
             <span>Privacy Policy</span>
-            <span className="inline-block h-1 w-1 rounded-full bg-slate-600" />
+            <span className="inline-block h-1 w-1 rounded-full bg-gold/40" />
             <span>Terms of Service</span>
           </div>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <p className="font-semibold text-slate-100">Navigasi Cepat</p>
-            <ul className="mt-4 space-y-3 text-sm text-slate-400">
+            <p className="font-semibold text-gold">Navigasi Cepat</p>
+            <ul className="mt-4 space-y-3 text-sm text-cream/70">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="transition-colors hover:text-white"
+                    className="transition-colors hover:text-gold-bright"
                   >
                     {link.label}
                   </Link>
@@ -62,8 +62,8 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="font-semibold text-slate-100">Kontak & Sosial</p>
-            <ul className="mt-4 space-y-3 text-sm text-slate-400">
+            <p className="font-semibold text-gold">Kontak & Sosial</p>
+            <ul className="mt-4 space-y-3 text-sm text-cream/70">
               <li>{SITE.email}</li>
               <li>{SITE.phone}</li>
               <li>{SITE.address}</li>
@@ -76,7 +76,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={link.label}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-slate-300 transition hover:border-secondary-light hover:bg-secondary-light hover:text-slate-950"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 bg-white/5 text-cream/80 transition hover:border-gold-bright hover:bg-gold-bright hover:text-ink"
                 >
                   <SocialIcon label={link.label} />
                 </a>
@@ -86,7 +86,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+      <div className="border-t border-teal-line py-4 text-center text-xs text-cream/50">
         © {currentYear} {SITE.name}. Semua hak dilindungi.
       </div>
     </footer>

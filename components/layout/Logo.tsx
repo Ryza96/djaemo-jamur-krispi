@@ -35,10 +35,10 @@ export function Logo({
       />
       {showText && (
         <span className="flex flex-col">
-          <span className="text-base font-bold leading-tight tracking-tight text-primary sm:text-lg">
+          <span className="text-base font-bold leading-tight tracking-tight text-cream sm:text-lg">
             {SITE.name}
           </span>
-          <span className="hidden text-xs text-muted sm:block">
+          <span className="hidden text-xs text-cream/70 sm:block">
             Renyah & Alami
           </span>
         </span>

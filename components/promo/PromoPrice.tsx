@@ -4,7 +4,7 @@ import { formatPrice, getDisplayPrice, formatDiscountLabel } from "./utils";
 export function PromoPrice({ data, variant = "inline", className }: PromoPriceProps) {
   if (!data.has_active_promo) {
     return (
-      <p className={`text-2xl font-bold text-secondary sm:text-3xl ${className ?? ""}`}>
+      <p className={`font-mono text-2xl font-bold text-ink sm:text-3xl ${className ?? ""}`}>
         {formatPrice(data.normal_price)}
       </p>
     );
@@ -13,13 +13,13 @@ export function PromoPrice({ data, variant = "inline", className }: PromoPricePr
   if (variant === "inline") {
     return (
       <div className={`space-y-1 ${className ?? ""}`}>
-        <p className="text-sm text-muted line-through">
+        <p className="text-sm text-ink-soft line-through">
           {formatPrice(data.normal_price)}
         </p>
-        <p className="text-xl font-bold text-primary">
+        <p className="font-mono text-xl font-bold text-ink">
           {formatPrice(data.final_price)}
         </p>
-        <p className="text-sm font-medium text-green-600">
+        <p className="text-sm font-medium text-red">
           {formatDiscountLabel(data.discount_amount)}
         </p>
       </div>
@@ -29,7 +29,7 @@ export function PromoPrice({ data, variant = "inline", className }: PromoPricePr
   if (variant === "stacked") {
     return (
       <div className={`${className ?? ""}`}>
-        <p className="text-2xl font-bold text-secondary sm:text-3xl">
+        <p className="font-mono text-2xl font-bold text-ink sm:text-3xl">
           {formatPrice(data.final_price)}
         </p>
       </div>
@@ -38,13 +38,13 @@ export function PromoPrice({ data, variant = "inline", className }: PromoPricePr
 
   return (
     <div className={`${className ?? ""}`}>
-      <p className="text-sm text-muted line-through">
+      <p className="text-sm text-ink-soft line-through">
         {formatPrice(data.normal_price)}
       </p>
-      <p className="text-3xl font-bold text-secondary sm:text-4xl">
+      <p className="font-mono text-3xl font-bold text-ink sm:text-4xl">
         {formatPrice(data.final_price)}
       </p>
-      <p className="mt-1 text-sm font-medium text-green-600">
+      <p className="mt-1 text-sm font-medium text-red">
         {formatDiscountLabel(data.discount_amount)}
       </p>
     </div>

@@ -31,7 +31,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-primary/10 bg-surface/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-teal-line bg-teal-deep/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Logo priority className="sm:gap-2" />
 
@@ -40,7 +40,7 @@ export function Header() {
               type="button"
               aria-expanded={isOpen}
               aria-label={isOpen ? "Tutup menu" : "Buka menu"}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/10 bg-white/95 text-foreground transition hover:border-primary hover:text-primary md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-cream transition hover:border-gold hover:text-gold-bright md:hidden"
               onClick={() => setIsOpen((value) => !value)}
             >
               <span className="sr-only">{isOpen ? "Tutup navigasi" : "Buka navigasi"}</span>
@@ -69,8 +69,8 @@ export function Header() {
                     className={cn(
                       "rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4",
                       isActive
-                        ? "bg-primary text-white"
-                        : "text-foreground hover:bg-primary/10 hover:text-primary",
+                        ? "bg-gold text-ink"
+                        : "text-cream hover:bg-white/10 hover:text-gold-bright",
                     )}
                   >
                     {link.label}
@@ -83,8 +83,8 @@ export function Header() {
                 className={cn(
                   "rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4",
                   (currentPath ?? "").startsWith("/track-order")
-                    ? "bg-primary text-white"
-                    : "text-foreground hover:bg-primary/10 hover:text-primary",
+                    ? "bg-gold text-ink"
+                    : "text-cream hover:bg-white/10 hover:text-gold-bright",
                 )}
               >
                 Lacak Pesanan
@@ -100,7 +100,7 @@ export function Header() {
                   ? `Keranjang Belanja, ${totalItems} item`
                   : "Keranjang Belanja"
               }
-              className="relative inline-flex items-center rounded-full border border-primary/10 bg-white/95 p-2 text-foreground transition-colors hover:border-primary hover:text-primary sm:p-3"
+              className="relative inline-flex items-center rounded-full border border-white/15 bg-white/10 p-2 text-cream transition-colors hover:border-gold hover:text-gold-bright sm:p-3"
             >
               <span className="sr-only">Keranjang Belanja</span>
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
@@ -109,7 +109,7 @@ export function Header() {
               {totalItems > 0 && (
                 <span
                   key={totalItems}
-                  className="absolute -right-1 -top-1 inline-flex h-5 w-5 animate-badge items-center justify-center rounded-full bg-secondary text-xs font-semibold text-white"
+                  className="absolute -right-1 -top-1 inline-flex h-5 w-5 animate-badge items-center justify-center rounded-full bg-gold text-xs font-semibold text-ink"
                 >
                   {totalItems}
                 </span>
@@ -123,7 +123,7 @@ export function Header() {
                 title="Akun Saya"
                 aria-label="Akun Saya"
                 aria-expanded={userMenuOpen}
-                className="inline-flex items-center rounded-full border border-primary/10 bg-white/95 p-2 text-foreground transition-colors hover:border-primary hover:text-primary sm:p-3"
+                className="inline-flex items-center rounded-full border border-white/15 bg-white/10 p-2 text-cream transition-colors hover:border-gold hover:text-gold-bright sm:p-3"
               >
                 <span className="sr-only">Akun Saya</span>
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
@@ -132,17 +132,17 @@ export function Header() {
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-primary/10 bg-white py-2 shadow-lg">
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-cream-2 bg-white py-2 shadow-lg">
                   <Link
                     href="/login"
-                    className="block px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    className="block px-4 py-3 text-sm font-medium text-ink transition-colors hover:bg-cream hover:text-ink"
                     onClick={() => setUserMenuOpen(false)}
                   >
                     Masuk
                   </Link>
                   <Link
                     href="/partner"
-                    className="block px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    className="block px-4 py-3 text-sm font-medium text-ink transition-colors hover:bg-cream hover:text-ink"
                     onClick={() => setUserMenuOpen(false)}
                   >
                     Daftar Menjadi Partner
@@ -154,7 +154,7 @@ export function Header() {
         </div>
 
         {isOpen && (
-          <div className="md:hidden border-t border-primary/10 bg-surface/95 px-4 py-4">
+          <div className="md:hidden border-t border-teal-line bg-teal-deep/95 px-4 py-4">
             <nav className="space-y-2">
               {navLinks.map((link) => (
                 <Link
@@ -163,8 +163,8 @@ export function Header() {
                   className={cn(
                     "block rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
                     currentPath === link.href
-                      ? "bg-primary text-white"
-                      : "text-foreground hover:bg-primary/10 hover:text-primary",
+                      ? "bg-gold text-ink"
+                      : "text-cream hover:bg-white/10 hover:text-gold-bright",
                   )}
                   onClick={() => setIsOpen(false)}
                 >
@@ -176,24 +176,24 @@ export function Header() {
                 className={cn(
                   "block rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
                   (currentPath ?? "").startsWith("/track-order")
-                    ? "bg-primary text-white"
-                    : "text-foreground hover:bg-primary/10 hover:text-primary",
+                    ? "bg-gold text-ink"
+                    : "text-cream hover:bg-white/10 hover:text-gold-bright",
                 )}
                 onClick={() => setIsOpen(false)}
               >
                 Lacak Pesanan
               </Link>
-              <div className="border-t border-primary/10 pt-2 mt-2">
+              <div className="border-t border-teal-line pt-2 mt-2">
                 <Link
                   href="/login"
-                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary"
+                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-cream hover:bg-white/10 hover:text-gold-bright"
                   onClick={() => setIsOpen(false)}
                 >
                   Masuk
                 </Link>
                 <Link
                   href="/partner"
-                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary"
+                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-cream hover:bg-white/10 hover:text-gold-bright"
                   onClick={() => setIsOpen(false)}
                 >
                   Daftar Menjadi Partner

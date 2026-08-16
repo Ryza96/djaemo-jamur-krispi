@@ -15,7 +15,7 @@ export function HomepagePromoSection({ promoName, countdown, products }: PromoSe
   if (products.length === 0) return null;
 
   return (
-    <Section className="bg-secondary/10">
+    <Section className="bg-gold/5">
       <PromoSectionHeader
         name={promoName}
         countdown={countdown}
@@ -38,7 +38,7 @@ function HomepageProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={productUrl}
-      className="group block rounded-2xl border border-primary/10 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      className="group block rounded-2xl border border-gold/30 bg-white p-4 shadow-sm transition-all duration-200 hover:-rotate-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
     >
       <div className="relative aspect-square overflow-hidden rounded-xl">
         <Image
@@ -52,7 +52,7 @@ function HomepageProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="mt-4 text-center">
-        <h3 className="text-base font-semibold text-primary">{product.name}</h3>
+        <h3 className="text-base font-semibold text-ink">{product.name}</h3>
 
         <div className="mt-3">
           <PartnerPriceDisplay product={product} variant="inline" className="items-center" />
@@ -65,7 +65,7 @@ function HomepageProductCard({ product }: { product: Product }) {
         )}
 
         <div className="mt-4">
-          <span className="inline-block rounded-full border border-primary/20 px-5 py-2 text-xs font-medium text-primary/60 transition-colors duration-200 group-hover:border-primary/40 group-hover:text-primary">
+          <span className="inline-block rounded-full border border-gold/30 px-5 py-2 font-mono text-xs font-medium text-ink-soft transition-colors duration-200 group-hover:border-gold group-hover:text-ink">
             Lihat Produk
           </span>
         </div>

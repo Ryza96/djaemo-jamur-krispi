@@ -2,12 +2,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const variants = {
-  primary:
-    "bg-primary text-white hover:bg-primary-light focus-visible:ring-primary",
-  secondary:
-    "bg-secondary text-white hover:bg-secondary-light focus-visible:ring-secondary",
+  primary: "bg-red text-white hover:bg-red/90 focus-visible:ring-red",
+  secondary: "bg-gold text-ink hover:bg-gold-bright focus-visible:ring-gold",
   outline:
-    "border-2 border-primary text-primary hover:bg-primary hover:text-white focus-visible:ring-primary",
+    "border-2 border-gold text-gold hover:bg-gold hover:text-ink focus-visible:ring-gold",
 };
 
 const baseStyles =

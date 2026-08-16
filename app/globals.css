@@ -1,16 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand — earthy mushroom & golden crisp */
-  --primary: #6b4226;
-  --primary-light: #8b5a3c;
-  --secondary: #c8942a;
-  --secondary-light: #e0ad3a;
-  --accent: #3d6b35;
-  --surface: #fff8f0;
-  --surface-dark: #f5ebe0;
-  --foreground: #2c1810;
-  --muted: #6b5b52;
+  /* D'Jaemo brand palette (from packaging) */
+  --teal-deep: #0b3634;
+  --teal-mid: #12504c;
+  --teal-line: rgba(227, 179, 61, 0.28);
+  --gold: #e3b33d;
+  --gold-bright: #f2c955;
+  --red: #c1392b;
+  --cream: #fbf6ea;
+  --cream-2: #f3ead6;
+  --ink: #10201e;
+  --ink-soft: #4c5c58;
+
+  /* Legacy semantic aliases (kept mapped so existing classes keep working) */
+  --primary: var(--ink);
+  --primary-light: var(--ink-soft);
+  --secondary: var(--gold);
+  --secondary-light: var(--gold-bright);
+  --accent: var(--red);
+  --surface: var(--cream);
+  --surface-dark: var(--cream-2);
+  --foreground: var(--ink);
+  --muted: var(--ink-soft);
   --background: var(--surface);
 }
 
@@ -25,14 +37,27 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-background: var(--background);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-teal-deep: var(--teal-deep);
+  --color-teal-mid: var(--teal-mid);
+  --color-teal-line: var(--teal-line);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-red: var(--red);
+  --color-cream: var(--cream);
+  --color-cream-2: var(--cream-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-newsreader);
+  --font-mono: var(--font-plex-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 @keyframes badge-pop {

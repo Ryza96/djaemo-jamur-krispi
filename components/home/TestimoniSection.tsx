@@ -41,7 +41,7 @@ const TESTIMONIALS = [
 
 function StarIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-secondary">
+    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-gold">
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   );
@@ -58,14 +58,14 @@ function TestimonialCard({
     .join("");
 
   return (
-    <div className="rounded-2xl border border-primary/10 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+    <div className="rounded-2xl border border-cream-2 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-gold/40 hover:shadow-md">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 bg-cream text-sm font-semibold text-teal-mid">
           {initials}
         </div>
         <div>
-          <p className="font-semibold text-primary">{testimonial.name}</p>
-          <p className="text-xs text-muted">{testimonial.city}</p>
+          <p className="font-semibold text-ink">{testimonial.name}</p>
+          <p className="text-xs text-ink-soft">{testimonial.city}</p>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ function TestimonialCard({
         ))}
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-muted">
+      <p className="mt-4 font-display text-sm italic leading-relaxed text-ink-soft">
         &ldquo;{testimonial.text}&rdquo;
       </p>
     </div>
@@ -86,13 +86,13 @@ export function TestimoniSection() {
   return (
     <Section>
       <div className="text-center">
-        <p className="text-sm font-medium uppercase tracking-widest text-secondary">
+        <p className="font-mono text-sm font-medium uppercase tracking-widest text-gold">
           Testimoni
         </p>
-        <h2 className="mt-2 text-2xl font-bold text-primary sm:text-3xl">
+        <h2 className="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">
           Kata Mereka tentang D&apos;JAEMO
         </h2>
-        <p className="mt-3 text-muted">
+        <p className="mt-3 text-ink-soft">
           100+ Customer telah mempercayai D&apos;JAEMO
         </p>
       </div>
