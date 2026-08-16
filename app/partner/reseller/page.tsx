@@ -162,8 +162,8 @@ export default function ResellerPage() {
             Pastikan Anda telah membaca seluruh informasi di atas sebelum melanjutkan ke proses registrasi.
           </p>
           <div className="mt-8">
-            <Button href="/partner/register" variant="primary" className="px-10">
-              Lanjutkan
+            <Button href="/partner/reseller/register" variant="primary" className="px-10">
+              Daftar sebagai Reseller
             </Button>
           </div>
           <div className="mt-6">

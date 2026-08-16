@@ -161,8 +161,8 @@ export default function DropshipperPage() {
             Pastikan Anda telah membaca seluruh informasi di atas sebelum melanjutkan ke proses registrasi.
           </p>
           <div className="mt-8">
-            <Button href="/partner/register" variant="primary" className="px-10">
-              Lanjutkan
+            <Button href="/partner/dropshipper/register" variant="primary" className="px-10">
+              Daftar sebagai Dropshipper
             </Button>
           </div>
           <div className="mt-6">
