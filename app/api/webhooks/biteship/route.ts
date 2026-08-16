@@ -1,21 +1,60 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { supabase } from "@/lib/supabase";
 import type { BiteshipWebhookPayload } from "@/lib/services/shipping/types";
 import { ShipmentService } from "@/lib/services/shipping/shipment.service";
 
-// TODO: Verify Biteship webhook signature
+const BITESHIP_SIGNATURE_HEADER =
+  process.env.BITESHIP_WEBHOOK_SIGNATURE_HEADER ?? "x-biteship-signature";
+const BITESHIP_SIGNATURE_SECRET = process.env.BITESHIP_WEBHOOK_SIGNATURE_SECRET;
 
-// Biteship sends empty payload during webhook installation.
+function signaturesMatch(expected: string, received: string): boolean {
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
 
-// TEMPORARY DEBUG
-// Capture raw webhook payload.
-// Remove after Sprint 7 verification.
+// Biteship webhook security: a signature header (name + secret configured in
+// the Biteship dashboard) is sent with every webhook request. Validate it
+// before processing any payload.
+
+// Biteship sends an empty payload during webhook installation.
 
 export async function POST(request: Request) {
+  const rawBody = await request.text();
+
+  if (!rawBody.trim()) {
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
+
+  if (!BITESHIP_SIGNATURE_SECRET) {
+    console.error(
+      "Biteship webhook rejected: BITESHIP_WEBHOOK_SIGNATURE_SECRET is not configured.",
+    );
+    return NextResponse.json(
+      { success: false, error: "Server configuration error" },
+      { status: 500 },
+    );
+  }
+
+  const receivedSignature = request.headers.get(BITESHIP_SIGNATURE_HEADER);
+  if (!receivedSignature || !signaturesMatch(receivedSignature, BITESHIP_SIGNATURE_SECRET)) {
+    console.error(
+      `Biteship webhook rejected: invalid signature (header "${BITESHIP_SIGNATURE_HEADER}").`,
+    );
+    return NextResponse.json(
+      { success: false, error: "Invalid signature" },
+      { status: 401 },
+    );
+  }
+
   let payload: Record<string, unknown>;
 
   try {
-    payload = await request.json();
+    payload = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ success: true }, { status: 200 });
   }
