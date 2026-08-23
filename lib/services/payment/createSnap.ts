@@ -91,6 +91,8 @@ export async function createSnapTransaction(
     item_details: buildItemDetails(items, shippingFee),
     callbacks: {
       finish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}&token=${accessToken}`,
+      unfinish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout?order_id=${orderId}&token=${accessToken}`,
+      error: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout?order_id=${orderId}&token=${accessToken}`,
     },
   };
 

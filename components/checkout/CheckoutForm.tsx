@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useState } from "react";
 import { useCheckout } from "@/components/checkout/CheckoutProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { CustomerInfo } from "@/components/checkout/CustomerInfo";
@@ -9,6 +9,7 @@ import { ShippingSelector } from "@/components/checkout/shipping/ShippingSelecto
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { VoucherSection } from "@/components/checkout/VoucherSection";
 import { CheckoutActions } from "@/components/checkout/CheckoutActions";
+import { Button } from "@/components/ui/Button";
 import {
   customerInfoSchema,
   shippingAddressSchema,
@@ -22,7 +23,72 @@ export function CheckoutForm() {
 
   const ORDER_STORAGE_KEY = "djaemo-last-order";
 
-  const orderId = useMemo(() => buildOrderId(), []);
+  const [orderId, setOrderId] = useState(() => buildOrderId());
+
+  const createOrderAndPay = useCallback(
+    async (currentOrderId: string): Promise<boolean> => {
+      const res = await fetch("/api/payment/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: currentOrderId,
+          customerInfo: state.customerInfo,
+          shippingAddress: state.shippingAddress,
+          shippingCourier: state.shippingCourier,
+          shippingService: state.shippingService,
+          shippingFee: state.shippingFee,
+          items: items.map((item) => ({
+            product: {
+              id: item.product.id,
+              name: item.product.name,
+              price: item.product.final_price,
+            },
+            quantity: item.quantity,
+          })),
+          subtotal,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          return false;
+        }
+        throw new Error(data.error || "Gagal membuat transaksi");
+      }
+
+      if (data.redirectUrl) {
+        try {
+          window.localStorage.setItem(
+            ORDER_STORAGE_KEY,
+            JSON.stringify({
+              orderId: data.orderId,
+              accessToken: data.accessToken,
+              totalAmount: data.totalAmount,
+              createdAt: new Date().toISOString(),
+              status: "pending_payment",
+            }),
+          );
+        } catch {
+          // localStorage not available
+        }
+
+        window.location.href = data.redirectUrl;
+      }
+
+      return true;
+    },
+    [
+      state.customerInfo,
+      state.shippingAddress,
+      state.shippingFee,
+      state.shippingService,
+      state.shippingCourier,
+      items,
+      subtotal,
+    ],
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -72,51 +138,12 @@ export function CheckoutForm() {
       dispatch({ type: "SET_SUBMITTING", payload: true });
 
       try {
-        const res = await fetch("/api/payment/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId,
-            customerInfo: state.customerInfo,
-            shippingAddress: state.shippingAddress,
-            shippingCourier: state.shippingCourier,
-            shippingService: state.shippingService,
-            shippingFee: state.shippingFee,
-            items: items.map((item) => ({
-              product: {
-                id: item.product.id,
-                name: item.product.name,
-                price: item.product.final_price,
-              },
-              quantity: item.quantity,
-            })),
-            subtotal,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Gagal membuat transaksi");
-        }
-
-        if (data.redirectUrl) {
-          try {
-            window.localStorage.setItem(
-              ORDER_STORAGE_KEY,
-              JSON.stringify({
-                orderId: data.orderId,
-                accessToken: data.accessToken,
-                totalAmount: data.totalAmount,
-                createdAt: new Date().toISOString(),
-                status: "pending_payment",
-              }),
-            );
-          } catch {
-            // localStorage not available
-          }
-
-          window.location.href = data.redirectUrl;
+        const done = await createOrderAndPay(orderId);
+        if (!done) {
+          // Order ID sudah ada di server (409): regenerate & retry maksimal 1x
+          const newOrderId = buildOrderId();
+          setOrderId(newOrderId);
+          await createOrderAndPay(newOrderId);
         }
       } catch (err) {
         const message =
@@ -131,18 +158,56 @@ export function CheckoutForm() {
       state.shippingAddress,
       state.shippingFee,
       state.shippingService,
-      state.shippingCourier,
-      items,
-      subtotal,
       orderId,
+      items,
       dispatch,
+      createOrderAndPay,
     ],
   );
+
+  function handleContinuePayment() {
+    if (!state.resume) return;
+    window.location.href = state.resume.redirectUrl;
+  }
+
+  function handleDiscardResume() {
+    try {
+      window.localStorage.removeItem(ORDER_STORAGE_KEY);
+    } catch {
+      // localStorage not available
+    }
+    dispatch({ type: "RESET" });
+    setOrderId(buildOrderId());
+  }
 
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="grid gap-8 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-8">
+          {state.resume && (
+            <section className="rounded-3xl border border-amber-500/30 bg-amber-50 p-6 shadow-sm">
+              <h2 className="mb-1 text-lg font-semibold text-primary">
+                Pesanan Belum Dibayar
+              </h2>
+              <p className="text-sm text-muted">
+                Pesanan{" "}
+                <span className="font-semibold text-primary">
+                  {state.resume.orderId}
+                </span>{" "}
+                masih menunggu pembayaran. Lanjutkan pembayaran, atau batalkan
+                untuk membuat pesanan baru.
+              </p>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <Button onClick={handleContinuePayment}>
+                  Lanjutkan Pembayaran
+                </Button>
+                <Button variant="outline" onClick={handleDiscardResume}>
+                  Batalkan &amp; Buat Pesanan Baru
+                </Button>
+              </div>
+            </section>
+          )}
+
           <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
             <h2 className="mb-1 text-lg font-semibold text-primary">
               Informasi Pembeli

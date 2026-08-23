@@ -120,6 +120,67 @@ export const OrderService = {
     });
   },
 
+  async expireUnpaidOrder(
+    orderId: string,
+    reason: string = "payment_expired",
+  ): Promise<{ success: boolean; message: string }> {
+    const order = await OrderRepository.findByOrderId(orderId);
+    if (!order) {
+      return { success: false, message: "ORDER_NOT_FOUND" };
+    }
+
+    const currentStatus = (
+      order.payment_status ?? order.status ?? ""
+    ).toLowerCase();
+
+    if (currentStatus === PAYMENT_STATUS.PAID) {
+      return { success: false, message: "ORDER_ALREADY_PAID" };
+    }
+
+    if (
+      currentStatus !== PAYMENT_STATUS.PENDING &&
+      currentStatus !== PAYMENT_STATUS.UNPAID
+    ) {
+      return {
+        success: false,
+        message: `ORDER_NOT_EXPIRABLE (current: ${currentStatus})`,
+      };
+    }
+
+    const targetStatus =
+      currentStatus === PAYMENT_STATUS.PENDING
+        ? PAYMENT_STATUS.EXPIRED
+        : PAYMENT_STATUS.FAILED;
+
+    await OrderRepository.updatePaymentByOrderId(orderId, {
+      payment_status: targetStatus as PaymentStatus,
+    });
+
+    const cancelResult = await FulfillmentService.cancel(orderId, reason);
+    if (!cancelResult.success) {
+      await AuditLogService.logPaymentEvent({
+        orderId,
+        event: AuditLogService.events.ROLLBACK,
+        fromStatus: targetStatus as PaymentStatus,
+        toStatus: targetStatus as PaymentStatus,
+        metadata: { reason: "auto_cancel_failed", detail: cancelResult.message },
+      });
+    }
+
+    await AuditLogService.logPaymentEvent({
+      orderId,
+      event: AuditLogService.events.STATUS_CHANGED,
+      fromStatus: currentStatus as PaymentStatus,
+      toStatus: targetStatus as PaymentStatus,
+      metadata: { reason },
+    });
+
+    return {
+      success: true,
+      message: `Order ${orderId} marked as ${targetStatus}`,
+    };
+  },
+
   async processCallback(
     notification: MidtransNotification,
   ): Promise<ProcessCallbackResult> {

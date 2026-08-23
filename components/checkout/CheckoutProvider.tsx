@@ -13,6 +13,10 @@ import {
   isResumableOrder,
   restoreToCheckout,
 } from "@/lib/checkout/restoreOrder";
+import {
+  isStalePendingOrder,
+  expireStaleOrder,
+} from "@/lib/checkout/resumeOrder";
 import { buildSnapRedirectUrl } from "@/lib/checkout/resumeOrder";
 
 const ORDER_STORAGE_KEY = "djaemo-last-order";
@@ -111,6 +115,11 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 
         const order = json.data;
         if (!isResumableOrder(order.payment_status)) return;
+
+        if (isStalePendingOrder(order)) {
+          await expireStaleOrder(order.order_id, accessToken);
+          return;
+        }
         if (cancelled) return;
 
         const snapToken: string | undefined = order.transaction_id;
