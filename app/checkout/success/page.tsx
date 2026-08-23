@@ -79,6 +79,10 @@ export default function CheckoutSuccessPage() {
   const [copied, setCopied] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [activeToken, setActiveToken] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const orderIdFromUrl = searchParams?.get("order_id") ?? null;
   const tokenFromUrl = searchParams?.get("token") ?? null;
@@ -145,6 +149,7 @@ export default function CheckoutSuccessPage() {
             status: data.payment_status,
           }));
 
+          setActiveToken(token);
           setOrder(data);
           setLoading(false);
         }
@@ -196,6 +201,48 @@ export default function CheckoutSuccessPage() {
       setResuming(false);
     }
   }, [resuming, order]);
+
+  const handleCancelOrder = useCallback(async () => {
+    if (!order || cancelling) return;
+    const token = activeToken ?? tokenFromUrl;
+    if (!token) {
+      setCancelError("Token tidak tersedia untuk membatalkan pesanan.");
+      return;
+    }
+
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(
+        `/api/orders/${encodeURIComponent(order.order_id)}/expire?token=${encodeURIComponent(token)}`,
+        { method: "POST" },
+      );
+      const json = await res.json().catch(() => null);
+
+      if (res.ok && json?.success) {
+        try {
+          window.localStorage.removeItem(ORDER_STORAGE_KEY);
+        } catch {}
+        router.push("/checkout");
+        return;
+      }
+
+      const friendlyErrors: Record<string, string> = {
+        ORDER_ALREADY_PAID: "Pesanan sudah dibayar dan tidak dapat dibatalkan.",
+        ORDER_NOT_EXPIRABLE: "Status pesanan tidak dapat dibatalkan.",
+        ORDER_NOT_FOUND: "Pesanan tidak ditemukan.",
+      };
+      setCancelError(
+        (json?.error && friendlyErrors[json.error]) ||
+          json?.error ||
+          "Gagal membatalkan pesanan. Silakan coba lagi.",
+      );
+    } catch {
+      setCancelError("Terjadi kesalahan jaringan. Silakan coba lagi.");
+    } finally {
+      setCancelling(false);
+    }
+  }, [order, cancelling, activeToken, tokenFromUrl, router]);
 
   function handleCopyOrderId() {
     if (!order?.order_id) return;
@@ -491,13 +538,24 @@ export default function CheckoutSuccessPage() {
                 <Button
                   className="w-full"
                   onClick={handleResumePayment}
-                  disabled={resuming}
+                  disabled={resuming || cancelling}
                 >
                   {resuming ? "Memproses..." : "Lanjutkan Pembayaran"}
                 </Button>
                 {resumeError && (
                   <p className="text-center text-xs text-red-600">{resumeError}</p>
                 )}
+                <Button
+                  variant="outline"
+                  className="w-full border-red/30 text-red hover:border-red hover:bg-red hover:text-white focus-visible:ring-red"
+                  onClick={() => {
+                    setCancelError(null);
+                    setShowCancelConfirm(true);
+                  }}
+                  disabled={cancelling}
+                >
+                  Batalkan & Buat Pesanan Baru
+                </Button>
               </div>
             )}
             {effectiveStatus === "success" && orderIdFromUrl && (
@@ -528,6 +586,48 @@ export default function CheckoutSuccessPage() {
           </div>
         </aside>
       </div>
+
+      {showCancelConfirm && effectiveStatus === "pending" && order && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !cancelling) {
+              setShowCancelConfirm(false);
+              setCancelError(null);
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-primary">Batalkan Pesanan?</h3>
+            <p className="mt-3 text-sm text-muted">
+              Yakin ingin membatalkan pesanan ini? Pesanan{" "}
+              <span className="font-semibold text-foreground">{order.order_id}</span> akan
+              dibatalkan, lalu Anda dapat membuat pesanan baru dengan metode pembayaran yang
+              berbeda.
+            </p>
+            {cancelError && (
+              <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                {cancelError}
+              </p>
+            )}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  setCancelError(null);
+                }}
+                disabled={cancelling}
+              >
+                Kembali
+              </Button>
+              <Button onClick={handleCancelOrder} disabled={cancelling}>
+                {cancelling ? "Membatalkan..." : "Ya, Batalkan Pesanan"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Section>
   );
 }
