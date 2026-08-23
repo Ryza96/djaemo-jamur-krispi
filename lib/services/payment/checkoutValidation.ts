@@ -102,8 +102,9 @@ async function fetchBiteshipRates(params: {
 
   const apiKey = getBiteshipApiKey();
   const origin = {
-    lat: Number(process.env.NEXT_PUBLIC_ORIGIN_LAT) || -7.1545,
-    lng: Number(process.env.NEXT_PUBLIC_ORIGIN_LNG) || 111.8853,
+    // Desa Pandantoyo, Kec. Temayang, Kab. Bojonegoro (lokasi toko)
+    lat: Number(process.env.NEXT_PUBLIC_ORIGIN_LAT) || -7.32893,
+    lng: Number(process.env.NEXT_PUBLIC_ORIGIN_LNG) || 111.92316,
   };
 
   const controller = new AbortController();

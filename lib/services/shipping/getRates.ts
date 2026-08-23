@@ -66,9 +66,10 @@ export function getDestinationCoords(
 }
 
 function getOriginCoords(): { lat: number; lng: number } {
+  // Desa Pandantoyo, Kec. Temayang, Kab. Bojonegoro (lokasi toko)
   return {
-    lat: Number(process.env.NEXT_PUBLIC_ORIGIN_LAT) || -7.1545,
-    lng: Number(process.env.NEXT_PUBLIC_ORIGIN_LNG) || 111.8853,
+    lat: Number(process.env.NEXT_PUBLIC_ORIGIN_LAT) || -7.32893,
+    lng: Number(process.env.NEXT_PUBLIC_ORIGIN_LNG) || 111.92316,
   };
 }
 
