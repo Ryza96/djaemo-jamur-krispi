@@ -16,9 +16,12 @@ const createPaymentSchema = z.object({
   customerInfo: z.object({
     name: z.string().min(1, "Nama wajib diisi"),
     whatsapp: z.string().min(1, "WhatsApp wajib diisi"),
-    email: z.string().refine(
-      (val) => val === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
-      "Email tidak valid",
+    email: z.preprocess(
+      (val) => (val === undefined ? "" : val),
+      z.string().refine(
+        (val) => val === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+        "Email tidak valid",
+      ),
     ),
     notes: z.string().optional(),
   }),
@@ -59,6 +62,20 @@ function logStep(step: number, message: string, data?: unknown) {
     console.log(text);
   }
   console.log("--------------------");
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+
+  if (typeof error === "object" && error !== null) {
+    const maybeMessage = (error as Record<string, unknown>).message;
+    if (typeof maybeMessage === "string" && maybeMessage.trim() !== "") {
+      const code = (error as Record<string, unknown>).code;
+      return code ? `[${String(code)}] ${maybeMessage}` : maybeMessage;
+    }
+  }
+
+  return "Gagal membuat transaksi pembayaran";
 }
 
 function logFail(step: number, error: unknown) {
@@ -199,17 +216,31 @@ export async function POST(request: Request) {
     } catch (snapError) {
       logFail(4, snapError);
 
-      await OrderRepository.updatePayment(orderDbId, {
-        payment_status: PAYMENT_STATUS.FAILED,
-      });
+      try {
+        await OrderRepository.updatePayment(orderDbId, {
+          payment_status: PAYMENT_STATUS.FAILED,
+        });
+      } catch (rollbackError) {
+        console.error(
+          "[ROLLBACK FAILED] updatePayment after snap failure:",
+          rollbackError,
+        );
+      }
 
-      await AuditLogService.logPaymentEvent({
-        orderId,
-        event: AuditLogService.events.ROLLBACK,
-        fromStatus: PAYMENT_STATUS.UNPAID,
-        toStatus: PAYMENT_STATUS.FAILED,
-        metadata: { reason: "snap_failed_after_retries" },
-      });
+      try {
+        await AuditLogService.logPaymentEvent({
+          orderId,
+          event: AuditLogService.events.ROLLBACK,
+          fromStatus: PAYMENT_STATUS.UNPAID,
+          toStatus: PAYMENT_STATUS.FAILED,
+          metadata: { reason: "snap_failed_after_retries" },
+        });
+      } catch (auditError) {
+        console.error(
+          "[ROLLBACK FAILED] audit log after snap failure:",
+          auditError,
+        );
+      }
 
       return NextResponse.json(
         { error: "Gagal membuat transaksi pembayaran setelah beberapa percobaan" },
@@ -249,10 +280,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Gagal membuat transaksi pembayaran",
+        error: extractErrorMessage(error),
       },
       { status: 500 },
     );
