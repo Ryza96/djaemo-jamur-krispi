@@ -6,6 +6,7 @@
  *   Scenario #1b: Missing Phone — channel handles null phone gracefully
  *   Scenario #2: Double Click — idempotency (engine-level explanation)
  *   Scenario #3: Idempotency — same order, same event
+ *   Scenario #4: Phone Normalization — 08xx/+62xx/62xx → 62..., invalid → null
  *
  * Run with: npx tsx lib/notifications/__tests__/whatsapp-channel.test.ts
  */
@@ -13,6 +14,7 @@
 import { createWhatsAppChannel } from "../channels/whatsapp/wa-channel";
 import { createMockWhatsAppProvider } from "../channels/whatsapp/mock-provider";
 import { formatWaMessage } from "../channels/whatsapp/formatter";
+import { normalizeWaTarget } from "../channels/whatsapp/normalize-phone";
 import type { NotificationPayload, NotificationChannel, ChannelResult } from "../types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────
@@ -159,7 +161,41 @@ console.log("");
 console.log("  ✅ IDEMPOTENSI DIJAMIN OLEH:");
 console.log("    - NotificationLogRepository.isSent() pre-check");
 console.log("    - Partial Unique Index: UNIQUE (event, order_id, channel_id) WHERE sent");
-console.log("    - tryMarkSent() error 23505 handling");
+  console.log("    - tryMarkSent() error 23505 handling");
+
+// ─── Test: Scenario #4 — Phone Normalization ────────────────────────────
+
+group("SCENARIO #4: PHONE NORMALIZATION — Format ke 62... untuk Fonnte");
+
+assert(normalizeWaTarget("08123456789") === "628123456789", "08xx → 628xx");
+assert(normalizeWaTarget("+628123456789") === "628123456789", "+628xx → 628xx");
+assert(normalizeWaTarget("628123456789") === "628123456789", "628xx tetap 628xx");
+assert(normalizeWaTarget("0812 345 6789") === "628123456789", "spasi diabaikan");
+assert(normalizeWaTarget("12345") === null, "nomor pendek invalid → null");
+assert(normalizeWaTarget("abcdefgh") === null, "huruf murni → null");
+assert(normalizeWaTarget("") === null, "string kosong → null");
+
+let capturedTarget = "";
+const spyProvider = createWhatsAppChannel({
+  providerId: "spy",
+  async send(msg) {
+    capturedTarget = msg.target;
+    return { success: true, messageId: "spy-ok" };
+  },
+});
+
+const normPayload = createMockPayload();
+const normResult08 = await spyProvider.send(normPayload, { name: "", email: null, phone: "08123456789" });
+assert(normResult08.success === true, "WA normalisasi 08xx sukses");
+assert(capturedTarget === "628123456789", "provider terima 628123456789");
+
+const normResultPlus = await spyProvider.send(normPayload, { name: "", email: null, phone: "+628123456789" });
+assert(normResultPlus.success === true, "WA normalisasi +62xx sukses");
+assert(capturedTarget === "628123456789", "provider terima 628123456789 dari +62xx");
+
+const normResultBad = await spyProvider.send(normPayload, { name: "", email: null, phone: "12345" });
+assert(normResultBad.success === false, "WA ditolak saat nomor tidak valid");
+assert(normResultBad.error === "INVALID_PHONE_FORMAT", "error INVALID_PHONE_FORMAT");
 
 // ─── Summary ────────────────────────────────────────────────────────────
 

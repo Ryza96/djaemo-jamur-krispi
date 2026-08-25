@@ -1,6 +1,7 @@
 import type { NotificationChannel, ChannelResult, NotificationPayload, RecipientInfo } from "../../types";
 import type { WhatsAppProvider } from "./types";
 import { formatWaMessage } from "./formatter";
+import { normalizeWaTarget } from "./normalize-phone";
 
 export function createWhatsAppChannel(provider: WhatsAppProvider): NotificationChannel {
   return {
@@ -19,8 +20,18 @@ export function createWhatsAppChannel(provider: WhatsAppProvider): NotificationC
         };
       }
 
+      const target = normalizeWaTarget(recipient.phone);
+      if (!target) {
+        return {
+          success: false,
+          channelId: "whatsapp",
+          error: "INVALID_PHONE_FORMAT",
+          timestamp: new Date().toISOString(),
+        };
+      }
+
       const message = formatWaMessage(payload);
-      message.target = recipient.phone;
+      message.target = target;
 
       const result = await provider.send(message);
 
