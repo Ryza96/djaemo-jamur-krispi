@@ -10,6 +10,7 @@ const AUDIT_EVENTS = {
   CALLBACK_SKIPPED: "callback.skipped",
   CALLBACK_INVALID: "callback.invalid",
   ROLLBACK: "order.rollback",
+  ORDER_RECOVERED: "order.recovered",
   ORDER_CONFIRMED: "order.confirmed",
   ORDER_PACKING: "order.packing",
   ORDER_WAYBILL_CREATED: "order.waybill_created",

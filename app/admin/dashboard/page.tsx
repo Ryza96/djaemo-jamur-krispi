@@ -11,6 +11,7 @@ interface DashboardStats {
   lowStockItems: Array<{ name: string; stock: number }>;
   weeklySales: Array<{ date: string; total: number }>;
   periodLabel: string;
+  waitingRestockCount: number;
 }
 
 const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -150,6 +151,35 @@ export default function AdminDashboardPage() {
 
   return (
     <>
+      {!loading && (stats?.waitingRestockCount ?? 0) > 0 && (
+        <section
+          role="alert"
+          className="rounded-3xl border border-amber-300 bg-amber-50 p-5 shadow-sm shadow-amber-200/50 sm:p-6"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 animate-pulse items-center justify-center rounded-2xl bg-amber-100 text-xl">
+                ⚠️
+              </span>
+              <div>
+                <p className="font-semibold text-amber-900">
+                  {stats?.waitingRestockCount} pesanan terbayar menunggu restok
+                </p>
+                <p className="mt-1 text-sm text-amber-800">
+                  Stok produk belum tersedia. Segera lakukan restok agar pesanan dapat diproses.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push("/admin/orders?fulfillment_status=waiting_for_restock")}
+              className="shrink-0 rounded-2xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-600"
+            >
+              Lihat Pesanan
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => (
           <article key={card.title} className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200">
@@ -255,6 +285,18 @@ export default function AdminDashboardPage() {
               <div>
                 <p className="font-semibold text-slate-900 group-hover:text-red-700">Masalah Pembayaran</p>
                 <p className="text-sm text-slate-500">Cek pembayaran gagal</p>
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => router.push("/admin/orders?fulfillment_status=waiting_for_restock")}
+            className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-amber-200 hover:bg-amber-50"
+          >
+            <div className="flex items-center gap-3">
+              <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${(stats?.waitingRestockCount ?? 0) > 0 ? "animate-pulse bg-amber-100" : "bg-slate-100"}`}>⏸️</span>
+              <div>
+                <p className="font-semibold text-slate-900 group-hover:text-amber-700">Menunggu Restok</p>
+                <p className="text-sm text-slate-500">{stats?.waitingRestockCount ?? 0} pesanan tertahan stok</p>
               </div>
             </div>
           </button>

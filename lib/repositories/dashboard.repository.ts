@@ -32,6 +32,7 @@ export interface DashboardStats {
   lowStockItems: Array<{ name: string; stock: number }>;
   weeklySales: Array<{ date: string; total: number }>;
   periodLabel: string;
+  waitingRestockCount: number;
 }
 
 export const DashboardRepository = {
@@ -43,7 +44,7 @@ export const DashboardRepository = {
 
     const wibMonthStartUTC = getWIBMonthStartUTC(now);
 
-    const [revenueResult, pendingResult, customerResult, lowStockCountResult, lowStockItemsResult, weeklySalesResult] =
+    const [revenueResult, pendingResult, customerResult, lowStockCountResult, lowStockItemsResult, weeklySalesResult, waitingRestockResult] =
       await Promise.all([
         supabase
           .from("orders")
@@ -78,6 +79,12 @@ export const DashboardRepository = {
           .select("subtotal, created_at")
           .eq("payment_status", "paid")
           .gte("created_at", weekAgoISO),
+
+        supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("payment_status", "paid")
+          .eq("fulfillment_status", "waiting_for_restock"),
       ]);
 
     if (revenueResult.error) throw revenueResult.error;
@@ -86,6 +93,7 @@ export const DashboardRepository = {
     if (lowStockCountResult.error) throw lowStockCountResult.error;
     if (lowStockItemsResult.error) throw lowStockItemsResult.error;
     if (weeklySalesResult.error) throw weeklySalesResult.error;
+    if (waitingRestockResult.error) throw waitingRestockResult.error;
 
     const revenue = (revenueResult.data ?? []).reduce(
       (sum, row) => sum + (row.subtotal ?? 0),
@@ -119,6 +127,7 @@ export const DashboardRepository = {
       lowStockItems: lowStockItemsResult.data ?? [],
       weeklySales,
       periodLabel: getWIBPeriodLabel(now),
+      waitingRestockCount: waitingRestockResult.count ?? 0,
     };
   },
 };

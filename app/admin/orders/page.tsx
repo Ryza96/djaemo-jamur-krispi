@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { AlertCircle, Inbox } from "lucide-react";
 import { OrderToolbar } from "@/components/admin/orders/toolbar";
 import { OrderTable } from "@/components/admin/orders/table";
@@ -11,6 +12,7 @@ import { AdminPageHeader } from "@/components/admin/patterns/AdminPageHeader";
 import { AdminEmptyLayout } from "@/components/admin/patterns/AdminEmptyLayout";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { useOrders } from "@/hooks/use-orders";
+import { FULFILLMENT_STATUS_OPTIONS } from "@/components/admin/orders/types";
 
 export default function AdminOrdersPage() {
   const router = useRouter();
@@ -24,6 +26,25 @@ export default function AdminOrdersPage() {
     setFilters,
     refresh,
   } = useOrders();
+
+  // Deep-link support: /admin/orders?fulfillment_status=waiting_for_restock
+  // (linked from the dashboard restock alert) seeds the fulfillment filter.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const value = new URLSearchParams(window.location.search).get(
+      "fulfillment_status",
+    );
+    if (
+      value &&
+      FULFILLMENT_STATUS_OPTIONS.some((opt) => opt.value === value)
+    ) {
+      setFilters((prev) =>
+        prev.fulfillment_status === value
+          ? prev
+          : { ...prev, fulfillment_status: value, page: 1 },
+      );
+    }
+  }, [setFilters]);
 
   const handleView = (orderId: string) => {
     router.push(`/admin/orders/${encodeURIComponent(orderId)}`);

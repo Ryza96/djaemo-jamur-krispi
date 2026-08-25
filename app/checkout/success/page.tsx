@@ -231,6 +231,8 @@ export default function CheckoutSuccessPage() {
         ORDER_ALREADY_PAID: "Pesanan sudah dibayar dan tidak dapat dibatalkan.",
         ORDER_NOT_EXPIRABLE: "Status pesanan tidak dapat dibatalkan.",
         ORDER_NOT_FOUND: "Pesanan tidak ditemukan.",
+        ORDER_CONCURRENT_MODIFICATION:
+          "Status pesanan baru saja berubah. Muat ulang halaman untuk melihat status terbaru.",
       };
       setCancelError(
         (json?.error && friendlyErrors[json.error]) ||

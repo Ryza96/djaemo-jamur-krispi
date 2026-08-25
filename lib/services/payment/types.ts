@@ -28,7 +28,10 @@ export const PAYMENT_STATUS_TRANSITIONS: Record<
   PaymentStatus,
   PaymentStatus[]
 > = {
-  [PAYMENT_STATUS.UNPAID]: [PAYMENT_STATUS.PENDING],
+  // UNPAID -> PAID is allowed: a Midtrans settlement is a fact that must
+  // always be processable, even if our DB never reached PENDING (e.g. the
+  // confirm step failed after Snap creation).
+  [PAYMENT_STATUS.UNPAID]: [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.PAID],
   [PAYMENT_STATUS.PENDING]: [
     PAYMENT_STATUS.PAID,
     PAYMENT_STATUS.FAILED,

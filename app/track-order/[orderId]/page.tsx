@@ -15,40 +15,106 @@ interface OrderItem {
 
 interface OrderData {
   order_id: string;
-  payment_status: string;
-  fulfillment_status: string;
+  payment_status?: string;
+  fulfillment_status?: string;
   total_amount: number;
   created_at: string;
   order_items: OrderItem[];
 }
 
 type CustomerStatus =
+  | "awaiting_payment"
+  | "payment_failed"
+  | "payment_expired"
+  | "cancelled"
   | "paid"
   | "confirmed"
   | "preparing"
   | "shipped"
-  | "delivered"
-  | "cancelled";
+  | "delivered";
 
-const CUSTOMER_STATUS_MAP: Record<string, CustomerStatus> = {
-  unpaid: "paid",
-  pending: "paid",
-  paid: "paid",
-  confirmed: "confirmed",
-  packing: "preparing",
-  waybill_created: "preparing",
-  waiting_for_courier_pickup: "preparing",
-  picked_up: "preparing",
-  shipped: "shipped",
-  delivered: "delivered",
-  cancelled: "cancelled",
-  waiting_for_restock: "preparing",
-};
+// Fulfillment values that all mean "order is being prepared".
+const FULFILLMENT_PREPARING = [
+  "packing",
+  "waybill_created",
+  "waiting_for_courier_pickup",
+  "picked_up",
+  "waiting_for_restock",
+];
+
+/**
+ * Resolves the customer-facing view from BOTH payment_status and
+ * fulfillment_status. An order whose payment is not settled must never be
+ * presented as "Pembayaran Berhasil" — the old mapping applied payment
+ * labels to the fulfillment field alone and showed unpaid/expired/failed
+ * orders as paid.
+ */
+function resolveCustomerView(
+  paymentRaw: string | undefined,
+  fulfillmentRaw: string | undefined,
+): CustomerStatus {
+  const payment = (paymentRaw ?? "").toLowerCase();
+  const fulfillment = (fulfillmentRaw ?? "").toLowerCase();
+
+  switch (payment) {
+    case "failed":
+      return "payment_failed";
+    case "expired":
+      return "payment_expired";
+    case "unpaid":
+    case "pending":
+      return fulfillment === "cancelled" ? "cancelled" : "awaiting_payment";
+    case "paid":
+      if (fulfillment === "cancelled") return "cancelled";
+      if (fulfillment === "delivered") return "delivered";
+      if (fulfillment === "shipped") return "shipped";
+      if (fulfillment === "confirmed") return "confirmed";
+      if (FULFILLMENT_PREPARING.includes(fulfillment)) return "preparing";
+      // "new" or unknown fulfillment after successful payment
+      return "paid";
+    default:
+      // Legacy/unknown payment status: derive from fulfillment progress,
+      // falling back to "awaiting payment" instead of claiming success.
+      if (fulfillment === "cancelled") return "cancelled";
+      if (fulfillment === "delivered") return "delivered";
+      if (fulfillment === "shipped") return "shipped";
+      if (fulfillment === "confirmed") return "confirmed";
+      if (FULFILLMENT_PREPARING.includes(fulfillment)) return "preparing";
+      return "awaiting_payment";
+  }
+}
 
 const STATUS_CONFIG: Record<
   CustomerStatus,
   { title: string; message: string; icon: string; color: string }
 > = {
+  awaiting_payment: {
+    title: "Menunggu Pembayaran",
+    message:
+      "Pesanan Anda telah dibuat. Selesaikan pembayaran agar pesanan segera kami proses.",
+    icon: "⏳",
+    color: "text-amber-600",
+  },
+  payment_failed: {
+    title: "Pembayaran Gagal",
+    message:
+      "Pembayaran Anda tidak berhasil. Silakan buat pesanan baru atau hubungi kami untuk bantuan.",
+    icon: "⚠️",
+    color: "text-red-600",
+  },
+  payment_expired: {
+    title: "Pembayaran Kedaluwarsa",
+    message:
+      "Waktu pembayaran telah berakhir sehingga pesanan dibatalkan otomatis. Silakan buat pesanan baru.",
+    icon: "🕒",
+    color: "text-slate-600",
+  },
+  cancelled: {
+    title: "Pesanan Dibatalkan",
+    message: "Pesanan Anda telah dibatalkan. Hubungi kami jika ada pertanyaan.",
+    icon: "❌",
+    color: "text-red-600",
+  },
   paid: {
     title: "Pembayaran Berhasil",
     message: "Pembayaran Anda telah kami terima dan pesanan sedang menunggu konfirmasi.",
@@ -78,12 +144,6 @@ const STATUS_CONFIG: Record<
     message: "Pesanan Anda telah berhasil diterima. Terima kasih telah berbelanja di D'Jaemo Jamur Krispi.",
     icon: "🎉",
     color: "text-green-600",
-  },
-  cancelled: {
-    title: "Pesanan Dibatalkan",
-    message: "Pesanan Anda telah dibatalkan. Hubungi kami jika ada pertanyaan.",
-    icon: "❌",
-    color: "text-red-600",
   },
 };
 
@@ -150,6 +210,7 @@ export default function TrackOrderDetailPage() {
   }, [orderId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadOrder();
   }, [loadOrder]);
 
@@ -195,10 +256,25 @@ export default function TrackOrderDetailPage() {
     );
   }
 
-  const customerStatus = CUSTOMER_STATUS_MAP[order.fulfillment_status] ?? "paid";
+  const customerStatus = resolveCustomerView(
+    order.payment_status,
+    order.fulfillment_status,
+  );
   const statusConfig = STATUS_CONFIG[customerStatus];
 
+  // Payment-pending / failed / expired / cancelled views are outside the
+  // fulfillment timeline; indexOf returns -1 and the timeline is hidden.
   const currentTimelineIndex = TIMELINE_ORDER.indexOf(customerStatus);
+
+  const CARD_STYLES: Partial<Record<CustomerStatus, string>> = {
+    awaiting_payment: "border-amber-200 bg-amber-50",
+    payment_failed: "border-red-200 bg-red-50",
+    payment_expired: "border-slate-200 bg-slate-50",
+    cancelled: "border-red-200 bg-red-50",
+    delivered: "border-green-200 bg-green-50",
+  };
+  const cardStyle =
+    CARD_STYLES[customerStatus] ?? "border-primary/10 bg-white";
 
   const firstItem = order.order_items[0];
   const remainingCount = order.order_items.length - 1;
@@ -219,13 +295,7 @@ export default function TrackOrderDetailPage() {
 
       <div className="mx-auto max-w-lg space-y-6">
         <div
-          className={`rounded-3xl border p-6 text-center shadow-sm sm:p-8 ${
-            customerStatus === "delivered"
-              ? "border-green-200 bg-green-50"
-              : customerStatus === "cancelled"
-                ? "border-red-200 bg-red-50"
-                : "border-primary/10 bg-white"
-          }`}
+          className={`rounded-3xl border p-6 text-center shadow-sm sm:p-8 ${cardStyle}`}
         >
           <div className={`text-4xl ${statusConfig.color}`}>{statusConfig.icon}</div>
           <h2 className={`mt-3 text-xl font-semibold ${statusConfig.color}`}>
@@ -252,50 +322,52 @@ export default function TrackOrderDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">Status Pesanan</h3>
-          <div className="space-y-0">
-            {TIMELINE_STEPS.map((step, idx) => {
-              const isCompleted = idx < currentTimelineIndex;
-              const isCurrent = idx === currentTimelineIndex;
+        {currentTimelineIndex !== -1 && (
+          <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-sm font-semibold text-foreground">Status Pesanan</h3>
+            <div className="space-y-0">
+              {TIMELINE_STEPS.map((step, idx) => {
+                const isCompleted = idx < currentTimelineIndex;
+                const isCurrent = idx === currentTimelineIndex;
 
-              return (
-                <div key={step.key} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                        isCompleted || isCurrent
-                          ? "bg-primary text-white"
-                          : "bg-slate-100 text-slate-400"
-                      }`}
-                    >
-                      {isCompleted ? "✓" : idx + 1}
-                    </div>
-                    {idx < TIMELINE_STEPS.length - 1 && (
+                return (
+                  <div key={step.key} className="flex gap-3">
+                    <div className="flex flex-col items-center">
                       <div
-                        className={`w-0.5 flex-1 ${
-                          isCompleted ? "bg-primary" : "bg-slate-200"
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                          isCompleted || isCurrent
+                            ? "bg-primary text-white"
+                            : "bg-slate-100 text-slate-400"
                         }`}
-                      />
-                    )}
+                      >
+                        {isCompleted ? "✓" : idx + 1}
+                      </div>
+                      {idx < TIMELINE_STEPS.length - 1 && (
+                        <div
+                          className={`w-0.5 flex-1 ${
+                            isCompleted ? "bg-primary" : "bg-slate-200"
+                          }`}
+                        />
+                      )}
+                    </div>
+                    <div className="pb-6">
+                      <p
+                        className={`text-sm font-medium ${
+                          isCompleted || isCurrent ? "text-foreground" : "text-slate-400"
+                        }`}
+                      >
+                        {step.label}
+                      </p>
+                      {isCurrent && (
+                        <p className="mt-0.5 text-xs text-muted">{statusConfig.message}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="pb-6">
-                    <p
-                      className={`text-sm font-medium ${
-                        isCompleted || isCurrent ? "text-foreground" : "text-slate-400"
-                      }`}
-                    >
-                      {step.label}
-                    </p>
-                    {isCurrent && (
-                      <p className="mt-0.5 text-xs text-muted">{statusConfig.message}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-foreground">Ringkasan Produk</h3>

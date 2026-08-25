@@ -404,6 +404,67 @@ export const OrderRepository = {
     if (error) throw error;
   },
 
+  /**
+   * Conditional payment status update (optimistic concurrency control).
+   *
+   * Only updates the row when its current payment_status is one of
+   * `allowedFrom`. Returns the number of rows actually updated so callers
+   * can detect losing a race against a concurrent status change instead of
+   * blindly overwriting it.
+   */
+  async updatePaymentByOrderIdIf(
+    orderId: string,
+    params: {
+      payment_status: PaymentStatus;
+      transaction_id?: string;
+      payment_method?: string | null;
+    },
+    allowedFrom: PaymentStatus[],
+  ): Promise<number> {
+    const updates: Record<string, string | number | null> = {
+      payment_status: params.payment_status,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (params.payment_status === "paid") {
+      updates.paid_at = new Date().toISOString();
+    }
+
+    if (params.transaction_id !== undefined) {
+      updates.transaction_id = params.transaction_id;
+    }
+    if (params.payment_method !== undefined) {
+      updates.payment_method = params.payment_method;
+    }
+
+    const { data, error } = await supabase
+      .from("orders")
+      .update(updates)
+      .eq("order_id", orderId)
+      .in("payment_status", allowedFrom)
+      .select("id");
+
+    if (error) throw error;
+    return data?.length ?? 0;
+  },
+
+  /**
+   * Clears cancellation bookkeeping after an order has been recovered from
+   * CANCELLED fulfillment (e.g. webhook race recovery).
+   */
+  async clearCancellation(id: string): Promise<void> {
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        cancelled_at: null,
+        cancellation_reason: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+  },
+
   async updateFulfillmentStatus(
     id: string,
     status: FulfillmentStatus,
