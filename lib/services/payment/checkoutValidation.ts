@@ -58,7 +58,7 @@ interface BiteshipRatesResponse {
 
 const REQUEST_TIMEOUT_MS = 10000;
 
-function extractWeightGrams(weight: string | undefined): number {
+export function extractWeightGrams(weight: string | undefined): number {
   const value = Number(weight?.replace(/[^0-9.]/g, ""));
   return Number.isFinite(value) && value > 0 ? Math.round(value) : 100;
 }

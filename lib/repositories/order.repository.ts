@@ -89,6 +89,7 @@ export interface InsertOrderItemParams {
   price: number;
   quantity: number;
   subtotal: number;
+  weight_grams?: number;
 }
 
 export interface PaginatedOrdersParams {

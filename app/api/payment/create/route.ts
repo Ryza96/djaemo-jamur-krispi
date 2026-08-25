@@ -217,6 +217,7 @@ export async function POST(request: Request) {
           id: item.product.id,
           name: item.product.name,
           price: item.product.price,
+          weight: item.product.weight,
         },
         quantity: item.quantity,
       })),

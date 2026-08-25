@@ -1,6 +1,7 @@
 import { OrderRepository, CustomerRepository } from "@/lib/repositories";
 import { AuditLogRepository } from "@/lib/repositories/audit-log.repository";
 import { combineAddress, mapMidtransStatus } from "./payment/mapper";
+import { extractWeightGrams } from "./payment/checkoutValidation";
 import { verifyMidtransSignature } from "./payment/verifySignature";
 import { isTransactionSettledAtMidtrans } from "./payment/midtrans-verify";
 import { AuditLogService } from "./audit-log.service";
@@ -77,6 +78,7 @@ export const OrderService = {
       price: item.product.price,
       quantity: item.quantity,
       subtotal: item.product.price * item.quantity,
+      weight_grams: extractWeightGrams(item.product.weight),
     }));
 
     try {
