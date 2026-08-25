@@ -33,6 +33,8 @@ interface AdminButtonProps
   loading?: boolean;
   disabled?: boolean;
   href?: string;
+  target?: React.HTMLAttributeAnchorTarget;
+  rel?: string;
   className?: string;
   children: React.ReactNode;
   type?: "button" | "submit" | "reset";
@@ -44,6 +46,8 @@ export function AdminButton({
   loading = false,
   disabled = false,
   href,
+  target,
+  rel,
   className,
   children,
   type = "button",
@@ -61,7 +65,7 @@ export function AdminButton({
 
   if (href) {
     return (
-      <Link href={href} className={styles}>
+      <Link href={href} target={target} rel={rel} className={styles}>
         {children}
       </Link>
     );

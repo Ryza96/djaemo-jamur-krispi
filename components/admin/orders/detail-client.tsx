@@ -308,6 +308,8 @@ export function OrderDetailClient({ id }: DetailClientProps) {
                   <AdminButton
                     variant="primary"
                     href={`/api/admin/orders/${encodeURIComponent(order.order_id)}/receipt`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     <Printer className="h-4 w-4" />
                     Cetak Resi (PDF)
