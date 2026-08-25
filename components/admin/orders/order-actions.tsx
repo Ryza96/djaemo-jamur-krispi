@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useOrderActions } from "@/hooks/use-order-actions";
 import { useOrderShipment } from "@/hooks/use-order-shipment";
 import { useToast } from "@/components/ui/Toast";
+import { formatPrice } from "@/lib/utils";
 
 interface ActionDef {
   action: "confirm" | "pack" | "ship" | "complete" | "cancel" | "create_shipment";
@@ -17,6 +18,7 @@ interface OrderActionsProps {
   fulfillmentStatus: string | null;
   paymentStatus: string | null;
   shipmentId: string | null;
+  totalAmount: number | null;
   onSuccess: () => void;
 }
 
@@ -145,14 +147,60 @@ function getActions(
   }
 }
 
+function CancelWarning({
+  paymentStatus,
+  totalAmount,
+}: {
+  paymentStatus: string | null;
+  totalAmount: number | null;
+}) {
+  const isPaid = paymentStatus === "paid";
+
+  if (isPaid) {
+    return (
+      <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+        <p className="text-sm font-semibold text-rose-700">
+          Pesanan ini SUDAH DIBAYAR
+          {totalAmount != null ? ` sebesar ${formatPrice(totalAmount)}` : ""}.
+        </p>
+        <p className="mt-1 text-sm text-rose-600">
+          Setelah dibatalkan, dana customer{" "}
+          {totalAmount != null ? `(${formatPrice(totalAmount)})` : ""} WAJIB
+          di-refund manual melalui Midtrans Dashboard. Pengingat refund akan
+          tampil permanen di halaman pesanan ini sampai Anda menandainya
+          &quot;Sudah Direfund&quot;.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <p className="text-sm font-semibold text-amber-800">
+        Pembayaran mungkin masih bisa masuk.
+      </p>
+      <p className="mt-1 text-sm text-amber-700">
+        Customer masih dapat menyelesaikan pembayaran selama token pembayaran
+        aktif. Jika pembayaran masuk setelah pesanan dibatalkan, sistem akan
+        otomatis memulihkan pesanan ini setelah diverifikasi ke Midtrans.
+        Pembatalan bersifat permanen.
+      </p>
+    </div>
+  );
+}
+
 function ConfirmationDialog({
   action,
   loading,
+  paymentStatus,
+  totalAmount,
   onConfirm,
   onCancel,
 }: {
   action: ActionDef;
   loading: boolean;
+  paymentStatus: string | null;
+  totalAmount: number | null;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -163,6 +211,13 @@ function ConfirmationDialog({
           {action.label}
         </h3>
         <p className="mt-2 text-sm text-slate-500">{action.description}</p>
+
+        {action.action === "cancel" && (
+          <CancelWarning
+            paymentStatus={paymentStatus}
+            totalAmount={totalAmount}
+          />
+        )}
 
         {action.action === "cancel" && (
           <div className="mt-4">
@@ -226,6 +281,7 @@ export function OrderActions({
   fulfillmentStatus,
   paymentStatus,
   shipmentId,
+  totalAmount,
   onSuccess,
 }: OrderActionsProps) {
   const { execute: executeAction, loading: actionsLoading } = useOrderActions();
@@ -367,6 +423,8 @@ export function OrderActions({
         <ConfirmationDialog
           action={confirmAction}
           loading={loading}
+          paymentStatus={paymentStatus}
+          totalAmount={totalAmount}
           onConfirm={handleConfirm}
           onCancel={() => setConfirmAction(null)}
         />

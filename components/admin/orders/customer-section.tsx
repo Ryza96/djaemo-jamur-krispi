@@ -8,6 +8,8 @@ interface CustomerSectionProps {
   customerEmail: string | null;
   customerPhone: string | null;
   shippingAddress: string | null;
+  city: string | null;
+  postalCode: string | null;
 }
 
 export function CustomerSection({
@@ -15,6 +17,8 @@ export function CustomerSection({
   customerEmail,
   customerPhone,
   shippingAddress,
+  city,
+  postalCode,
 }: CustomerSectionProps) {
   return (
     <>
@@ -34,11 +38,15 @@ export function CustomerSection({
           <div className="sm:col-span-2">
             <AdminKeyValue label="Alamat Lengkap" value={shippingAddress ?? "-"} />
           </div>
+          <AdminKeyValue label="Kota" value={city ?? "-"} />
+          <AdminKeyValue label="Kode Pos" value={postalCode ?? "-"} />
           <AdminKeyValue label="Kelurahan" value="-" />
           <AdminKeyValue label="Kecamatan" value="-" />
-          <AdminKeyValue label="Kota" value="-" />
           <AdminKeyValue label="Provinsi" value="-" />
-          <AdminKeyValue label="Kode Pos" value="-" />
+          <p className="text-xs text-slate-400 sm:col-span-2">
+            Kelurahan, kecamatan, dan provinsi tidak disimpan sebagai field
+            terpisah — informasi lengkapnya terdapat pada Alamat Lengkap di atas.
+          </p>
         </div>
       </AdminSection>
     </>

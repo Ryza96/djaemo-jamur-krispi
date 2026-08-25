@@ -4,7 +4,10 @@ import { useState } from "react";
 import { AlertCircle, PackageX, Printer } from "lucide-react";
 import { useOrderDetail } from "@/hooks/use-order-detail";
 import { useOrderActions } from "@/hooks/use-order-actions";
+import { useOrderRefund } from "@/hooks/use-order-refund";
 import { formatPrice } from "@/lib/utils";
+import type { OrderDetailRow } from "@/lib/repositories/order.repository";
+import type { RefundInfo } from "@/lib/services/payment/types";
 import { useToast } from "@/components/ui/Toast";
 import { AdminBadge, AdminButton, AdminKeyValue } from "@/components/admin/ui";
 import { AdminSection, AdminPageHeader, AdminEmptyLayout } from "@/components/admin/patterns";
@@ -24,6 +27,7 @@ import { OrderActions } from "./order-actions";
 import { AdminNotes } from "./admin-notes";
 import { TrackingPanel } from "./tracking-panel";
 import { ActionBanner } from "./action-banner";
+import { RefundBanner } from "./refund-banner";
 
 function DetailSkeleton() {
   return (
@@ -67,11 +71,19 @@ interface DetailClientProps {
   id: string;
 }
 
+type OrderDetail = OrderDetailRow & { refund_info?: RefundInfo | null };
+
 export function OrderDetailClient({ id }: DetailClientProps) {
   const { order, loading, error, refresh } = useOrderDetail(id);
   const { execute: executeAction, loading: actionLoading } = useOrderActions();
+  const { markRefunded, loading: refundLoading } = useOrderRefund();
   const { showToast } = useToast();
   const [timelineKey, setTimelineKey] = useState(0);
+
+  const orderDetail = order as OrderDetail | null;
+  const refundInfo = orderDetail?.refund_info ?? null;
+  const showRefundBanner =
+    refundInfo !== null && refundInfo.required && !refundInfo.refunded;
 
   const handleOrderUpdate = () => {
     refresh();
@@ -86,6 +98,17 @@ export function OrderDetailClient({ id }: DetailClientProps) {
       handleOrderUpdate();
     } else {
       showToast(result.error ?? "Gagal melanjutkan pesanan.", "error");
+    }
+  };
+
+  const handleMarkRefunded = async () => {
+    if (!order) return;
+    const result = await markRefunded(order.order_id);
+    if (result.success) {
+      showToast("Refund ditandai sudah direfund.", "success");
+      handleOrderUpdate();
+    } else {
+      showToast(result.error ?? "Gagal menandai refund.", "error");
     }
   };
 
@@ -168,6 +191,14 @@ export function OrderDetailClient({ id }: DetailClientProps) {
           className="mb-6"
         />
 
+        {showRefundBanner && (
+          <RefundBanner
+            amount={refundInfo?.amount ?? null}
+            loading={refundLoading}
+            onMarkRefunded={handleMarkRefunded}
+          />
+        )}
+
         <ActionBanner
           fulfillmentStatus={order.fulfillment_status}
           paymentStatus={order.payment_status}
@@ -201,6 +232,8 @@ export function OrderDetailClient({ id }: DetailClientProps) {
               customerEmail={order.customer_email}
               customerPhone={order.customer_phone}
               shippingAddress={order.shipping_address}
+              city={order.destination}
+              postalCode={order.postal_code}
             />
 
             {/* Shipping Information */}
@@ -241,6 +274,7 @@ export function OrderDetailClient({ id }: DetailClientProps) {
                 fulfillmentStatus={order.fulfillment_status}
                 paymentStatus={order.payment_status}
                 shipmentId={order.shipment_id}
+                totalAmount={order.total_amount ?? null}
                 onSuccess={handleOrderUpdate}
               />
 

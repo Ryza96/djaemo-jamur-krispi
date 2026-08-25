@@ -102,3 +102,16 @@ export interface CallbackResult {
   paymentStatus: PaymentStatus;
   message: string;
 }
+
+/**
+ * Manual-refund tracking for orders that were cancelled after payment.
+ * Derived from audit_logs metadata written by FulfillmentService.cancel:
+ * - required=true  → an ORDER_CANCELLED entry carries refund_required:true
+ * - refunded=true  → a later REFUND_CONFIRMED entry exists (admin marked
+ *   the manual Midtrans Dashboard refund as done)
+ */
+export interface RefundInfo {
+  required: boolean;
+  refunded: boolean;
+  amount: number | null;
+}

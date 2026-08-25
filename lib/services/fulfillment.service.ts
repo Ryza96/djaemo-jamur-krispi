@@ -235,12 +235,29 @@ async function executeTransition(
   );
 
   const auditEvent = FULFILLMENT_EVENT_MAP[targetStatus as keyof typeof FULFILLMENT_EVENT_MAP] ?? AuditLogService.events.STATUS_CHANGED;
+
+  // Cancelling an already-paid order creates a manual refund obligation:
+  // record it in the audit metadata so the admin UI can surface a persistent
+  // reminder until the refund is confirmed.
+  let auditMetadata = extra ?? undefined;
+  if (targetStatus === FULFILLMENT_STATUS.CANCELLED) {
+    const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
+    if (paymentStatus === PAYMENT_STATUS.PAID) {
+      auditMetadata = {
+        ...(auditMetadata ?? {}),
+        refund_required: true,
+        amount: order.total_amount,
+        refunded: false,
+      };
+    }
+  }
+
   await AuditLogService.logFulfillmentEvent({
     orderId,
     event: auditEvent,
     fromStatus: currentFulfillmentStatus,
     toStatus: targetStatus,
-    metadata: extra ?? undefined,
+    metadata: auditMetadata,
   });
 
   const notificationEvent = CUSTOMER_NOTIFIABLE[targetStatus];

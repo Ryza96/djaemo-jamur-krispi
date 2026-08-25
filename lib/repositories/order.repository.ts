@@ -20,6 +20,7 @@ export interface OrderRow {
   courier_company: string | null;
   courier_type: string | null;
   shipping_cost: number | null;
+  destination: string | null;
   postal_code: string | null;
   shipping_address: string | null;
   notes: string | null;

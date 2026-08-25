@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { OrderRepository } from "@/lib/repositories";
+import { OrderService } from "@/lib/services/order.service";
 import { requireAdmin } from "@/lib/services/admin-auth.service";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -19,7 +20,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: "Order tidak ditemukan." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: order });
+    const refundInfo = await OrderService.getRefundInfo(id);
+
+    return NextResponse.json({ success: true, data: { ...order, refund_info: refundInfo } });
   } catch (error) {
     console.error("Error fetching order detail:", error);
     return NextResponse.json(

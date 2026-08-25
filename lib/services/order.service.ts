@@ -1,4 +1,5 @@
 import { OrderRepository, CustomerRepository } from "@/lib/repositories";
+import { AuditLogRepository } from "@/lib/repositories/audit-log.repository";
 import { combineAddress, mapMidtransStatus } from "./payment/mapper";
 import { verifyMidtransSignature } from "./payment/verifySignature";
 import { isTransactionSettledAtMidtrans } from "./payment/midtrans-verify";
@@ -11,6 +12,7 @@ import type {
   FulfillmentStatus,
   MidtransNotification,
   CreatePaymentRequest,
+  RefundInfo,
 } from "./payment/types";
 
 export interface CreateOrderResult {
@@ -236,9 +238,11 @@ export const OrderService = {
 
   /**
    * Recovers an order whose payment was marked EXPIRED/FAILED by a local
-   * race (auto-expire / manual cancel) while Midtrans has actually captured
-   * the funds. Restores the order to PAID, un-cancels fulfillment back to
-   * NEW, and records audit entries so the recovery is traceable.
+   * race (auto-expire) — or whose fulfillment was cancelled by an admin
+   * while the order was still UNPAID/PENDING — but for which Midtrans has
+   * actually captured the funds. Restores the order to PAID, un-cancels
+   * fulfillment back to NEW, and records audit entries so the recovery is
+   * traceable.
    *
    * Callers MUST verify settlement with Midtrans Core API first.
    */
@@ -246,13 +250,18 @@ export const OrderService = {
     orderId: string,
     reason: string,
   ): Promise<{ success: boolean; message: string }> {
-    // Conditional write from terminal states only; if another process
+    // Conditional write from pre-paid states only; if another process
     // already recovered it to PAID this matches 0 rows and we treat it as
     // an idempotent success.
     const updatedRows = await OrderRepository.updatePaymentByOrderIdIf(
       orderId,
       { payment_status: PAYMENT_STATUS.PAID },
-      [PAYMENT_STATUS.EXPIRED, PAYMENT_STATUS.FAILED],
+      [
+        PAYMENT_STATUS.EXPIRED,
+        PAYMENT_STATUS.FAILED,
+        PAYMENT_STATUS.UNPAID,
+        PAYMENT_STATUS.PENDING,
+      ],
     );
 
     if (updatedRows === 0) {
@@ -403,7 +412,9 @@ export const OrderService = {
     // UNPAID -> PAID is allowed: a Midtrans settlement is a fact that must
     // always be processable even if our DB never reached PENDING (e.g. the
     // confirm step failed after Snap creation). Already-PAID orders are
-    // skipped above as an idempotent no-op.
+    // skipped above as an idempotent no-op. Exception: when the fulfillment
+    // was already cancelled, settlement is diverted to the verified
+    // recovery path below instead of this plain write.
     const validTransitions: Record<string, PaymentStatus[]> = {
       [PAYMENT_STATUS.UNPAID]: [
         PAYMENT_STATUS.PENDING,
@@ -420,11 +431,28 @@ export const OrderService = {
     };
 
     const allowed = validTransitions[currentStatus];
-    if (!allowed?.includes(newStatus)) {
+
+    // A settlement arriving for an order whose fulfillment was already
+    // cancelled (manual admin cancel while UNPAID/PENDING) must NOT go
+    // through the plain status write: that would produce a paid-but-dead
+    // order. Route it through the verified recovery path instead so the
+    // fulfillment is un-cancelled and the money is never stranded.
+    const paidIntoCancelledFulfillment =
+      newStatus === PAYMENT_STATUS.PAID &&
+      (currentStatus === PAYMENT_STATUS.UNPAID ||
+        currentStatus === PAYMENT_STATUS.PENDING) &&
+      (order.fulfillment_status ?? "").toLowerCase() ===
+        FULFILLMENT_STATUS.CANCELLED;
+
+    if (!allowed?.includes(newStatus) || paidIntoCancelledFulfillment) {
       const isRaceRecoveryCandidate =
         newStatus === PAYMENT_STATUS.PAID &&
         (currentStatus === PAYMENT_STATUS.EXPIRED ||
-          currentStatus === PAYMENT_STATUS.FAILED);
+          currentStatus === PAYMENT_STATUS.FAILED ||
+          ((currentStatus === PAYMENT_STATUS.UNPAID ||
+            currentStatus === PAYMENT_STATUS.PENDING) &&
+            (order.fulfillment_status ?? "").toLowerCase() ===
+              FULFILLMENT_STATUS.CANCELLED));
 
       if (!isRaceRecoveryCandidate) {
         await AuditLogService.logPaymentEvent({
@@ -444,9 +472,11 @@ export const OrderService = {
       }
 
       // Race condition recovery: our DB marked the order EXPIRED/FAILED
-      // while the customer was actually completing payment. Money must not
-      // be lost to a local state race — verify with Midtrans Core API that
-      // the transaction is genuinely settled right now, then recover.
+      // while the customer was actually completing payment, OR an admin
+      // cancelled the still-unpaid order before the customer finished
+      // paying. Money must not be lost to a local state race — verify with
+      // Midtrans Core API that the transaction is genuinely settled right
+      // now, then recover.
       const settledOnMidtrans = await isTransactionSettledAtMidtrans(order_id);
 
       if (!settledOnMidtrans) {
@@ -469,7 +499,10 @@ export const OrderService = {
 
       const recovery = await OrderService.recoverPaidOrderFromTerminal(
         order_id,
-        "webhook_race_recovery",
+        currentStatus === PAYMENT_STATUS.EXPIRED ||
+          currentStatus === PAYMENT_STATUS.FAILED
+          ? "webhook_race_recovery"
+          : "webhook_paid_after_manual_cancel",
       );
 
       if (!recovery.success) {
@@ -586,6 +619,94 @@ export const OrderService = {
       orderId: order_id,
       paymentStatus: newStatus,
       message: `Order status updated to ${newStatus}`,
+    };
+  },
+
+  /**
+   * Derives manual-refund tracking state from the append-only audit log.
+   * An ORDER_CANCELLED entry carrying metadata.refund_required=true marks
+   * the start of an obligation; any later REFUND_CONFIRMED entry closes it
+   * (admin confirmed the manual Midtrans Dashboard refund).
+   */
+  async getRefundInfo(orderId: string): Promise<RefundInfo | null> {
+    const logs = await AuditLogRepository.findByOrderId(orderId);
+
+    let cancelIndex = -1;
+    let amount: number | null = null;
+    logs.forEach((log, index) => {
+      if (
+        log.event === AuditLogService.events.ORDER_CANCELLED &&
+        log.metadata?.refund_required === true
+      ) {
+        cancelIndex = index;
+        amount =
+          typeof log.metadata.amount === "number" ? log.metadata.amount : null;
+      }
+    });
+
+    if (cancelIndex === -1) return null;
+
+    const refunded = logs
+      .slice(cancelIndex + 1)
+      .some((log) => log.event === AuditLogService.events.REFUND_CONFIRMED);
+
+    return { required: true, refunded, amount };
+  },
+
+  /**
+   * Records that an admin completed the manual refund (Midtrans Dashboard)
+   * for a previously cancelled paid order. Appends a new audit entry rather
+   * than mutating history, keeping the log append-only.
+   */
+  async confirmManualRefund(
+    orderId: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    refundInfo: RefundInfo | null;
+  }> {
+    const order = await OrderRepository.findByOrderId(orderId);
+    if (!order) {
+      return {
+        success: false,
+        message: "ORDER_NOT_FOUND",
+        refundInfo: null,
+      };
+    }
+
+    const info = await OrderService.getRefundInfo(orderId);
+    if (!info) {
+      return {
+        success: false,
+        message: "REFUND_NOT_REQUIRED",
+        refundInfo: null,
+      };
+    }
+
+    if (info.refunded) {
+      return {
+        success: false,
+        message: "ALREADY_REFUNDED",
+        refundInfo: info,
+      };
+    }
+
+    await AuditLogService.logPaymentEvent({
+      orderId,
+      event: AuditLogService.events.REFUND_CONFIRMED,
+      fromStatus: PAYMENT_STATUS.PAID,
+      toStatus: PAYMENT_STATUS.PAID,
+      metadata: {
+        amount: info.amount,
+        refunded: true,
+        method: "manual_midtrans_dashboard",
+      },
+    });
+
+    return {
+      success: true,
+      message: `Refund untuk ${orderId} ditandai selesai.`,
+      refundInfo: { ...info, refunded: true },
     };
   },
 };
