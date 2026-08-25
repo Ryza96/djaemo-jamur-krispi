@@ -1,3 +1,5 @@
+export const PARTNER_COMING_SOON = true;
+
 export const SITE = {
   name: "Djaemo Jamur Krispi",
   tagline: "Camilan jamur renyah, alami, dan penuh rasa.",

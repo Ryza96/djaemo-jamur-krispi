@@ -1,13 +1,57 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE } from "@/lib/constants";
-import { Button } from "@/components/ui/Button";
+import { SITE, PARTNER_COMING_SOON } from "@/lib/constants";
 import { PageHeader, Section } from "@/components/sections/Section";
 
 export const metadata: Metadata = {
   title: "Program Dropshipper",
   description: `Program Kemitraan Resmi ${SITE.name} untuk Dropshipper.`,
 };
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-10 w-10 text-gold">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+function ComingSoonView() {
+  return (
+    <>
+      <Section className="bg-surface-dark">
+        <PageHeader
+          title="Program Dropshipper D'JAEMO"
+          description="Program Kemitraan Resmi untuk memasarkan produk D'JAEMO."
+        />
+      </Section>
+
+      <Section>
+        <div className="mx-auto max-w-lg text-center">
+          <div className="rounded-4xl border border-gold/20 bg-white p-10 shadow-sm sm:p-14">
+            <div className="mx-auto mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gold/10">
+              <ClockIcon />
+            </div>
+            <h2 className="text-2xl font-bold text-ink">Segera Hadir</h2>
+            <p className="mt-4 text-sm leading-7 text-ink-soft">
+              Program Dropshipper D&apos;JAEMO sedang kami siapkan.
+              Nantikan info selanjutnya!
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/partner"
+                className="inline-flex items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-ink focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
+              >
+                Kembali ke Program Kemitraan
+              </Link>
+            </div>
+          </div>
+        </div>
+      </Section>
+    </>
+  );
+}
 
 const suitableFor = [
   "Individu yang ingin memasarkan produk D'JAEMO",
@@ -56,6 +100,10 @@ function ArrowIcon() {
 }
 
 export default function DropshipperPage() {
+  if (PARTNER_COMING_SOON) {
+    return <ComingSoonView />;
+  }
+
   return (
     <>
       <Section className="bg-surface-dark">
@@ -161,9 +209,12 @@ export default function DropshipperPage() {
             Pastikan Anda telah membaca seluruh informasi di atas sebelum melanjutkan ke proses registrasi.
           </p>
           <div className="mt-8">
-            <Button href="/partner/dropshipper/register" variant="primary" className="px-10">
+            <button
+              disabled
+              className="inline-flex items-center justify-center rounded-full bg-primary/50 px-6 py-3 text-sm font-semibold text-white/70 cursor-not-allowed"
+            >
               Daftar sebagai Dropshipper
-            </Button>
+            </button>
           </div>
           <div className="mt-6">
             <Link href="/partner" className="text-sm font-medium text-primary hover:underline">
