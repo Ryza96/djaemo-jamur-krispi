@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 
-export function ContactForm({ defaultEmail, defaultPhone }: { defaultEmail?: string; defaultPhone?: string }) {
+export function ContactForm() {
   const { showToast } = useToast();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState(defaultEmail || "");
-  const [phone, setPhone] = useState(defaultPhone || "");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +60,7 @@ export function ContactForm({ defaultEmail, defaultPhone }: { defaultEmail?: str
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             className="mt-1 w-full rounded-lg border border-primary/20 bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            placeholder="email@contoh.com"
+            placeholder="email@example.com"
           />
         </label>
       </div>
@@ -71,7 +71,7 @@ export function ContactForm({ defaultEmail, defaultPhone }: { defaultEmail?: str
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="mt-1 w-full rounded-lg border border-primary/20 bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-          placeholder="+62 8xx xxx xxxx"
+          placeholder="0812xxxxxxxx"
         />
       </label>
 
@@ -98,8 +98,8 @@ export function ContactForm({ defaultEmail, defaultPhone }: { defaultEmail?: str
           type="button"
           onClick={() => {
             setName("");
-            setEmail(defaultEmail || "");
-            setPhone(defaultPhone || "");
+            setEmail("");
+            setPhone("");
             setMessage("");
           }}
           className="text-sm text-muted underline-offset-2 hover:underline"

@@ -133,7 +133,7 @@ export const metadata: Metadata = {
 };
 
 export default function TentangPage() {
-  const whatsappLink = `https://wa.me/${SITE.phone.replace(/\D/g, "")}`;
+  const whatsappLink = `https://wa.me/62${SITE.phone.replace(/\D/g, "").replace(/^0/, "")}`;
 
   return (
     <>

@@ -6,8 +6,8 @@ export const SITE = {
   description:
     "Produk camilan jamur krispi berkualitas dengan bahan alami pilihan.",
   logo: "/images/logo/logo.png",
-  email: "hello@djaemojamurkrispi.com",
-  phone: "+62 812-3904-7565",
+  email: "nguntaljamor@gmail.com",
+  phone: "081239047565",
   address: "Indonesia",
 } as const;
 
