@@ -8,7 +8,7 @@ export const SITE = {
   logo: "/images/logo/logo.png",
   email: "nguntaljamor@gmail.com",
   phone: "081239047565",
-  address: "Indonesia",
+  address: "Kabupaten Bojonegoro, Jawa Timur 62184",
 } as const;
 
 export const NAV_LINKS = [
@@ -20,6 +20,6 @@ export const NAV_LINKS = [
 ] as const;
 
 export const SOCIAL_LINKS = [
-  { href: "https://instagram.com", label: "Instagram" },
+  { href: "https://www.instagram.com/djaemojamurcrispy", label: "Instagram" },
   { href: "https://wa.me/6281239047565", label: "WhatsApp" },
 ] as const;
