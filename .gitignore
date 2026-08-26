@@ -45,3 +45,27 @@ dev*.log
 
 # Local audit/debug files
 __*.json
+
+# Internal reports & docs (not source code)
+*_REPORT.md
+*_AUDIT.md
+*_CHECKLIST.md
+*_ASSESSMENT.md
+*_PLAN.md
+*_VERIFICATION.md
+*_DISCOVERY.md
+*_EVALUATION.md
+*_INVENTORY.md
+WO-*.md
+WO-*.sql
+IMPLEMENTATION*
+
+# Test/debug artifacts
+*-screenshot.png
+*screenshot*.mjs
+receipt-*.pdf
+sample-receipt*.pdf
+Reff_card.webp
+
+# Local data backups (not for version control)
+backup/
