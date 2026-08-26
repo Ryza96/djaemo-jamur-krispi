@@ -582,7 +582,20 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      <ProgressModal steps={pipelineSteps} error={pipelineError} isOpen={showPipeline} fileStatuses={fileUploadStatuses} />
+      <ProgressModal
+        steps={pipelineSteps}
+        error={pipelineError}
+        isOpen={showPipeline}
+        fileStatuses={fileUploadStatuses}
+        onClose={() => {
+          setShowPipeline(false);
+          setPipelineError(null);
+          setPipelineSteps([]);
+          setFileUploadStatuses([]);
+          setUploadingMap({});
+          pickerRef.current?.reset();
+        }}
+      />
 
       {restockProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

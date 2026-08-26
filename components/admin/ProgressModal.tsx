@@ -99,11 +99,13 @@ export default function ProgressModal({
   error,
   isOpen,
   fileStatuses,
+  onClose,
 }: {
   steps: PipelineStep[];
   error: string | null;
   isOpen: boolean;
   fileStatuses: FileUploadStatusItem[];
+  onClose?: () => void;
 }) {
   if (!isOpen) return null;
 
@@ -172,6 +174,14 @@ export default function ProgressModal({
           <div className="mt-5 rounded-2xl bg-red-50 p-4">
             <p className="text-sm font-semibold text-red-800">Proses gagal</p>
             <p className="mt-1 text-sm text-red-700">{error}</p>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="mt-3 w-full rounded-2xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+              >
+                Tutup &amp; Coba Lagi
+              </button>
+            )}
           </div>
         )}
       </div>
