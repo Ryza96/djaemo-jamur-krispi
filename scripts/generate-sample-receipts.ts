@@ -11,8 +11,8 @@ import path from "path";
 const SITE = {
   name: "Djaemo Jamur Krispi",
   tagline: "Camilan jamur renyah, alami, dan penuh rasa.",
-  email: "hello@djaemojamurkrispi.com",
-  phone: "+62 812-3904-7565",
+  email: "nguntaljamor@gmail.com",
+  phone: "081239047565",
 };
 
 const C = {

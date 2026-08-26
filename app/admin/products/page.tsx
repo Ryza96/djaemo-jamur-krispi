@@ -167,17 +167,23 @@ export default function AdminProductsPage() {
           );
           try {
             const file = item.file;
-            const filePath = `${productId}/${Date.now()}-${file.name}`;
-            const { error: uploadError } = await supabaseClient.storage.from('product-images').upload(filePath, file, { upsert: true });
+            const uploadForm = new FormData();
+            uploadForm.append("file", file);
+            uploadForm.append("productId", productId);
 
-            if (uploadError) throw uploadError;
+            const res = await fetch("/api/admin/products/upload", {
+              method: "POST",
+              body: uploadForm,
+            });
 
-            const { data: urlData } = supabaseClient.storage.from('product-images').getPublicUrl(filePath);
-
-            if (urlData && urlData.publicUrl) {
-              imageUrls.push(urlData.publicUrl);
-              uploadedFileRecords.push({ path: filePath, url: urlData.publicUrl });
+            if (!res.ok) {
+              const errBody = await res.json().catch(() => null);
+              throw new Error(errBody?.error || `Upload gagal (HTTP ${res.status})`);
             }
+
+            const { url, path } = await res.json();
+            imageUrls.push(url);
+            uploadedFileRecords.push({ path, url });
 
             setFileUploadStatuses((prev) =>
               prev.map((fs) => (fs.id === item.id ? { ...fs, status: 'success' } : fs))
