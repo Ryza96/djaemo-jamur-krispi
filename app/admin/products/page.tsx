@@ -219,6 +219,9 @@ export default function AdminProductsPage() {
     setPipelineSteps(steps);
     await delay(30);
 
+    console.log('[Admin Products] imageUrls after upload:', JSON.stringify(imageUrls));
+    console.log('[Admin Products] items count:', items.length, 'existing:', items.filter(i => i.type === 'existing').length, 'new:', items.filter(i => i.type === 'new').length);
+
     steps = pipelineRunning(steps, 3);
     setPipelineSteps(steps);
     await delay(30);

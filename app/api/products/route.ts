@@ -73,13 +73,18 @@ export const POST = async (request: Request) => {
     }
 
     const imagesToInsert = extractImageUrls(body);
+    console.log('[POST /api/products] imagesToInsert:', JSON.stringify(imagesToInsert));
+    console.log('[POST /api/products] body.images raw:', JSON.stringify(body?.images));
     if (imagesToInsert.length > 0) {
-      const { error: imgErr } = await supabase.from('product_images').insert(
-        imagesToInsert.map((image_url) => ({ product_id: product.id, image_url }))
-      );
+      const rows = imagesToInsert.map((image_url) => ({ product_id: product.id, image_url }));
+      console.log('[POST /api/products] inserting into product_images:', JSON.stringify(rows));
+      const { data: insertData, error: imgErr } = await supabase.from('product_images').insert(rows).select();
+      console.log('[POST /api/products] product_images insert result:', JSON.stringify({ data: insertData, error: imgErr }));
       if (imgErr) {
-        return NextResponse.json({ error: imgErr.message }, { status: 500 });
+        return NextResponse.json({ error: imgErr.message, details: imgErr.details, hint: imgErr.hint, code: imgErr.code }, { status: 500 });
       }
+    } else {
+      console.log('[POST /api/products] SKIPPING product_images insert — imagesToInsert is empty');
     }
 
     return NextResponse.json({ ...product, images: imagesToInsert }, { status: 201 });
@@ -121,24 +126,29 @@ export const PUT = async (request: Request) => {
     }
 
     const imagesToInsert = extractImageUrls(body);
+    console.log('[PUT /api/products] imagesToInsert:', JSON.stringify(imagesToInsert));
+    console.log('[PUT /api/products] body.images raw:', JSON.stringify(body?.images));
 
     const { error: deleteImgErr } = await supabase
       .from('product_images')
       .delete()
       .eq('product_id', productId);
 
+    console.log('[PUT /api/products] delete product_images result:', JSON.stringify({ error: deleteImgErr }));
     if (deleteImgErr) {
-      return NextResponse.json({ error: deleteImgErr.message }, { status: 500 });
+      return NextResponse.json({ error: deleteImgErr.message, details: deleteImgErr.details, code: deleteImgErr.code }, { status: 500 });
     }
 
     if (imagesToInsert.length > 0) {
-      const { error: insertImgErr } = await supabase
-        .from('product_images')
-        .insert(imagesToInsert.map((image_url) => ({ product_id: productId, image_url })));
-
+      const rows = imagesToInsert.map((image_url) => ({ product_id: productId, image_url }));
+      console.log('[PUT /api/products] inserting into product_images:', JSON.stringify(rows));
+      const { data: insertData, error: insertImgErr } = await supabase.from('product_images').insert(rows).select();
+      console.log('[PUT /api/products] product_images insert result:', JSON.stringify({ data: insertData, error: insertImgErr }));
       if (insertImgErr) {
-        return NextResponse.json({ error: insertImgErr.message }, { status: 500 });
+        return NextResponse.json({ error: insertImgErr.message, details: insertImgErr.details, hint: insertImgErr.hint, code: insertImgErr.code }, { status: 500 });
       }
+    } else {
+      console.log('[PUT /api/products] SKIPPING product_images insert — imagesToInsert is empty');
     }
 
     return NextResponse.json({ ...updatedProduct, images: imagesToInsert });
