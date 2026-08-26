@@ -96,10 +96,6 @@ export async function createSnapTransaction(
     },
   };
 
-  console.log(`\n[STEP 2] Midtrans payload ready`);
-  console.log(JSON.stringify(payload, null, 2));
-  console.log("--------------------");
-
   const isProd = process.env.NODE_ENV === "production";
   const apiUrl = isProd
     ? "https://app.midtrans.com/snap/v1/transactions"
@@ -109,15 +105,7 @@ export async function createSnapTransaction(
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`\n[STEP 3] Calling Midtrans (attempt ${attempt}/${MAX_RETRIES})`);
-      console.log(`  URL: ${apiUrl}`);
-      console.log("--------------------");
-
       const { token, redirect_url } = await snap.createTransaction(payload);
-
-      console.log(`\n[STEP 4] Midtrans response (attempt ${attempt})`);
-      console.log(JSON.stringify({ token, redirect_url }, null, 2));
-      console.log("--------------------");
 
       if (attempt > 1) {
         await AuditLogService.logPaymentEvent({
@@ -132,19 +120,6 @@ export async function createSnapTransaction(
       return { token, redirectUrl: redirect_url };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-
-      const httpErr = err as Record<string, unknown>;
-      const apiResponse = httpErr.ApiResponse
-        ? JSON.stringify(httpErr.ApiResponse, null, 2)
-        : "N/A";
-
-      console.log(`\n[STEP ${attempt < MAX_RETRIES ? 3 : 4} FAILED] (attempt ${attempt}/${MAX_RETRIES})`);
-      console.log("  Exception:", lastError.message);
-      console.log("  httpStatusCode:", httpErr.httpStatusCode ?? "N/A");
-      console.log("  ApiResponse:", apiResponse);
-      console.log("  Stack:", lastError.stack ?? "N/A");
-      console.log("  Cause:", lastError.cause ?? "N/A");
-      console.log("--------------------");
 
       if (attempt < MAX_RETRIES) {
         await AuditLogService.logPaymentEvent({

@@ -104,18 +104,6 @@ const createPaymentSchema = z.object({
   subtotal: z.number().nonnegative(),
 });
 
-function logStep(step: number, message: string, data?: unknown) {
-  console.log(`\n[STEP ${step}] ${message}`);
-  if (data !== undefined) {
-    const text =
-      typeof data === "object" && data !== null
-        ? JSON.stringify(data, null, 2)
-        : String(data);
-    console.log(text);
-  }
-  console.log("--------------------");
-}
-
 function extractErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
 
@@ -130,36 +118,6 @@ function extractErrorMessage(error: unknown): string {
   return "Gagal membuat transaksi pembayaran";
 }
 
-function logFail(step: number, error: unknown) {
-  console.log(`\n[STEP ${step} FAILED — RAW ERROR]`);
-  console.log("  typeof:", typeof error);
-  console.log("  constructor:", (error as object)?.constructor?.name ?? "N/A");
-  console.log("  keys:", Object.keys(error as object));
-  try { console.log("  JSON:", JSON.stringify(error, null, 2)); } catch {}
-  if (error instanceof Error) {
-    console.log("  message:", error.message);
-    console.log("  stack:", error.stack ?? "N/A");
-  }
-
-  const err = error instanceof Error ? error : new Error(String(error));
-  const httpErr = error as Record<string, unknown>;
-  const apiResponse = httpErr.ApiResponse
-    ? JSON.stringify(httpErr.ApiResponse, null, 2)
-    : "N/A";
-  const cause =
-    err.cause instanceof Error
-      ? `{ message: "${err.cause.message}", stack: ${err.cause.stack} }`
-      : err.cause ?? "N/A";
-
-  console.log(`\n[STEP ${step} FAILED]`);
-  console.log("  Exception:", err.message);
-  console.log("  httpStatusCode:", httpErr.httpStatusCode ?? "N/A");
-  console.log("  ApiResponse:", apiResponse);
-  console.log("  Stack:", err.stack ?? "N/A");
-  console.log("  Cause:", cause);
-  console.log("--------------------");
-}
-
 export async function POST(request: Request) {
   let body: unknown;
 
@@ -171,11 +129,6 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-
-  console.log("\n====================");
-  console.log("REQUEST BODY");
-  console.log(JSON.stringify(body, null, 2));
-  console.log("====================");
 
   const parsed = createPaymentSchema.safeParse(body);
   if (!parsed.success) {
@@ -193,8 +146,6 @@ export async function POST(request: Request) {
   } = parsed.data;
 
   try {
-    logStep(1, "Validating checkout request");
-
     let validated;
     try {
       validated = await validateCheckoutRequest(parsed.data);
@@ -207,8 +158,6 @@ export async function POST(request: Request) {
       }
       throw validationError;
     }
-
-    logStep(2, "Creating order draft with server-validated prices");
 
     const orderRequest: typeof parsed.data = {
       ...parsed.data,
@@ -267,8 +216,6 @@ export async function POST(request: Request) {
       token = result.token;
       redirectUrl = result.redirectUrl;
     } catch (snapError) {
-      logFail(4, snapError);
-
       try {
         await OrderRepository.updatePayment(orderDbId, {
           payment_status: PAYMENT_STATUS.FAILED,
@@ -301,17 +248,7 @@ export async function POST(request: Request) {
       );
     }
 
-    logStep(5, "Payment saved", { orderId, token });
-
     await OrderService.confirmPayment(orderId, token);
-
-    logStep(6, "Response to frontend", {
-      success: true,
-      orderId,
-      token,
-      redirectUrl,
-      totalAmount,
-    });
 
     return NextResponse.json({
       success: true,
@@ -328,8 +265,6 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-
-    logFail(5, error);
 
     return NextResponse.json(
       {
