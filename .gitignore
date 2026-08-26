@@ -62,6 +62,7 @@ IMPLEMENTATION*
 
 # Test/debug artifacts
 *-screenshot.png
+restyle-*.png
 *screenshot*.mjs
 receipt-*.pdf
 sample-receipt*.pdf
