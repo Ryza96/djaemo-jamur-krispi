@@ -10,6 +10,15 @@ const WIB_MONTH_NAMES = [
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
 
+function getWIBDateKey(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 function getWIBMonthStartUTC(now: Date): string {
   const wibNow = new Date(now.getTime() + WIB_OFFSET_MS);
   const year = wibNow.getUTCFullYear();
@@ -38,14 +47,21 @@ export interface DashboardStats {
 export const DashboardRepository = {
   async getDashboardStats(): Promise<DashboardStats> {
     const now = new Date();
-    const weekAgo = new Date(now);
-    weekAgo.setDate(weekAgo.getDate() - WEEKLY_SALES_DAYS);
-    const weekAgoISO = weekAgo.toISOString();
+
+    // Compute "7 days ago" in WIB, then convert boundary back to UTC for the query.
+    // This ensures we cover the full WIB day (00:00-23:59) for each of the 7 days.
+    const wibTodayKey = getWIBDateKey(now);
+    const wibTodayStart = new Date(`${wibTodayKey}T00:00:00+07:00`);
+    const wibBoundaryStart = new Date(wibTodayStart);
+    wibBoundaryStart.setDate(wibBoundaryStart.getDate() - WEEKLY_SALES_DAYS);
+    const weekAgoISO = wibBoundaryStart.toISOString();
 
     const wibMonthStartUTC = getWIBMonthStartUTC(now);
 
     const [revenueResult, pendingResult, customerResult, lowStockCountResult, lowStockItemsResult, weeklySalesResult, waitingRestockResult] =
       await Promise.all([
+        // Revenue card: sums subtotal (product revenue only, excludes shipping fee).
+        // Consistent with the weekly sales chart which also uses subtotal.
         supabase
           .from("orders")
           .select("subtotal", { count: "exact" })
@@ -74,6 +90,7 @@ export const DashboardRepository = {
           .order("stock", { ascending: true })
           .limit(LOW_STOCK_LIMIT),
 
+        // Weekly sales: subtotal (product revenue, excludes shipping fee).
         supabase
           .from("orders")
           .select("subtotal, created_at")
@@ -100,17 +117,21 @@ export const DashboardRepository = {
       0,
     );
 
+    // Use WIB date keys for bucket initialization (not UTC).
     const dailyRevenue = new Map<string, number>();
     for (let i = 0; i < WEEKLY_SALES_DAYS; i++) {
-      const d = new Date(now);
+      const d = new Date(wibTodayStart);
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      dailyRevenue.set(key, 0);
+      dailyRevenue.set(getWIBDateKey(d), 0);
     }
 
     for (const row of weeklySalesResult.data ?? []) {
-      const key = row.created_at.slice(0, 10);
+      // created_at is timestamptz → Supabase returns UTC ISO string.
+      // Convert to WIB date key before grouping.
+      const key = getWIBDateKey(new Date(row.created_at));
       if (dailyRevenue.has(key)) {
+        // Use subtotal (product revenue, excludes shipping) for consistency
+        // with the "Total Penjualan" card above which also sums subtotal.
         dailyRevenue.set(key, (dailyRevenue.get(key) ?? 0) + (row.subtotal ?? 0));
       }
     }

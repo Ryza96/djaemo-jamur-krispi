@@ -197,7 +197,8 @@ export default function AdminDashboardPage() {
               <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grafik Penjualan</p>
               <h3 className="mt-2 text-xl font-semibold text-slate-900">Performanya minggu ini</h3>
             </div>
-            <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-600">Marketplace</span>
+            {/* TODO: Marketplace filter — belum ada logic filter, placeholder statsis. Aktifkan kalau sudah ada kolom sales_channel di tabel orders. */}
+            {/* <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-600">Marketplace</span> */}
           </div>
           <div className="rounded-4xl border border-slate-200 bg-slate-50 p-4">
             <canvas ref={chartRef} className="h-80 w-full" aria-label="Penjualan mingguan" />

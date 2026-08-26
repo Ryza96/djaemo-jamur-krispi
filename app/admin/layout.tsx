@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { NotificationDropdown } from "@/components/admin/notifications/NotificationDropdown";
 
 type NavItem = { label: string; icon: string; href?: string; disabled?: boolean };
 
@@ -130,10 +131,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <h2 className="text-3xl font-semibold tracking-tight text-slate-900">{activeLabel}</h2>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100">
-                <span className="rounded-full bg-sky-100 px-2 py-1 text-sky-700">3</span>
-                Notifikasi
-              </button>
+              <NotificationDropdown />
               <button
                 onClick={handleLogout}
                 className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 transition hover:bg-rose-100"
