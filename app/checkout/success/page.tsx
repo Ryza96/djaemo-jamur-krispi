@@ -563,7 +563,7 @@ export default function CheckoutSuccessPage() {
             {effectiveStatus === "success" && orderIdFromUrl && (
               <Button
                 className="w-full"
-                href={`/track-order/${encodeURIComponent(orderIdFromUrl)}`}
+                href={`/track-order/${encodeURIComponent(orderIdFromUrl)}?token=${encodeURIComponent(activeToken ?? tokenFromUrl ?? "")}`}
               >
                 Lacak Pesanan
               </Button>

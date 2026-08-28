@@ -5,7 +5,7 @@ const TRACKING_FIELDS =
   "order_id, payment_status, fulfillment_status, total_amount, created_at, order_items(id, product_name, price, quantity, subtotal)";
 
 const FULL_FIELDS =
-  "id, order_id, payment_status, fulfillment_status, subtotal, shipping_fee, total_amount, destination, shipping_service, customer_name, customer_email, customer_phone, shipping_address, shipping_cost, courier_company, courier_type, postal_code, destination_area_id, notes, payment_method, transaction_id, created_at, access_token, order_items(id, product_name, price, quantity, subtotal), customers(name, email, phone)";
+  "id, order_id, payment_status, fulfillment_status, subtotal, shipping_fee, total_amount, destination, shipping_service, customer_name, customer_email, customer_phone, shipping_address, shipping_cost, courier_company, courier_type, postal_code, destination_area_id, notes, payment_method, transaction_id, created_at, waybill_id, access_token, order_items(id, product_name, price, quantity, subtotal), customers(name, email, phone)";
 
 export async function GET(
   request: NextRequest,
@@ -29,22 +29,17 @@ export async function GET(
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      if (!order) {
-        const { data: exists } = await supabase
-          .from("orders")
-          .select("id")
-          .eq("order_id", orderId)
-          .maybeSingle();
-
-        if (exists) {
-          return NextResponse.json({ error: "Token tidak valid." }, { status: 403 });
-        }
-        return NextResponse.json({ error: "Order tidak ditemukan." }, { status: 404 });
+      if (order) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { access_token: _, ...safeOrder } = order;
+        return NextResponse.json({ success: true, data: safeOrder });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { access_token: _, ...safeOrder } = order;
-      return NextResponse.json({ success: true, data: safeOrder });
+      // Token provided but did NOT match this order: fall back to the same
+      // public result as a no-token request. Returning a distinct
+      // 403/404 here would leak whether the order ID exists (a customer
+      // could enumerate orders and tell "wrong token" apart from "no such
+      // order"). Falling through to the tracking query hides that.
     }
 
     const { data: order, error } = await supabase

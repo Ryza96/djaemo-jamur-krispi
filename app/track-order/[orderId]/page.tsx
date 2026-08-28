@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Section } from "@/components/sections/Section";
 import { formatPrice } from "@/lib/utils";
+
+const ORDER_STORAGE_KEY = "djaemo-last-order";
 
 interface OrderItem {
   product_name: string;
@@ -20,6 +22,9 @@ interface OrderData {
   total_amount: number;
   created_at: string;
   order_items: OrderItem[];
+  waybill_id?: string | null;
+  courier_company?: string | null;
+  courier_type?: string | null;
 }
 
 type CustomerStatus =
@@ -166,10 +171,22 @@ const TIMELINE_ORDER: CustomerStatus[] = [
   "delivered",
 ];
 
+// Customer statuses for which a waybill (resi) becomes relevant. These map
+// the existing fulfillment values waybill_created / picked_up (-> "preparing"),
+// shipped and delivered. The waybill card is rendered only when a waybill_id
+// is actually present in the response AND the order is in one of these states.
+const WAYBILL_RELEVANT_STATUSES: CustomerStatus[] = [
+  "preparing",
+  "shipped",
+  "delivered",
+];
+
 export default function TrackOrderDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
 
   const orderId = params?.orderId as string;
+  const tokenFromUrl = searchParams?.get("token") ?? null;
 
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -187,9 +204,28 @@ export default function TrackOrderDetailPage() {
     setLoading(true);
     setError(null);
 
+    // Resolve the access token for this order: prefer the URL query param,
+    // then fall back to the one stored by checkout (so guests returning via
+    // bookmark/history still see the waybill without a token in the URL).
+    let token: string | null = tokenFromUrl;
+    if (!token) {
+      try {
+        const stored = localStorage.getItem(ORDER_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.orderId === orderId && parsed?.accessToken) {
+            token = parsed.accessToken;
+          }
+        }
+      } catch {}
+    }
+
     try {
+      const query = token
+        ? `?token=${encodeURIComponent(token)}`
+        : "";
       const res = await fetch(
-        `/api/orders/${encodeURIComponent(orderId)}`
+        `/api/orders/${encodeURIComponent(orderId)}${query}`
       );
 
       if (!res.ok) {
@@ -207,7 +243,7 @@ export default function TrackOrderDetailPage() {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, tokenFromUrl]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -303,6 +339,29 @@ export default function TrackOrderDetailPage() {
           </h2>
           <p className="mt-2 text-sm text-muted">{statusConfig.message}</p>
         </div>
+
+        {WAYBILL_RELEVANT_STATUSES.includes(customerStatus) && order.waybill_id && (
+          <div className="rounded-3xl border border-primary/10 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-foreground">
+              Informasi Pengiriman
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted">Nomor Resi</span>
+                <span className="break-all text-right font-mono text-sm font-semibold text-foreground">
+                  {order.waybill_id}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted">Kurir</span>
+                <span className="text-right text-sm font-medium capitalize text-foreground">
+                  {order.courier_company || "-"}
+                  {order.courier_type ? ` (${order.courier_type})` : ""}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-3xl border border-primary/10 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
