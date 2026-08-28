@@ -60,11 +60,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     const updatedOrder = await OrderRepository.findDetailByOrderId(id);
+    const { access_token: _accessToken, ...safeOrder } = updatedOrder ?? {};
 
     return NextResponse.json({
       success: true,
       message: result.message,
-      data: updatedOrder,
+      data: safeOrder,
     });
   } catch (error) {
     console.error("Error executing order action:", error);

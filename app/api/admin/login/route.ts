@@ -5,8 +5,23 @@ import {
   adminSessionCookieOptions,
   createAdminSessionToken,
 } from "@/lib/services/admin-auth.service";
+import {
+  clearFailedLogins,
+  getClientIdentifier,
+  isLoginRateLimited,
+  recordFailedLogin,
+} from "@/lib/services/admin-login-rate-limit.service";
 
 export async function POST(request: Request) {
+  const identifier = getClientIdentifier(request);
+
+  if (await isLoginRateLimited(identifier)) {
+    return NextResponse.json(
+      { success: false, error: "Terlalu banyak percobaan login. Coba lagi dalam beberapa menit." },
+      { status: 429 },
+    );
+  }
+
   let body: { username?: string; password?: string };
 
   try {
@@ -39,11 +54,14 @@ export async function POST(request: Request) {
   }
 
   if (username !== adminUsername || password !== adminPassword) {
+    await recordFailedLogin(identifier, username);
     return NextResponse.json(
       { success: false, error: "Username atau password salah." },
       { status: 401 },
     );
   }
+
+  await clearFailedLogins(identifier);
 
   const token = createAdminSessionToken();
   if (!token) {

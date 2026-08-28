@@ -22,7 +22,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     const refundInfo = await OrderService.getRefundInfo(id);
 
-    return NextResponse.json({ success: true, data: { ...order, refund_info: refundInfo } });
+    const { access_token: _accessToken, ...safeOrder } = order;
+
+    return NextResponse.json({ success: true, data: { ...safeOrder, refund_info: refundInfo } });
   } catch (error) {
     console.error("Error fetching order detail:", error);
     return NextResponse.json(
