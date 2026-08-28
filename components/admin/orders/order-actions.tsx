@@ -194,6 +194,9 @@ function ConfirmationDialog({
   loading,
   paymentStatus,
   totalAmount,
+  shipWaybill,
+  shipWaybillError,
+  onShipWaybillChange,
   onConfirm,
   onCancel,
 }: {
@@ -201,9 +204,13 @@ function ConfirmationDialog({
   loading: boolean;
   paymentStatus: string | null;
   totalAmount: number | null;
+  shipWaybill: string;
+  shipWaybillError: boolean;
+  onShipWaybillChange: (value: string) => void;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const shipDisabled = action.action === "ship" && !shipWaybill.trim();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="mx-4 w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
@@ -236,14 +243,26 @@ function ConfirmationDialog({
         {action.action === "ship" && (
           <div className="mt-4">
             <label className="text-xs font-medium text-slate-500">
-              Nomor Resi (opsional)
+              Nomor Resi <span className="text-rose-500">(wajib)</span>
             </label>
             <input
               id="waybill-id"
               type="text"
-              className="mt-1 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
+              value={shipWaybill}
+              onChange={(e) => onShipWaybillChange(e.target.value)}
+              className={`mt-1 w-full rounded-2xl border bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-4 ${
+                shipWaybillError
+                  ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10"
+                  : "border-slate-300 focus:border-slate-900 focus:ring-slate-900/10"
+              }`}
               placeholder="Masukkan nomor resi..."
             />
+            {shipWaybillError && (
+              <p className="mt-1 text-xs font-medium text-rose-600">
+                Nomor resi wajib diisi sebelum menandai pesanan sebagai
+                terkirim.
+              </p>
+            )}
           </div>
         )}
 
@@ -257,7 +276,7 @@ function ConfirmationDialog({
           </button>
           <button
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || shipDisabled}
             className={`rounded-2xl px-5 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50 ${
               action.variant === "danger"
                 ? "bg-rose-600 hover:bg-rose-700"
@@ -288,6 +307,8 @@ export function OrderActions({
   const { create: createShipment, loading: shipmentLoading } = useOrderShipment();
   const { showToast } = useToast();
   const [confirmAction, setConfirmAction] = useState<ActionDef | null>(null);
+  const [shipWaybill, setShipWaybill] = useState("");
+  const [shipWaybillError, setShipWaybillError] = useState(false);
 
   const loading = actionsLoading || shipmentLoading;
 
@@ -308,16 +329,23 @@ export function OrderActions({
       return;
     }
 
+    if (confirmAction.action === "ship" && !shipWaybill.trim()) {
+      setShipWaybillError(true);
+      showToast(
+        "Nomor resi wajib diisi sebelum menandai pesanan sebagai terkirim.",
+        "error",
+      );
+      return;
+    }
+    setShipWaybillError(false);
+
     const reasonEl = document.getElementById(
       "cancel-reason",
     ) as HTMLTextAreaElement | null;
-    const waybillEl = document.getElementById(
-      "waybill-id",
-    ) as HTMLInputElement | null;
 
     const result = await executeAction(orderId, confirmAction.action, {
       cancellation_reason: reasonEl?.value || undefined,
-      waybill_id: waybillEl?.value || undefined,
+      waybill_id: confirmAction.action === "ship" ? shipWaybill.trim() : undefined,
     });
 
     setConfirmAction(null);
@@ -406,7 +434,11 @@ export function OrderActions({
         {actions.map((act) => (
           <button
             key={act.action}
-            onClick={() => setConfirmAction(act)}
+            onClick={() => {
+              setConfirmAction(act);
+              setShipWaybill("");
+              setShipWaybillError(false);
+            }}
             disabled={loading}
             className={`rounded-2xl px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
               act.variant === "danger"
@@ -425,6 +457,9 @@ export function OrderActions({
           loading={loading}
           paymentStatus={paymentStatus}
           totalAmount={totalAmount}
+          shipWaybill={shipWaybill}
+          shipWaybillError={shipWaybillError}
+          onShipWaybillChange={setShipWaybill}
           onConfirm={handleConfirm}
           onCancel={() => setConfirmAction(null)}
         />

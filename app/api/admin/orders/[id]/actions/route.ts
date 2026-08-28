@@ -53,8 +53,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     if (!result.success) {
+      const error =
+        result.message === "WAYBILL_REQUIRED"
+          ? "Nomor resi wajib diisi sebelum menandai pesanan sebagai terkirim."
+          : result.message;
       return NextResponse.json(
-        { error: result.message, previousStatus: result.previousStatus, newStatus: result.newStatus },
+        { error, previousStatus: result.previousStatus, newStatus: result.newStatus },
         { status: 422 },
       );
     }

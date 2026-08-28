@@ -183,6 +183,22 @@ async function executeTransition(
     };
   }
 
+  if (targetStatus === FULFILLMENT_STATUS.SHIPPED) {
+    const waybillId = (
+      (((extra?.waybill_id as string | undefined) ?? order.waybill_id) ?? "").toString().trim()
+    );
+    if (!waybillId) {
+      return {
+        success: false,
+        orderId,
+        previousStatus: currentFulfillmentStatus,
+        newStatus: targetStatus,
+        message: "WAYBILL_REQUIRED",
+      };
+    }
+    extra = { ...(extra ?? {}), waybill_id: waybillId };
+  }
+
   if (targetStatus !== FULFILLMENT_STATUS.CANCELLED) {
     const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
     if (paymentStatus !== PAYMENT_STATUS.PAID) {
