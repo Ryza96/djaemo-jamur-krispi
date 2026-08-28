@@ -12,13 +12,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const { id } = await params;
     const product = await getProductById(id);
     if (!product) return { title: "Produk Tidak Ditemukan" };
+    const ogImage =
+      product.images.length > 0 ? product.images[0] : undefined;
     return {
       title: product.name,
       description: product.description,
       openGraph: {
         title: product.name,
         description: product.description,
-        images: product.images.length > 0 ? [{ url: product.images[0] }] : [],
+        images: ogImage ? [{ url: ogImage }] : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: product.name,
+        description: product.description,
+        images: ogImage ? [ogImage] : [],
       },
     };
   } catch {

@@ -25,12 +25,34 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
 });
 
+function baseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured && configured.trim() !== "") {
+    return configured.replace(/\/+$/, "");
+  }
+  return "https://jamurkrispi.com";
+}
+
 export const metadata: Metadata = {
   title: {
     default: SITE.name,
     template: `%s | ${SITE.name}`,
   },
   description: SITE.description,
+  openGraph: {
+    title: SITE.name,
+    description: SITE.description,
+    type: "website",
+    url: baseUrl(),
+    siteName: SITE.name,
+    images: [{ url: `${baseUrl()}${SITE.logo}` }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE.name,
+    description: SITE.description,
+    images: [`${baseUrl()}${SITE.logo}`],
+  },
 };
 
 export default function RootLayout({
