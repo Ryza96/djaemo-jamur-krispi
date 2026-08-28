@@ -19,6 +19,7 @@ interface SnapParams {
     quantity: number;
   }>;
   shippingFee: number;
+  discountAmount: number;
 }
 
 interface SnapResult {
@@ -32,6 +33,7 @@ const RETRY_DELAY_MS = 1000;
 function buildItemDetails(
   items: SnapParams["items"],
   shippingFee: number,
+  discountAmount: number,
 ): Array<{
   id: string;
   name: string;
@@ -54,6 +56,15 @@ function buildItemDetails(
     });
   }
 
+  if (discountAmount > 0) {
+    details.push({
+      id: "discount",
+      name: "Diskon Voucher",
+      price: -discountAmount,
+      quantity: 1,
+    });
+  }
+
   return details;
 }
 
@@ -64,7 +75,7 @@ function delay(ms: number): Promise<void> {
 export async function createSnapTransaction(
   params: SnapParams,
 ): Promise<SnapResult> {
-  const { orderId, accessToken, grossAmount, customerInfo, shippingAddress, items, shippingFee } = params;
+  const { orderId, accessToken, grossAmount, customerInfo, shippingAddress, items, shippingFee, discountAmount } = params;
 
   if (orderId.length > 50) {
     throw new Error(`ORDER_ID_TOO_LONG: order_id length ${orderId.length} exceeds 50 character limit`);
@@ -88,7 +99,7 @@ export async function createSnapTransaction(
       gross_amount: grossAmount,
     },
     customer_details: customerDetails,
-    item_details: buildItemDetails(items, shippingFee),
+    item_details: buildItemDetails(items, shippingFee, discountAmount),
     callbacks: {
       finish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}&token=${accessToken}`,
       unfinish: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}&token=${accessToken}`,

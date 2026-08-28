@@ -41,6 +41,10 @@ export interface OrderRow {
   cancelled_at: string | null;
   cancellation_reason: string | null;
   access_token: string;
+  voucher_code: string | null;
+  voucher_discount_percent: number | null;
+  discount_amount: number;
+  voucher_usage_released: boolean | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -80,6 +84,9 @@ export interface InsertOrderParams {
   payment_status: PaymentStatus;
   fulfillment_status: FulfillmentStatus;
   destination_area_id?: string | null;
+  voucher_code?: string | null;
+  voucher_discount_percent?: number | null;
+  discount_amount?: number;
 }
 
 export interface InsertOrderItemParams {
@@ -328,6 +335,9 @@ export const OrderRepository = {
         payment_status: params.payment_status,
         fulfillment_status: params.fulfillment_status,
         destination_area_id: params.destination_area_id ?? null,
+        voucher_code: params.voucher_code ?? null,
+        voucher_discount_percent: params.voucher_discount_percent ?? null,
+        discount_amount: params.discount_amount ?? 0,
         access_token: crypto.randomUUID(),
       })
       .select()

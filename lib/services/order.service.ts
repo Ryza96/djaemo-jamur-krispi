@@ -22,6 +22,12 @@ export interface CreateOrderResult {
   accessToken: string;
 }
 
+export interface VoucherSnapshot {
+  voucherCode: string;
+  voucherDiscountPercent: number;
+  discountAmount: number;
+}
+
 export interface ProcessCallbackResult {
   success: boolean;
   orderId: string;
@@ -33,6 +39,7 @@ export const OrderService = {
   async createDraft(
     params: CreatePaymentRequest,
     initialFulfillmentStatus: FulfillmentStatus = FULFILLMENT_STATUS.NEW,
+    voucherInfo?: VoucherSnapshot,
   ): Promise<CreateOrderResult> {
     const existing = await OrderRepository.findByOrderId(params.orderId);
     if (existing) {
@@ -40,7 +47,8 @@ export const OrderService = {
     }
 
     const fullAddress = combineAddress(params.shippingAddress);
-    const totalAmount = params.subtotal + params.shippingFee;
+    const discountAmount = voucherInfo?.discountAmount ?? 0;
+    const totalAmount = params.subtotal + params.shippingFee - discountAmount;
 
     const customer = await CustomerRepository.upsert({
       email: params.customerInfo.email,
@@ -69,6 +77,9 @@ export const OrderService = {
       payment_status: PAYMENT_STATUS.UNPAID,
       fulfillment_status: initialFulfillmentStatus,
       destination_area_id: params.shippingAddress.areaId ?? null,
+      voucher_code: voucherInfo?.voucherCode ?? null,
+      voucher_discount_percent: voucherInfo?.voucherDiscountPercent ?? null,
+      discount_amount: discountAmount,
     });
 
     const orderItems = params.items.map((item) => ({
@@ -321,6 +332,32 @@ export const OrderService = {
         fromStatus: FULFILLMENT_STATUS.CANCELLED,
         toStatus: FULFILLMENT_STATUS.NEW,
         metadata: { reason, recovery: "midtrans_race_recovery" },
+      });
+    }
+
+    // Visibility for a known edge case: when this order was previously
+    // cancelled/expired/failed, its reserved voucher usage was RELEASED back
+    // to the voucher (voucher_usage_released = TRUE). If the customer then
+    // pays and the order is recovered to success, the released slot is NOT
+    // re-applied (accepted as a small business risk). We only LOG this so
+    // admins can see the potential 1-slot overshoot. This is notification
+    // ONLY — we deliberately do not re-apply quota here.
+    if (
+      order &&
+      order.voucher_code &&
+      order.voucher_usage_released === true
+    ) {
+      await AuditLogService.logPaymentEvent({
+        orderId,
+        event: AuditLogService.events.VOUCHER_USAGE_RELEASED_ON_RECOVERY,
+        fromStatus: "expired_or_failed",
+        toStatus: PAYMENT_STATUS.PAID,
+        metadata: {
+          reason,
+          recovery: "midtrans_race_recovery",
+          voucher_code: order.voucher_code,
+          note: "voucher usage was released during cancellation and is NOT re-applied; potential 1-slot quota overshoot",
+        },
       });
     }
 

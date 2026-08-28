@@ -21,6 +21,7 @@ export interface ShippingAddress {
 export interface Voucher {
   code: string;
   discount: number;
+  discountPercent?: number;
 }
 
 export interface ShippingRate {

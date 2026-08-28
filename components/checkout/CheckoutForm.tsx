@@ -46,6 +46,7 @@ export function CheckoutForm() {
             quantity: item.quantity,
           })),
           subtotal,
+          voucherCode: state.voucher?.code,
         }),
       });
 
@@ -85,6 +86,7 @@ export function CheckoutForm() {
       state.shippingFee,
       state.shippingService,
       state.shippingCourier,
+      state.voucher,
       items,
       subtotal,
     ],

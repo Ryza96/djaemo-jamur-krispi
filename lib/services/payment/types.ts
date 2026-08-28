@@ -75,6 +75,7 @@ export interface CreatePaymentRequest {
     quantity: number;
   }>;
   subtotal: number;
+  voucherCode?: string;
 }
 
 export interface CreatePaymentResponse {

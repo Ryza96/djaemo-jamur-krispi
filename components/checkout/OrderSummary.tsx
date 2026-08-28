@@ -10,7 +10,8 @@ export function OrderSummary() {
   const { shippingFee, shippingCourier, shippingService } = state;
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const total = subtotal + shippingFee;
+  const voucherDiscount = state.voucher?.discount ?? 0;
+  const total = subtotal + shippingFee - voucherDiscount;
 
   return (
     <div className="space-y-3">
@@ -67,6 +68,12 @@ export function OrderSummary() {
                 )}
               </span>
             </div>
+            {voucherDiscount > 0 && (
+              <div className="flex items-center justify-between text-emerald-600">
+                <span>Diskon Voucher ({state.voucher?.code})</span>
+                <span>-{formatPrice(voucherDiscount)}</span>
+              </div>
+            )}
             <div className="border-t border-slate-200 pt-2 text-lg font-semibold text-primary flex items-center justify-between">
               <span>Total</span>
               <span>{formatPrice(total)}</span>

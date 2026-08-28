@@ -22,6 +22,7 @@ const AUDIT_EVENTS = {
   PAYMENT_MANUAL_CONFIRM: "payment.manual_confirm",
   REFUND_CONFIRMED: "payment.refund_confirmed",
   NOTES_UPDATED: "order.notes_updated",
+  VOUCHER_USAGE_RELEASED_ON_RECOVERY: "voucher.usage_released_on_recovery",
 
   // Shipping events
   SHIPMENT_CREATED: "shipment.created",

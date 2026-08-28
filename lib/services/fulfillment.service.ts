@@ -1,4 +1,4 @@
-import { OrderRepository } from "@/lib/repositories";
+import { OrderRepository, VoucherRepository } from "@/lib/repositories";
 import { AuditLogService } from "./audit-log.service";
 import { InventoryService } from "./inventory.service";
 import { FULFILLMENT_STATUS, PAYMENT_STATUS } from "./payment/types";
@@ -239,6 +239,37 @@ async function executeTransition(
         metadata: {
           partialRestoreFailure: true,
           items: result.items,
+        },
+      });
+    }
+  }
+
+  // Return any reserved voucher usage when an order is cancelled BEFORE it
+  // completes. Usage is reserved at draft-creation time (apply_voucher), and
+  // unlike inventory it is NOT tied to a stock-deducted status, so it is
+  // released for any cancelled order that used a voucher. The
+  // release_voucher_usage RPC is atomic + idempotent and handles the
+  // race between a webhook expire and an admin cancel (slot returned at
+  // most once per order).
+  //
+  // KNOWN LIMITATION (accepted business decision, NOT a bug): if this order
+  // is later RECOVERED to a success/completed state after a late payment,
+  // the released quota is NOT re-applied, so the voucher can overshoot by at
+  // most 1 slot per such event. Re-applying on recovery is intentionally not
+  // done here; the edge case is only surfaced via the
+  // VOUCHER_USAGE_RELEASED_ON_RECOVERY audit event at the recovery site.
+  if (targetStatus === FULFILLMENT_STATUS.CANCELLED && order.voucher_code) {
+    try {
+      await VoucherRepository.releaseUsage(order.id);
+    } catch (err) {
+      await AuditLogService.logFulfillmentEvent({
+        orderId,
+        event: AuditLogService.events.ROLLBACK,
+        fromStatus: currentFulfillmentStatus,
+        toStatus: targetStatus,
+        metadata: {
+          reason: "voucher_release_failed",
+          detail: err instanceof Error ? err.message : "RELEASE_FAILED",
         },
       });
     }

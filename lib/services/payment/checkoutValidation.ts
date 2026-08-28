@@ -7,6 +7,8 @@ import {
 } from "@/lib/services/inventory.service";
 import { BITESHIP_API_BASE_URL, DEFAULT_COURIERS, getBiteshipApiKey } from "@/lib/services/shipping/constants";
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
+import { VoucherRepository } from "@/lib/repositories";
+import { validateVoucherRules } from "@/lib/services/voucher-engine";
 import type { CreatePaymentRequest } from "./types";
 
 interface ValidatedCheckoutItem {
@@ -26,6 +28,11 @@ export interface ValidatedCheckout {
   shippingFee: number;
   totalAmount: number;
   stock: ValidateOrderStockResult;
+  voucher?: {
+    code: string;
+    discount_percent: number;
+    discount_amount: number;
+  } | null;
 }
 
 export class CheckoutValidationError extends Error {
@@ -237,6 +244,32 @@ export async function validateCheckoutRequest(
 
   assertClientTotalsMatch(params, subtotal, shippingFee);
 
+  // Voucher pre-validation (non-destructive). The authoritative check +
+  // usage reservation happens atomically in the create route via
+  // apply_voucher, but validating here gives an early, clear rejection
+  // before any order row is written.
+  let voucher: ValidatedCheckout["voucher"] = null;
+  if (params.voucherCode && params.voucherCode.trim()) {
+    const normalizedCode = params.voucherCode.trim().toUpperCase();
+    const voucherRow = await VoucherRepository.findByCode(normalizedCode);
+    const validation = validateVoucherRules({ voucher: voucherRow, subtotal });
+
+    if (!validation.valid) {
+      throw new CheckoutValidationError(
+        validation.message || "Kode voucher tidak valid",
+        400,
+      );
+    }
+
+    voucher = {
+      code: normalizedCode,
+      discount_percent: validation.discount_percent!,
+      discount_amount: validation.discount_amount!,
+    };
+  }
+
+  const discountAmount = voucher?.discount_amount ?? 0;
+
   return {
     request: {
       ...params,
@@ -247,7 +280,8 @@ export async function validateCheckoutRequest(
     items,
     subtotal,
     shippingFee,
-    totalAmount: subtotal + shippingFee,
+    totalAmount: subtotal + shippingFee - discountAmount,
     stock: stockResult,
+    voucher,
   };
 }

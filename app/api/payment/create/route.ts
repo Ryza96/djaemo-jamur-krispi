@@ -4,6 +4,7 @@ import { OrderService } from "@/lib/services/order.service";
 import { createSnapTransaction } from "@/lib/services/payment/createSnap";
 import { combineAddress } from "@/lib/services/payment/mapper";
 import { AuditLogService } from "@/lib/services/audit-log.service";
+import { VoucherService } from "@/lib/services/voucher.service";
 import { OrderRepository } from "@/lib/repositories";
 import { PAYMENT_STATUS, FULFILLMENT_STATUS } from "@/lib/services/payment/types";
 import {
@@ -102,6 +103,7 @@ const createPaymentSchema = z.object({
       }
     }),
   subtotal: z.number().nonnegative(),
+  voucherCode: z.string().max(50).optional(),
 });
 
 function extractErrorMessage(error: unknown): string {
@@ -174,6 +176,32 @@ export async function POST(request: Request) {
       shippingFee: validated.shippingFee,
     };
 
+    // Authoritative, atomic voucher application. Re-validates every rule
+    // server-side AND reserves a usage slot inside the apply_voucher RPC
+    // transaction — this is the TOCTOU guard against concurrent redemptions
+    // of the same code (e.g. the last remaining use claimed by two
+    // checkouts at once). It returns the discount amount used to compute
+    // the final total below.
+    let appliedVoucher: typeof validated.voucher = validated.voucher;
+    if (validated.voucher) {
+      const applied = await VoucherService.applyForCheckout(
+        validated.voucher.code,
+        validated.subtotal,
+      );
+      if (!applied.success) {
+        return NextResponse.json({ error: applied.error }, { status: 400 });
+      }
+      appliedVoucher = applied.discount
+        ? {
+            code: applied.discount.code,
+            discount_percent: applied.discount.discount_percent,
+            discount_amount: applied.discount.discount_amount,
+          }
+        : validated.voucher;
+    }
+
+    const discountAmount = appliedVoucher?.discount_amount ?? 0;
+
     const initialFulfillmentStatus = validated.stock.valid
       ? FULFILLMENT_STATUS.NEW
       : FULFILLMENT_STATUS.WAITING_FOR_RESTOCK;
@@ -181,6 +209,13 @@ export async function POST(request: Request) {
     const { id: orderDbId, accessToken } = await OrderService.createDraft(
       orderRequest,
       initialFulfillmentStatus,
+      appliedVoucher
+        ? {
+            voucherCode: appliedVoucher.code,
+            voucherDiscountPercent: appliedVoucher.discount_percent,
+            discountAmount,
+          }
+        : undefined,
     );
 
     const totalAmount = validated.totalAmount;
@@ -209,6 +244,7 @@ export async function POST(request: Request) {
         shippingAddress: fullAddress,
         items: snapItems,
         shippingFee: validated.shippingFee,
+        discountAmount,
       };
 
       const result = await createSnapTransaction(snapParams);
