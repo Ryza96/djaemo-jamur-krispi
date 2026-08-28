@@ -26,6 +26,7 @@ export default function AdminProductsPage() {
   const [restockLoading, setRestockLoading] = useState(false);
   const [restockError, setRestockError] = useState<string | null>(null);
   const [restockSuccess, setRestockSuccess] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const pipelineLabels = [
     { id: 1, label: 'Validasi Data Produk' },
@@ -57,26 +58,80 @@ export default function AdminProductsPage() {
   const handleAddProduct = () => {
     setEditingProduct(null);
     setFormData({ name: "", description: "", price: 0, weight: "", stock: 0, images: [] });
+    setFormErrors({});
     setShowProductModal(true);
   };
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setFormData(product);
+    setFormErrors({});
     setShowProductModal(true);
   };
 
   const sanitizePriceToInt = (raw: unknown): number | null => {
     if (raw === null || raw === undefined) return null;
-    if (typeof raw === 'number') {
+    if (typeof raw === "number") {
       if (!Number.isFinite(raw)) return null;
       return Math.trunc(raw);
     }
     const s = String(raw);
-    const digits = s.replace(/[^0-9]/g, '');
+    const digits = s.replace(/[^0-9]/g, "");
     if (!digits) return null;
     const n = Number.parseInt(digits, 10);
     return Number.isNaN(n) ? null : n;
+  };
+
+  const parsePositiveInt = (raw: unknown): number | null => {
+    if (typeof raw === "number") {
+      if (!Number.isFinite(raw) || !Number.isInteger(raw) || raw <= 0) return null;
+      return raw;
+    }
+    if (typeof raw === "string") {
+      const s = raw.trim().replace(/^\+/, "");
+      if (!/^\d+$/.test(s)) return null;
+      const n = Number.parseInt(s, 10);
+      return Number.isNaN(n) || n <= 0 ? null : n;
+    }
+    return null;
+  };
+
+  const validateProductForm = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+
+    const name = typeof formData.name === "string" ? formData.name.trim() : "";
+    if (!name) {
+      errors.name = "Nama produk wajib diisi.";
+    } else if (name.length > 150) {
+      errors.name = "Nama produk maksimal 150 karakter.";
+    }
+
+    const price = sanitizePriceToInt(formData.price);
+    if (price === null || price <= 0) {
+      errors.price = "Harga wajib diisi angka bulat lebih dari 0.";
+    }
+
+    const stock = typeof formData.stock === "number" ? formData.stock : Number(formData.stock);
+    if (!Number.isInteger(stock) || stock < 0) {
+      errors.stock = "Stok wajib diisi angka bulat (boleh 0, tidak boleh negatif).";
+    }
+
+    if (parsePositiveInt(formData.weight) === null) {
+      errors.weight =
+        "Berat (gram) wajib diisi angka bulat lebih dari 0. Berat dipakai untuk menghitung ongkir.";
+    }
+
+    const description = typeof formData.description === "string" ? formData.description.trim() : "";
+    if (description.length > 2000) {
+      errors.description = "Deskripsi maksimal 2000 karakter.";
+    }
+
+    const items = pickerRef.current?.getItems() || [];
+    if (items.length === 0) {
+      errors.images = "Minimal 1 foto produk wajib diunggah.";
+    }
+
+    return errors;
   };
 
   const handleSaveProduct = async () => {
@@ -92,8 +147,11 @@ export default function AdminProductsPage() {
     setPipelineSteps(steps);
     await delay(30);
 
-    if (!formData.name || sanitizedPrice === null) {
-      const msg = "Nama dan harga produk harus diisi (angka integer).";
+    const validationErrors = validateProductForm();
+    setFormErrors(validationErrors);
+    const errorMessages = Object.values(validationErrors);
+    if (errorMessages.length > 0) {
+      const msg = errorMessages[0];
       steps = pipelineFailed(steps, 1, msg);
       setPipelineSteps(steps);
       setPipelineError(msg);
@@ -218,9 +276,6 @@ export default function AdminProductsPage() {
     steps = pipelineSuccess(steps, 2);
     setPipelineSteps(steps);
     await delay(30);
-
-    console.log('[Admin Products] imageUrls after upload:', JSON.stringify(imageUrls));
-    console.log('[Admin Products] items count:', items.length, 'existing:', items.filter(i => i.type === 'existing').length, 'new:', items.filter(i => i.type === 'new').length);
 
     steps = pipelineRunning(steps, 3);
     setPipelineSteps(steps);
@@ -352,6 +407,7 @@ export default function AdminProductsPage() {
 
     setShowProductModal(false);
     setFormData({});
+    setFormErrors({});
     setUploadingMap({});
     pickerRef.current?.reset();
 
@@ -508,6 +564,9 @@ export default function AdminProductsPage() {
                   placeholder="Masukkan nama produk"
                   className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
                 />
+                {formErrors.name && (
+                  <p className="mt-1 text-sm text-rose-600">{formErrors.name}</p>
+                )}
               </div>
 
               <div>
@@ -519,6 +578,9 @@ export default function AdminProductsPage() {
                   rows={3}
                   className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
                 />
+                {formErrors.description && (
+                  <p className="mt-1 text-sm text-rose-600">{formErrors.description}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -531,28 +593,42 @@ export default function AdminProductsPage() {
                     placeholder="0"
                     className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
                   />
+                  {formErrors.price && (
+                    <p className="mt-1 text-sm text-rose-600">{formErrors.price}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Stok</label>
                   <input
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.stock ?? 0}
                     onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
                     placeholder="0"
                     className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
                   />
+                  {formErrors.stock && (
+                    <p className="mt-1 text-sm text-rose-600">{formErrors.stock}</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Berat</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Berat (gram)</label>
                   <input
-                    type="text"
+                    type="number"
+                    min="1"
+                    step="1"
                     value={formData.weight || ""}
                     onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                    placeholder="e.g., 72g"
+                    placeholder="contoh: 300"
                     className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
                   />
+                  <p className="mt-1 text-xs text-slate-400">Dipakai untuk menghitung ongkir.</p>
+                  {formErrors.weight && (
+                    <p className="mt-1 text-sm text-rose-600">{formErrors.weight}</p>
+                  )}
                 </div>
               </div>
 
@@ -563,12 +639,18 @@ export default function AdminProductsPage() {
                   existingImages={editingProduct && Array.isArray(editingProduct.images) ? editingProduct.images : undefined}
                   uploadingMap={uploadingMap}
                 />
+                {formErrors.images && (
+                  <p className="mt-1 text-sm text-rose-600">{formErrors.images}</p>
+                )}
               </div>
             </div>
 
             <div className="mt-8 flex gap-4">
               <button
-                onClick={() => setShowProductModal(false)}
+                onClick={() => {
+                  setShowProductModal(false);
+                  setFormErrors({});
+                }}
                 className="flex-1 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
               >
                 Batal
