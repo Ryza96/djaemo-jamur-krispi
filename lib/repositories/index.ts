@@ -7,3 +7,4 @@ export { DashboardRepository } from "./dashboard.repository";
 export { PromoRepository } from "./promo.repository";
 export { VoucherRepository } from "./voucher.repository";
 export { AdminLoginAttemptRepository } from "./admin-login-attempt.repository";
+export { ContactSubmissionRepository } from "./contact-submission.repository";
