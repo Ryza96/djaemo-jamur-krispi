@@ -274,6 +274,7 @@ export function OrderDetailClient({ id }: DetailClientProps) {
                 fulfillmentStatus={order.fulfillment_status}
                 paymentStatus={order.payment_status}
                 shipmentId={order.shipment_id}
+                waybillId={order.waybill_id}
                 totalAmount={order.total_amount ?? null}
                 onSuccess={handleOrderUpdate}
               />

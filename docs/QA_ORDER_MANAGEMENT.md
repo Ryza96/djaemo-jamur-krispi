@@ -122,9 +122,9 @@
 | **Which API performs it?** | `POST /api/admin/orders/[id]/actions` with `{ action: "ship", waybill_id?: string }` → `FulfillmentService.ship()` |
 | **Which database tables are updated?** | `orders` (fulfillment_status → "shipped", shipped_at timestamp). `audit_logs` (event "order.shipped"). |
 | **What validations exist?** | State machine: "processing" → "shipped" is valid. Payment must be "paid". `waybill_id` is optional in Zod schema but can be left empty. |
-| **What could fail?** | Admin can ship WITHOUT waybill ID — no tracking possible later. Waybill input is free text with no format validation. No transaction between DB update and audit log. If the shipment was already created via Biteship (Step 6), the waybill should already be in the DB, but the UI shows "Shipment Created" badge and does NOT offer the "Tandai Dikirim" button — this is a potentially confusing UX gap. The admin might need to first create the shipment, then separately mark as shipped, but the button disappears after shipment creation. |
+| **What could fail?** | Admin can ship WITHOUT waybill ID — no tracking possible later. Waybill input is free text with no format validation. No transaction between DB update and audit log. ~~If the shipment was already created via Biteship (Step 6), the waybill should already be in the DB, but the UI shows "Shipment Created" badge and does NOT offer the "Tandai Dikirim" button — this is a potentially confusing UX gap. The admin might need to first create the shipment, then separately mark as shipped, but the button disappears after shipment creation.~~ **[FIXED]** Tombol "Tandai Dikirim" sekarang muncul untuk status `waybill_created` dan `picked_up`, memakai resi yang sudah tersimpan secara otomatis. Input manual hanya muncul jika order belum punya resi. |
 | **What happens if it fails?** | Invalid transition → 422. Payment not paid → 422. Success → toast. |
-| **Does the workflow continue correctly?** | No. The optional waybill means tracking (Step 9) will show "No waybill ID available" with no path to recovery. The "Shipment Created" → "Mark as Shipped" flow has a UI gap where buttons disappear. |
+| **Does the workflow continue correctly?** | ~~No.~~ **[FIXED]** Transisi `waybill_created`/`picked_up` → `shipped` sekarang tersedia via tombol manual "Tandai Dikirim". Resi otomatis diambil dari database. |
 
 ---
 
@@ -169,7 +169,7 @@
 | Admin starts processing | ✅ **Working** | State machine works. Audit logged. Confirmation dialog present. No transaction for DB+audit. |
 | Admin creates shipment | ❌ **Broken** | Admin cannot verify shipping address (hardcoded "-" from Step 4). Shipment data may be incomplete at checkout (postal code, area ID not validated). Item weight validated here but not at checkout — causing late failures. Single point of failure on Biteship. |
 | Admin prints receipt | ✅ **Working** | PDF generation works with graceful degradation on missing logo. |
-| Admin marks as shipped | ⚠️ **Partially Working** | State transition works, but `waybill_id` is optional — admin can ship without one, permanently breaking tracking. UI gap: after "Buat Resi", the "Tandai Dikirim" button disappears. |
+| Admin marks as shipped | ~~⚠️ **Partially Working**~~ ✅ **Working** | State transition works. ~~`waybill_id` is optional — admin can ship without one, permanently breaking tracking. UI gap: after "Buat Resi", the "Tandai Dikirim" button disappears.~~ Tombol "Tandai Dikirim" sekarang muncul untuk status `waybill_created` dan `picked_up`. Resi otomatis diambil dari database. |
 | Admin tracks shipment | ⚠️ **Partially Working** | Works if waybill exists. But manual refresh only (no auto-fetch), limited status mapping (5/?? statuses), no waybill recovery if shipped without one. |
 | Admin completes order | ✅ **Working** | Valid transition from "shipped". Timestamp set. Audit logged. |
 
