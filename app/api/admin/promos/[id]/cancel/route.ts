@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { PromoService } from "@/lib/services/promo.service";
 import { requireAdmin } from "@/lib/services/admin-auth.service";
 
@@ -19,6 +20,8 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    revalidatePath("/");
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { OrderRepository } from "@/lib/repositories";
 import { FulfillmentService } from "@/lib/services/fulfillment.service";
 import { adminActionSchema } from "@/lib/validation/admin-orders";
@@ -62,6 +63,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         { status: 422 },
       );
     }
+
+    revalidatePath("/");
 
     const updatedOrder = await OrderRepository.findDetailByOrderId(id);
     const { access_token: _accessToken, ...safeOrder } = updatedOrder ?? {};

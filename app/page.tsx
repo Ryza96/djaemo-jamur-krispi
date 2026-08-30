@@ -1,25 +1,31 @@
-import { getCatalogProducts } from "@/lib/services/product.service";
+import { getBestSellers, getHomepagePromo } from "@/lib/services/product.service";
 import {
   HeroSection,
   BestSellerSection,
-  MarketingBanner,
-  BestSellerPromoLayout,
+  HomepagePromoSection,
   WhyDjaemoSection,
   TestimoniSection,
 } from "@/components/home";
 
+export const revalidate = 300;
+
 export default async function Home() {
-  const products = await getCatalogProducts();
-  const activeProducts = products.filter((p) => p.stock > 0);
+  const [bestSellers, promo] = await Promise.all([
+    getBestSellers(3),
+    getHomepagePromo(),
+  ]);
 
   return (
     <>
       <HeroSection />
 
-      <BestSellerPromoLayout
-        bestSeller={<BestSellerSection products={activeProducts} embedded />}
-        promo={<MarketingBanner />}
+      <HomepagePromoSection
+        promoName={promo?.promoName ?? ""}
+        countdown={promo?.countdown ?? null}
+        products={promo?.products ?? []}
       />
+
+      <BestSellerSection products={bestSellers} />
 
       <WhyDjaemoSection />
 

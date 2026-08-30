@@ -121,6 +121,12 @@ export const PromoService = {
     return PromoEngine.getActivePromo(productId);
   },
 
+  async getHomepagePromo(): Promise<PromoWithProducts | null> {
+    const promos = await PromoRepository.findActivePromos();
+    if (promos.length === 0) return null;
+    return promos[0];
+  },
+
   async duplicatePromo(promoId: string) {
     return PromoEngine.duplicatePromo(promoId);
   },

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { getCatalogProducts } from "@/lib/services/product.service";
 import { UPLOAD } from "@/lib/constants/upload";
@@ -158,13 +159,13 @@ export const POST = async (request: Request) => {
       }
     }
 
+    revalidatePath("/");
     return NextResponse.json({ ...product, images }, { status: 201 });
   } catch (err) {
     console.error("POST /api/products exception", err);
     return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 };
-
 export const PUT = async (request: Request) => {
   try {
     const unauthorized = await requireAdmin();
@@ -211,6 +212,7 @@ export const PUT = async (request: Request) => {
       }
     }
 
+    revalidatePath("/");
     return NextResponse.json({ ...updatedProduct, images });
   } catch {
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
@@ -244,6 +246,7 @@ export const DELETE = async (request: Request) => {
 
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidatePath("/");
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });

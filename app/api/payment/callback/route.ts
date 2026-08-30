@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import type { MidtransNotification } from "@/lib/services/payment/types";
+import { PAYMENT_STATUS } from "@/lib/services/payment/types";
 import { OrderService } from "@/lib/services/order.service";
 
 export async function POST(request: Request) {
@@ -24,6 +26,10 @@ export async function POST(request: Request) {
   try {
     const result = await OrderService.processCallback(body);
     const httpStatus = result.success ? 200 : 422;
+
+    if (result.success && result.paymentStatus === PAYMENT_STATUS.PAID) {
+      revalidatePath("/");
+    }
 
     return NextResponse.json(result, { status: httpStatus });
   } catch (error) {

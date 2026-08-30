@@ -57,6 +57,21 @@ export const PromoRepository = {
     return data;
   },
 
+  async findActivePromos(): Promise<PromoWithProducts[]> {
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from("promos")
+      .select("*, promo_products(*, products(id, name, price))")
+      .is("cancelled_at", null)
+      .lte("start_date", now)
+      .gte("end_date", now)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
   async insertAtomic(params: InsertPromoParams): Promise<string> {
     const { data, error } = await supabase.rpc("create_promo_atomic", {
       p_name: params.name,

@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { InventoryService } from "@/lib/services/inventory.service";
 import { MOVEMENT_REASON } from "@/lib/inventory/types";
 import { restockSchema } from "@/lib/validation/admin-orders";
@@ -56,6 +57,8 @@ export async function POST(
     }
 
     const after = await InventoryService.getStock(id);
+
+    revalidatePath("/");
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { PromoService } from "@/lib/services/promo.service";
 import { requireAdmin } from "@/lib/services/admin-auth.service";
 
@@ -138,6 +139,8 @@ export async function POST(request: Request) {
         { status: getHttpStatus(errorType) }
       );
     }
+
+    revalidatePath("/");
 
     return NextResponse.json(
       { success: true, data: { promo_id: result.promo_id } },
