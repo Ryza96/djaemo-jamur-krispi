@@ -101,7 +101,7 @@ export default function CheckoutFailedPage() {
         <div className="space-y-6 rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-primary">Status Transaksi</h2>
-            <p className="text-sm text-muted">failed</p>
+            <p className="text-sm text-muted">Pembayaran gagal diproses</p>
           </div>
 
           {orderId ? (
