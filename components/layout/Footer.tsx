@@ -38,9 +38,19 @@ export function Footer() {
             {SITE.tagline} Kami hadir sebagai pilihan terpercaya untuk camilan jamur premium di Indonesia.
           </p>
           <div className="flex flex-wrap gap-3 text-xs text-cream/60">
-            <span>Privacy Policy</span>
+            <Link
+              href="/kebijakan-privasi"
+              className="transition-colors hover:text-gold-bright"
+            >
+              Kebijakan Privasi
+            </Link>
             <span className="inline-block h-1 w-1 rounded-full bg-gold/40" />
-            <span>Terms of Service</span>
+            <Link
+              href="/syarat-ketentuan"
+              className="transition-colors hover:text-gold-bright"
+            >
+              Syarat &amp; Ketentuan
+            </Link>
           </div>
         </div>
 
