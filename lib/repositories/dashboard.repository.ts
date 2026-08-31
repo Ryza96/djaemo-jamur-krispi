@@ -19,6 +19,27 @@ function getWIBDateKey(date: Date): string {
   }).format(date);
 }
 
+/**
+ * Parses a timestamp value that may come from a naive TIMESTAMP column
+ * (no timezone suffix, e.g. "2026-04-05T07:30:00").
+ *
+ * Production columns `orders.created_at` / `orders.paid_at` are naive
+ * TIMESTAMP that consistently store UTC wall-clock values (written via
+ * `new Date().toISOString()` and a UTC Postgres server). JavaScript's
+ * `new Date("...")` would otherwise interpret a tz-less string as LOCAL
+ * server time, which silently shifts the WIB conversion if the runtime
+ * is not running in UTC. Appending `Z` pins the value to UTC.
+ */
+function parseUTC(value: string | null | undefined): Date {
+  const s = (value ?? "").trim();
+  if (!s) return new Date(0);
+  try {
+    return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : `${s}Z`);
+  } catch {
+    return new Date(0);
+  }
+}
+
 function getWIBMonthStartUTC(now: Date): string {
   const wibNow = new Date(now.getTime() + WIB_OFFSET_MS);
   const year = wibNow.getUTCFullYear();
@@ -61,11 +82,15 @@ export const DashboardRepository = {
     const [revenueResult, pendingResult, customerResult, lowStockCountResult, lowStockItemsResult, weeklySalesResult, waitingRestockResult] =
       await Promise.all([
         // Revenue card: sums subtotal (product revenue only, excludes shipping fee).
-        // Consistent with the weekly sales chart which also uses subtotal.
+        // Consistent with the weekly sales chart which also uses subtotal,
+        // and both measure the same event (payment received via paid_at).
+        // Orders cancelled after payment are NOT revenue, regardless of whether
+        // the refund has been confirmed yet — a cancelled sale is void.
         supabase
           .from("orders")
           .select("subtotal", { count: "exact" })
           .eq("payment_status", "paid")
+          .neq("fulfillment_status", "cancelled")
           .gte("paid_at", wibMonthStartUTC),
 
         supabase
@@ -90,12 +115,16 @@ export const DashboardRepository = {
           .order("stock", { ascending: true })
           .limit(LOW_STOCK_LIMIT),
 
-        // Weekly sales: subtotal (product revenue, excludes shipping fee).
+        // Weekly sales: subtotal (product revenue, excludes shipping fee),
+        // grouped by the day the payment was received (paid_at). This keeps the
+        // chart consistent with the "Total Penjualan" card (both use paid_at)
+        // and reflects actual sales (money received), not order creation.
         supabase
           .from("orders")
-          .select("subtotal, created_at")
+          .select("subtotal, paid_at")
           .eq("payment_status", "paid")
-          .gte("created_at", weekAgoISO),
+          .neq("fulfillment_status", "cancelled")
+          .gte("paid_at", weekAgoISO),
 
         supabase
           .from("orders")
@@ -126,9 +155,9 @@ export const DashboardRepository = {
     }
 
     for (const row of weeklySalesResult.data ?? []) {
-      // created_at is timestamptz → Supabase returns UTC ISO string.
-      // Convert to WIB date key before grouping.
-      const key = getWIBDateKey(new Date(row.created_at));
+      // paid_at comes from a naive TIMESTAMP column storing UTC wall-clock;
+      // parse it as UTC before converting to the WIB date key for grouping.
+      const key = getWIBDateKey(parseUTC(row.paid_at));
       if (dailyRevenue.has(key)) {
         // Use subtotal (product revenue, excludes shipping) for consistency
         // with the "Total Penjualan" card above which also sums subtotal.

@@ -12,7 +12,7 @@ import { AdminPageHeader } from "@/components/admin/patterns/AdminPageHeader";
 import { AdminEmptyLayout } from "@/components/admin/patterns/AdminEmptyLayout";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { useOrders } from "@/hooks/use-orders";
-import { FULFILLMENT_STATUS_OPTIONS } from "@/components/admin/orders/types";
+import { PAYMENT_STATUS_OPTIONS, FULFILLMENT_STATUS_OPTIONS } from "@/components/admin/orders/types";
 
 export default function AdminOrdersPage() {
   const router = useRouter();
@@ -27,23 +27,39 @@ export default function AdminOrdersPage() {
     refresh,
   } = useOrders();
 
-  // Deep-link support: /admin/orders?fulfillment_status=waiting_for_restock
-  // (linked from the dashboard restock alert) seeds the fulfillment filter.
+  // Deep-link support for dashboard alerts:
+  // /admin/orders?fulfillment_status=waiting_for_restock (restock alert)
+  // /admin/orders?fulfillment_status=confirmed (shipping alert)
+  // /admin/orders?payment_status=failed (payment alert)
+  // seeds the matching toolbar filter.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const value = new URLSearchParams(window.location.search).get(
-      "fulfillment_status",
-    );
-    if (
-      value &&
-      FULFILLMENT_STATUS_OPTIONS.some((opt) => opt.value === value)
-    ) {
-      setFilters((prev) =>
-        prev.fulfillment_status === value
-          ? prev
-          : { ...prev, fulfillment_status: value, page: 1 },
-      );
-    }
+    const params = new URLSearchParams(window.location.search);
+    const fStatus = params.get("fulfillment_status");
+    const pStatus = params.get("payment_status");
+
+    setFilters((prev) => {
+      let next = prev;
+      if (
+        fStatus &&
+        FULFILLMENT_STATUS_OPTIONS.some((opt) => opt.value === fStatus)
+      ) {
+        next =
+          prev.fulfillment_status === fStatus
+            ? next
+            : { ...next, fulfillment_status: fStatus, page: 1 };
+      }
+      if (
+        pStatus &&
+        PAYMENT_STATUS_OPTIONS.some((opt) => opt.value === pStatus)
+      ) {
+        next =
+          next.payment_status === pStatus
+            ? next
+            : { ...next, payment_status: pStatus, page: 1 };
+      }
+      return next;
+    });
   }, [setFilters]);
 
   const handleView = (orderId: string) => {

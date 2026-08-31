@@ -21,12 +21,14 @@ export default function AdminDashboardPage() {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       try {
+        setError(false);
         const res = await fetch("/api/admin/dashboard/stats");
         if (res.status === 401) {
           router.replace("/admin");
@@ -36,9 +38,12 @@ export default function AdminDashboardPage() {
         const json = await res.json();
         if (!cancelled && json.success) {
           setStats(json.data);
+        } else {
+          setError(true);
         }
       } catch (err) {
         console.error("Dashboard stats error:", err);
+        if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -180,6 +185,35 @@ export default function AdminDashboardPage() {
         </section>
       )}
 
+      {!loading && error && (
+        <section
+          role="alert"
+          className="rounded-3xl border border-rose-300 bg-rose-50 p-5 shadow-sm shadow-rose-200/50 sm:p-6"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-xl">
+                ⚠️
+              </span>
+              <div>
+                <p className="font-semibold text-rose-900">Gagal memuat data dashboard</p>
+                <p className="mt-1 text-sm text-rose-800">
+                  Tidak dapat mengambil data statistik. Angka di bawah mungkin tidak
+                  akurat. Coba muat ulang halaman.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="shrink-0 rounded-2xl bg-rose-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600"
+            >
+              Muat Ulang
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => (
           <article key={card.title} className="rounded-3xl bg-white p-5 shadow-sm shadow-slate-200">
@@ -195,7 +229,7 @@ export default function AdminDashboardPage() {
           <div className="mb-5 flex items-center justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grafik Penjualan</p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-900">Performanya minggu ini</h3>
+              <h3 className="mt-2 text-xl font-semibold text-slate-900">Penjualan per hari (pembayaran diterima)</h3>
             </div>
             {/* TODO: Marketplace filter — belum ada logic filter, placeholder statsis. Aktifkan kalau sudah ada kolom sales_channel di tabel orders. */}
             {/* <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-600">Marketplace</span> */}
@@ -211,7 +245,12 @@ export default function AdminDashboardPage() {
               <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Ringkasan stok</p>
               <h3 className="mt-2 text-xl font-semibold text-slate-900">Produk hampir habis</h3>
             </div>
-            <button className="rounded-2xl bg-slate-950 px-4 py-2 text-sm text-white transition hover:bg-slate-800">Kelola Stok</button>
+            <button
+              onClick={() => router.push("/admin/products")}
+              className="rounded-2xl bg-slate-950 px-4 py-2 text-sm text-white transition hover:bg-slate-800"
+            >
+              Kelola Stok
+            </button>
           </div>
           <div className="space-y-4">
             {loading ? (
@@ -254,7 +293,7 @@ export default function AdminDashboardPage() {
             </div>
           </button>
           <button
-            onClick={() => router.push("/admin/orders")}
+            onClick={() => router.push("/admin/orders?fulfillment_status=confirmed")}
             className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-amber-200 hover:bg-amber-50"
           >
             <div className="flex items-center gap-3">
@@ -278,7 +317,7 @@ export default function AdminDashboardPage() {
             </div>
           </button>
           <button
-            onClick={() => router.push("/admin/orders")}
+            onClick={() => router.push("/admin/orders?payment_status=failed")}
             className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-red-200 hover:bg-red-50"
           >
             <div className="flex items-center gap-3">
