@@ -107,11 +107,6 @@ export async function createSnapTransaction(
     },
   };
 
-  const isProd = process.env.NODE_ENV === "production";
-  const apiUrl = isProd
-    ? "https://app.midtrans.com/snap/v1/transactions"
-    : "https://app.sandbox.midtrans.com/snap/v1/transactions";
-
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
