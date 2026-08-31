@@ -196,19 +196,50 @@ export const PUT = async (request: Request) => {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
-    const { error: deleteImgErr } = await supabase
+    // Snapshot existing image rows (id + storage url) BEFORE touching them, so
+    // we can (a) delete only the OLD rows after the new insert succeeds, and
+    // (b) clean up their storage files afterwards.
+    const { data: oldRows } = await supabase
       .from("product_images")
-      .delete()
+      .select("id, image_url")
       .eq("product_id", productId);
-    if (deleteImgErr) {
-      return NextResponse.json({ error: deleteImgErr.message }, { status: 500 });
+
+    const oldImageUrls = (oldRows ?? []).map((r) => r.image_url);
+
+    // Insert NEW rows FIRST. Old rows are intentionally left in place for now:
+    // if this insert fails, the product keeps its existing (old) images intact
+    // and nothing is torn down.
+    const newRows = images.map((image_url) => ({ product_id: productId, image_url }));
+    const { error: insertImgErr } = await supabase.from("product_images").insert(newRows);
+    if (insertImgErr) {
+      return NextResponse.json({ error: insertImgErr.message }, { status: 500 });
     }
 
-    if (images.length > 0) {
-      const rows = images.map((image_url) => ({ product_id: productId, image_url }));
-      const { error: insertImgErr } = await supabase.from("product_images").insert(rows);
-      if (insertImgErr) {
-        return NextResponse.json({ error: insertImgErr.message }, { status: 500 });
+    // Delete ONLY the prior rows (by their specific ids), NOT by product_id, so
+    // the rows we just inserted above are never touched.
+    const oldIds = (oldRows ?? []).map((r) => r.id);
+    if (oldIds.length > 0) {
+      const { error: deleteOldErr } = await supabase
+        .from("product_images")
+        .delete()
+        .in("id", oldIds);
+      if (deleteOldErr) {
+        return NextResponse.json({ error: deleteOldErr.message }, { status: 500 });
+      }
+    }
+
+    // Best-effort cleanup of the storage files for the OLD images that were just
+    // unlinked. The DB is already consistent with the new images (new rows
+    // inserted, old rows removed), so a storage failure here must NOT fail the
+    // whole request — an orphaned file is preferable to a failed update.
+    if (oldImageUrls.length > 0) {
+      try {
+        await deleteStorageFiles(oldImageUrls);
+      } catch (err) {
+        console.warn(
+          `[products] PUT ${productId}: gagal membersihkan storage gambar lama`,
+          err,
+        );
       }
     }
 
