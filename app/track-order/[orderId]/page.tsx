@@ -25,6 +25,7 @@ interface OrderData {
   waybill_id?: string | null;
   courier_company?: string | null;
   courier_type?: string | null;
+  tracking_url?: string | null;
 }
 
 type CustomerStatus =
@@ -359,6 +360,16 @@ export default function TrackOrderDetailPage() {
                   {order.courier_type ? ` (${order.courier_type})` : ""}
                 </span>
               </div>
+              {order.tracking_url && (
+                <a
+                  href={order.tracking_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block rounded-2xl bg-primary/10 px-4 py-2.5 text-center text-sm font-semibold text-primary transition-colors hover:bg-primary/20"
+                >
+                  Lacak Paket di Kurir ↗
+                </a>
+              )}
             </div>
           </div>
         )}

@@ -85,6 +85,7 @@ export const ShipmentService = {
         shipment_id: result.shipmentId!,
         waybill_id: result.waybillId!,
         tracking_id: result.trackingId,
+        tracking_url: result.trackingLink ?? null,
       });
 
       await OrderRepository.updateShippingStatus(order.id, {
@@ -116,6 +117,7 @@ export const ShipmentService = {
       await OrderRepository.updateShippingStatus(order.id, {
         shipping_status: payload.status,
         delivered_at: payload.status === "delivered" ? new Date().toISOString() : undefined,
+        tracking_url: payload.tracking_url ?? null,
       });
 
       const fulfillmentCalls = {

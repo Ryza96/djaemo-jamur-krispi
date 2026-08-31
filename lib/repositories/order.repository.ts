@@ -28,6 +28,7 @@ export interface OrderRow {
   waybill_id: string | null;
   shipment_id: string | null;
   shipping_tracking_id: string | null;
+  tracking_url: string | null;
   destination_area_id: string | null;
   shipping_status: string | null;
   shipment_error: string | null;
@@ -544,6 +545,7 @@ export const OrderRepository = {
       shipment_id: string;
       waybill_id: string | null;
       tracking_id?: string | null;
+      tracking_url?: string | null;
     },
   ): Promise<void> {
     const updates: Record<string, string | null> = {
@@ -554,6 +556,10 @@ export const OrderRepository = {
 
     if (params.tracking_id !== undefined) {
       updates.shipping_tracking_id = params.tracking_id;
+    }
+
+    if (params.tracking_url !== undefined) {
+      updates.tracking_url = params.tracking_url;
     }
 
     const { error } = await supabase
@@ -569,6 +575,7 @@ export const OrderRepository = {
     params: {
       shipping_status: string;
       delivered_at?: string;
+      tracking_url?: string | null;
     },
   ): Promise<void> {
     const updates: Record<string, string | number | null> = {
@@ -578,6 +585,10 @@ export const OrderRepository = {
 
     if (params.delivered_at !== undefined) {
       updates.delivered_at = params.delivered_at;
+    }
+
+    if (params.tracking_url !== undefined) {
+      updates.tracking_url = params.tracking_url;
     }
 
     const { error } = await supabase
