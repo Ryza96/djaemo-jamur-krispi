@@ -92,23 +92,50 @@ export const OrderService = {
       weight_grams: extractWeightGrams(item.product.weight),
     }));
 
+    let insertItemsError: unknown;
     try {
       await OrderRepository.insertItems(orderItems);
-    } catch {
+    } catch (err) {
+      insertItemsError = err;
       try {
         await OrderRepository.deleteById(order.id);
-      } catch {
-        // rollback failure is non-blocking; original error is preserved
+      } catch (rollbackError) {
+        console.error(
+          "[CRITICAL] Order rollback failed: order_items insert failed and cleanup also failed; order is orphaned without items and requires manual intervention.",
+          {
+            dbOrderId: order.id,
+            orderId: params.orderId,
+            insertItemsError:
+              insertItemsError instanceof Error
+                ? insertItemsError.message
+                : String(insertItemsError),
+            rollbackError:
+              rollbackError instanceof Error
+                ? rollbackError.message
+                : String(rollbackError),
+          },
+        );
       }
       throw new Error("ORDER_ITEMS_FAILED");
     }
 
-    await AuditLogService.logPaymentEvent({
-      orderId: params.orderId,
-      event: AuditLogService.events.ORDER_CREATED,
-      fromStatus: null,
-      toStatus: PAYMENT_STATUS.UNPAID,
-    });
+    try {
+      await AuditLogService.logPaymentEvent({
+        orderId: params.orderId,
+        event: AuditLogService.events.ORDER_CREATED,
+        fromStatus: null,
+        toStatus: PAYMENT_STATUS.UNPAID,
+      });
+    } catch (err) {
+      console.error(
+        "[WARN] Order created but order.created audit event failed to persist.",
+        {
+          dbOrderId: order.id,
+          orderId: params.orderId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      );
+    }
 
     return { id: order.id, orderId: params.orderId, accessToken: order.access_token };
   },
