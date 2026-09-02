@@ -19,7 +19,7 @@ export default function ProdukNotFound() {
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h1 className="text-2xl font-bold text-ink">Produk Tidak Ditemukan</h1>
+      <h1 className="font-display text-[26px] font-semibold tracking-tight text-ink md:text-[30px]">Produk Tidak Ditemukan</h1>
       <p className="max-w-md text-sm text-muted">
         Produk yang Anda cari tidak tersedia atau telah dihapus.
       </p>

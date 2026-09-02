@@ -9,7 +9,7 @@ export function LoginForm() {
       <div className="w-full max-w-md">
         <div className="rounded-3xl border border-ink/10 bg-white p-8 shadow-lg sm:p-10">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-ink sm:text-3xl">Masuk</h1>
+            <h1 className="font-display text-[26px] font-semibold tracking-tight text-ink md:text-[30px]">Masuk</h1>
             <p className="mt-2 text-sm text-muted">
               Selamat datang kembali di {SITE.name}
             </p>

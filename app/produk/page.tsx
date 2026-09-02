@@ -27,12 +27,12 @@ export default async function ProdukPage() {
   return (
     <>
       {/* PAGE HERO — hijau gelap, sesuai design yang disetujui */}
-      <section className="relative overflow-hidden border-b border-teal-line bg-teal-deep px-6 py-14 md:py-[72px]">
-        <div className="mx-auto max-w-[1180px]">
+      <section className="relative overflow-hidden border-b border-teal-line bg-teal-deep px-4 py-16 sm:px-6 md:py-20">
+        <div className="mx-auto max-w-6xl">
           <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold">
             Produk D&apos;Jaemo
           </p>
-          <h1 className="mt-4 font-display text-[38px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[54px]">
+          <h1 className="mt-4 font-display text-[40px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[52px] lg:text-[60px]">
             Pilih <em className="not-italic text-gold-bright">Favoritmu.</em>
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-cream/70 md:text-lg">
@@ -41,13 +41,13 @@ export default async function ProdukPage() {
             sampai tujuan.
           </p>
           <div className="mt-6 flex flex-wrap gap-2.5">
-            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-xs font-medium uppercase tracking-widest text-cream/85">
               {products.length} varian rasa
             </span>
-            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-xs font-medium uppercase tracking-widest text-cream/85">
               72 g per kemasan
             </span>
-            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-xs font-medium uppercase tracking-widest text-cream/85">
               Fresh setiap hari
             </span>
           </div>

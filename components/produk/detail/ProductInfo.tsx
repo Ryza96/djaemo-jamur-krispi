@@ -21,7 +21,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
   return (
     <div className="flex flex-col">
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">
+      <h1 className="font-display text-[26px] font-semibold tracking-tight text-ink md:text-[30px]">
         {product.name}
       </h1>
 

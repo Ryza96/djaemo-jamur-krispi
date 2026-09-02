@@ -150,13 +150,13 @@ export default function TentangPage() {
   return (
     <>
       {/* 1 · HERO TENTANG — hijau gelap, sesuai desain yang disetujui */}
-      <section className="relative bg-teal-deep px-6 pb-14 pt-12 text-cream md:pb-[76px] md:pt-16">
-        <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14">
+      <section className="relative bg-teal-deep px-4 pt-12 pb-16 text-cream sm:px-6 md:pt-14 md:pb-20">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14">
           <div>
             <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold">
               Tentang D&apos;Jaemo
             </p>
-            <h1 className="mt-4 font-display text-[38px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[54px]">
+            <h1 className="mt-4 font-display text-[40px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[52px] lg:text-[60px]">
               Renyahnya D&apos;Jaemo,
               <br />
               <em className="not-italic text-gold-bright">Cerita di Baliknya.</em>
@@ -167,13 +167,13 @@ export default function TentangPage() {
               dikemas rapi, dan dikirim aman sampai tujuan.
             </p>
             <div className="mt-6 hidden flex-wrap gap-2.5 md:flex">
-              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-xs font-medium uppercase tracking-widest text-cream/85">
                 Bahan alami pilihan
               </span>
-              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-xs font-medium uppercase tracking-widest text-cream/85">
                 Digoreng fresh
               </span>
-              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-xs font-medium uppercase tracking-widest text-cream/85">
                 Bojonegoro, Jawa Timur
               </span>
             </div>
@@ -195,17 +195,17 @@ export default function TentangPage() {
               <span className="h-2 w-2 shrink-0 rounded-full bg-gold" />
               <div>
                 <p className="font-mono text-xs font-semibold text-teal-deep">100% Alami</p>
-                <p className="text-[11px] text-ink-soft">tanpa pengawet</p>
+                <p className="text-xs text-ink-soft">tanpa pengawet</p>
               </div>
             </div>
             <div className="absolute bottom-4 right-[-10px] hidden items-center gap-2.5 rounded-xl bg-cream/95 px-3.5 py-2.5 shadow-lg backdrop-blur md:flex">
               <span className="h-2 w-2 shrink-0 rounded-full bg-gold-bright" />
               <div>
                 <p className="font-mono text-xs font-semibold text-teal-deep">Fresh Setiap Hari</p>
-                <p className="text-[11px] text-ink-soft">digoreng saat pesanan</p>
+                <p className="text-xs text-ink-soft">digoreng saat pesanan</p>
               </div>
             </div>
-            <span className="absolute bottom-3 left-3 rounded-md bg-teal-deep/85 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-cream md:hidden">
+            <span className="absolute bottom-3 left-3 rounded-md bg-teal-deep/85 px-2.5 py-1.5 font-mono text-xs uppercase tracking-wider text-cream md:hidden">
               100% Alami
             </span>
           </div>
@@ -223,14 +223,14 @@ export default function TentangPage() {
             <h2 className="mt-4 font-display text-[32px] font-semibold leading-[1.15] tracking-tight text-ink md:text-[38px]">
               Berawal dari Satu Gigitan.
             </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-ink-soft md:text-[15.5px] md:leading-[1.75]">
+            <p className="mt-4 text-base leading-relaxed text-ink-soft md:text-lg md:leading-[1.75]">
               Semua berawal dari satu gigitan — angan sederhana untuk menghadirkan
               camilan jamur yang benar-benar enak, benar-benar alami, dan bisa
               dinikmati siapa saja tanpa rasa bersalah. Dari dapur kecil di
               Bojonegoro, Jawa Timur, D&apos;Jaemo lahir dengan satu fokus: jamur
               krispi.
             </p>
-            <p className="mt-4 text-[15px] leading-relaxed text-ink-soft md:text-[15.5px] md:leading-[1.75]">
+            <p className="mt-4 text-base leading-relaxed text-ink-soft md:text-lg md:leading-[1.75]">
               Kami memilih jamur segar dengan penuh perhatian, meracik bumbu khas
               Indonesia, dan mengolahnya dengan teliti. Tujuannya sederhana —
               camilan berkualitas yang rasanya jujur, dari bahan sampai kerenyahan.
@@ -257,7 +257,7 @@ export default function TentangPage() {
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 560px"
               />
-              <span className="absolute bottom-3.5 left-3.5 hidden rounded-md bg-teal-deep/85 px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-wider text-cream md:block">
+              <span className="absolute bottom-3.5 left-3.5 hidden rounded-md bg-teal-deep/85 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-cream md:block">
                 Jamur krispi · hasil olahan fresh
               </span>
             </div>
@@ -279,7 +279,7 @@ export default function TentangPage() {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-[980px] grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-[22px]">
+        <div className="mx-auto mt-10 grid max-w-[980px] grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-[22px]">
           {values.map((value) => (
             <div
               key={value.title}
@@ -288,8 +288,8 @@ export default function TentangPage() {
               <div className="mx-auto mb-4 flex h-[50px] w-[50px] items-center justify-center rounded-[14px] border border-gold/30 bg-gold/15 text-gold-bright">
                 <value.icon />
               </div>
-              <h3 className="text-[13.5px] font-semibold text-cream md:text-[15.5px]">{value.title}</h3>
-              <p className="mt-1.5 text-[11.5px] leading-snug text-cream/60 md:text-[13px] md:leading-snug md:text-cream/70">
+              <h3 className="text-sm font-semibold text-cream md:text-base">{value.title}</h3>
+              <p className="mt-1.5 text-xs leading-snug text-cream/75 md:text-sm md:leading-snug md:text-cream/75">
                 {value.description}
               </p>
             </div>
@@ -317,12 +317,12 @@ export default function TentangPage() {
               key={item.step}
               className="relative flex items-start gap-3.5 sm:block sm:rounded-xl sm:border sm:border-cream-2 sm:bg-white sm:p-5 sm:shadow-sm sm:transition-all sm:duration-200 sm:hover:-translate-y-1 sm:hover:shadow-md"
             >
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold font-mono text-xs font-semibold text-[#2b220d] sm:h-auto sm:w-auto sm:rounded-full sm:px-2.5 sm:py-1 sm:text-[11px]">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold font-mono text-xs font-semibold text-[#2b220d] sm:h-auto sm:w-auto sm:rounded-full sm:px-2.5 sm:py-1">
                 {item.step}
               </span>
               <div className="pt-0.5 sm:pt-0">
-                <h3 className="text-sm font-semibold text-ink sm:mt-3 sm:text-[15.5px]">{item.title}</h3>
-                <p className="mt-0.5 text-[12.5px] leading-snug text-ink-soft sm:mt-1.5 sm:text-[13px] sm:leading-relaxed">
+                <h3 className="text-sm font-semibold text-ink sm:mt-3 sm:text-base">{item.title}</h3>
+                <p className="mt-0.5 text-sm leading-snug text-ink-soft sm:mt-1.5 sm:text-base sm:leading-relaxed">
                   {item.description}
                 </p>
               </div>
@@ -361,8 +361,8 @@ export default function TentangPage() {
                 <reason.icon />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-ink md:text-[15px]">{reason.title}</h3>
-                <p className="mt-1 text-[12.5px] leading-snug text-ink-soft md:text-[13px] md:leading-relaxed">
+                <h3 className="text-sm font-semibold text-ink md:text-base">{reason.title}</h3>
+                <p className="mt-1 text-sm leading-snug text-ink-soft md:text-base md:leading-relaxed">
                   {reason.description}
                 </p>
               </div>
@@ -380,21 +380,21 @@ export default function TentangPage() {
           <h2 className="mt-4 font-display text-[30px] font-semibold leading-[1.15] tracking-tight text-cream md:text-[40px]">
             Sudah Siap Coba <em className="not-italic text-gold-bright">D&apos;Jaemo?</em>
           </h2>
-          <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-relaxed text-cream/70">
+          <p className="mx-auto mt-4 max-w-[520px] text-base leading-relaxed text-cream/75">
             Pilih varian jamur krispi favoritmu dan rasakan sendiri — dibuat fresh,
             dikirim aman, dan dijamin bikin ketagihan.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3.5 sm:flex-row">
             <Button
               href="/produk"
-              className="w-full rounded-lg bg-gold px-10 py-3.5 text-[15px] font-semibold text-teal-deep shadow-lg shadow-gold/20 hover:bg-gold-bright sm:w-auto"
+              className="w-full rounded-lg bg-gold px-10 py-3.5 text-sm font-semibold text-teal-deep shadow-lg shadow-gold/20 hover:bg-gold-bright sm:w-auto"
             >
               Beli Sekarang
             </Button>
             <Button
               variant="outline"
               href="/produk"
-              className="w-full rounded-lg border-cream/40 px-10 py-3.5 text-[15px] font-semibold text-cream hover:bg-cream hover:text-teal-deep sm:w-auto"
+              className="w-full rounded-lg border-cream/40 px-10 py-3.5 text-sm font-semibold text-cream hover:bg-cream hover:text-teal-deep sm:w-auto"
             >
               Lihat Produk
             </Button>

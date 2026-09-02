@@ -28,15 +28,15 @@ function TruckIcon() {
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-teal-deep pt-5 pb-16 md:pt-6 md:pb-[72px] lg:pt-5 lg:pb-[84px]">
-      <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-12 px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+    <section className="relative overflow-hidden bg-teal-deep pt-5 pb-16 md:pt-6 md:pb-20">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
         {/* Text */}
         <div className="flex flex-col items-start gap-6 md:gap-7">
           <div className="flex flex-col gap-4">
             <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold">
               Camilan jamur premium di Bojonegoro
             </p>
-            <h1 className="font-display text-[40px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[60px] lg:text-[64px]">
+            <h1 className="font-display text-[40px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[52px] lg:text-[60px]">
               Renyah. Gurih.
               <br />
               <em className="not-italic text-gold-bright">Berkualitas.</em>
@@ -50,7 +50,7 @@ export function HeroSection() {
 
           <div className="w-full max-w-[430px] rounded-2xl border border-gold/25 bg-white/5 px-5 py-4">
             <div>
-              <span className="block text-xs text-cream/60">Harga mulai</span>
+              <span className="block text-xs text-cream/75">Harga mulai</span>
               <span className="mt-1 block font-mono text-xl font-semibold text-gold-bright">
                 Rp 22.000
               </span>
@@ -60,28 +60,28 @@ export function HeroSection() {
           <div className="mt-2 flex flex-wrap items-center gap-4">
             <Button
               href="/produk"
-              className="rounded-lg bg-gold px-10 py-3.5 text-[15px] font-semibold text-teal-deep shadow-lg shadow-gold/20 hover:bg-gold-bright"
+              className="rounded-lg bg-gold px-10 py-3.5 text-sm font-semibold text-teal-deep shadow-lg shadow-gold/20 hover:bg-gold-bright"
             >
               Beli Sekarang
             </Button>
             <Link
               href="/tentang"
-              className="text-sm font-semibold text-cream/70 underline decoration-gold/40 underline-offset-4 transition-colors hover:text-cream hover:decoration-gold md:text-[15px]"
+              className="text-sm font-semibold text-cream/70 underline decoration-gold/40 underline-offset-4 transition-colors hover:text-cream hover:decoration-gold"
             >
               Pelajari Selengkapnya
             </Link>
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-3 text-cream/65">
-            <div className="flex items-center gap-2 text-[13px]">
+          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-3 text-cream/75">
+            <div className="flex items-center gap-2 text-sm">
               <span className="text-gold"><CheckIcon /></span>
               100% Alami
             </div>
-            <div className="flex items-center gap-2 text-[13px]">
+            <div className="flex items-center gap-2 text-sm">
               <span className="text-gold"><BoltIcon /></span>
               Fresh &amp; Higienis
             </div>
-            <div className="flex items-center gap-2 text-[13px]">
+            <div className="flex items-center gap-2 text-sm">
               <span className="text-gold"><TruckIcon /></span>
               Kirim Aman
             </div>
@@ -106,7 +106,7 @@ export function HeroSection() {
               <span className="h-2 w-2 rounded-full bg-gold" />
               <div>
                 <p className="font-mono text-xs font-semibold text-teal-deep">Digoreng Fresh</p>
-                <p className="text-[11px] text-ink-soft">setiap hari</p>
+                <p className="text-xs text-ink-soft">setiap hari</p>
               </div>
             </div>
 
@@ -114,7 +114,7 @@ export function HeroSection() {
               <span className="h-2 w-2 rounded-full bg-red" />
               <div>
                 <p className="font-mono text-xs font-semibold text-teal-deep">Promo -14%</p>
-                <p className="text-[11px] text-ink-soft">Bundle 3 varian</p>
+                <p className="text-xs text-ink-soft">Bundle 3 varian</p>
               </div>
             </div>
           </div>

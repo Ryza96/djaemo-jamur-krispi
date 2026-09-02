@@ -50,7 +50,7 @@ export function PartnerStatusView() {
     <div className="flex flex-1 flex-col px-4 py-8 sm:py-12">
       <div className="mx-auto w-full max-w-xl">
         <div className="mb-6 text-center sm:mb-8">
-          <h1 className="text-2xl font-bold text-ink sm:text-3xl">Status Partner</h1>
+          <h1 className="font-display text-[26px] font-semibold tracking-tight text-ink md:text-[30px]">Status Partner</h1>
           <p className="mt-2 text-sm text-muted">
             {partner.email}
           </p>
