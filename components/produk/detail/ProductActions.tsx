@@ -34,7 +34,7 @@ export function ProductActions({ product }: ProductActionsProps) {
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-sm font-medium text-primary" id="quantity-label">
+        <label className="text-sm font-medium text-ink" id="quantity-label">
           Jumlah
         </label>
         <div className="mt-2 flex items-center gap-3">
@@ -42,7 +42,7 @@ export function ProductActions({ product }: ProductActionsProps) {
             type="button"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={isMinQuantity}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 text-primary transition-colors duration-200 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/20 text-ink transition-colors duration-200 hover:bg-teal-deep/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-deep focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Kurangi jumlah"
           >
             <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden="true">
@@ -55,7 +55,7 @@ export function ProductActions({ product }: ProductActionsProps) {
           <button
             type="button"
             onClick={() => setQuantity((q) => q + 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 text-primary transition-colors duration-200 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/20 text-ink transition-colors duration-200 hover:bg-teal-deep/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-deep focus-visible:ring-offset-2"
             aria-label="Tambah jumlah"
           >
             <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden="true">
@@ -69,7 +69,7 @@ export function ProductActions({ product }: ProductActionsProps) {
         type="button"
         onClick={handleAddToCart}
         disabled={isAdding}
-        className="w-full rounded-full bg-primary px-6 py-3 text-base font-semibold text-white transition-all duration-200 hover:bg-primary-light active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-full bg-gold px-6 py-3 text-base font-semibold text-teal-deep transition-all duration-200 hover:bg-gold-bright active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isAdding ? "Ditambahkan..." : "Tambah ke Keranjang"}
       </button>
@@ -77,7 +77,7 @@ export function ProductActions({ product }: ProductActionsProps) {
       <button
         type="button"
         onClick={handleBuyNow}
-        className="w-full rounded-full border-2 border-primary/20 px-6 py-2.5 text-sm font-semibold text-primary transition-all duration-200 hover:bg-primary/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="w-full rounded-full bg-gold px-6 py-2.5 text-sm font-semibold text-teal-deep transition-all duration-200 hover:bg-gold-bright active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
       >
         Beli Sekarang
       </button>

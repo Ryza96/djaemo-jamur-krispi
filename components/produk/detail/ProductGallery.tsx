@@ -24,7 +24,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   return (
     <div>
-      <div className="relative h-[55vh] overflow-hidden rounded-xl border border-primary/10 bg-white shadow-sm md:aspect-square md:h-auto">
+      <div className="relative h-[55vh] overflow-hidden rounded-xl border border-ink/10 bg-white shadow-sm md:aspect-square md:h-auto">
         <Image
           unoptimized={process.env.NODE_ENV === "development"}
           key={selectedIndex}
@@ -47,10 +47,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               aria-selected={i === selectedIndex}
               aria-label={`${productName} gambar ${i + 1}`}
               onClick={() => handleSelect(i)}
-              className={`relative aspect-square w-16 overflow-hidden rounded-lg border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:shrink-0 ${
+              className={`relative aspect-square w-16 overflow-hidden rounded-lg border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-deep focus-visible:ring-offset-2 md:shrink-0 ${
                 i === selectedIndex
-                  ? "scale-105 border-primary ring-2 ring-primary/20"
-                  : "border-primary/10 hover:scale-105 hover:border-primary/30"
+                  ? "scale-105 border-teal-deep ring-2 ring-teal-deep/20"
+                  : "border-ink/10 hover:scale-105 hover:border-teal-deep/30"
               }`}
             >
               <Image

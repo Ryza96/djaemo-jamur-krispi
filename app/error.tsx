@@ -16,7 +16,7 @@ export default function Error({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-24 text-center">
-      <h1 className="text-2xl font-bold text-primary">Terjadi Kesalahan</h1>
+      <h1 className="text-2xl font-bold text-ink">Terjadi Kesalahan</h1>
       <p className="max-w-md text-sm text-muted">
         Maaf, terjadi masalah saat memuat halaman. Silakan coba lagi.
       </p>

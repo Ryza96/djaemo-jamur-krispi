@@ -22,7 +22,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, description }: PageHeaderProps) {
   return (
     <div className="mb-10 text-center sm:mb-12">
-      <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
+      <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
         {title}
       </h1>
       {description && (

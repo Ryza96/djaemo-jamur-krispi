@@ -6,7 +6,7 @@ interface ProductPriceProps {
 
 export function ProductPrice({ price }: ProductPriceProps) {
   return (
-    <p className="text-3xl font-bold text-secondary sm:text-4xl">
+    <p className="text-3xl font-bold text-gold sm:text-4xl">
       {formatPrice(price)}
     </p>
   );

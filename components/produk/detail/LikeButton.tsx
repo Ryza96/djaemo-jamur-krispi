@@ -61,7 +61,7 @@ export function LikeButton({ productId }: LikeButtonProps) {
       type="button"
       onClick={handleToggle}
       disabled={loading}
-      className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 px-3 py-1 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 px-3 py-1 text-sm font-medium text-ink transition-all duration-200 hover:bg-teal-deep/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-deep focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
       aria-label={liked ? "Hapus dari favorit" : "Tambah ke favorit"}
     >
       {liked ? (

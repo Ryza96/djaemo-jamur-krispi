@@ -76,7 +76,7 @@ export default function SyaratKetentuanPage() {
 
         {sections.map((section) => (
           <section key={section.heading} className="space-y-3">
-            <h2 className="text-xl font-bold text-primary">
+            <h2 className="text-xl font-bold text-ink">
               {section.heading}
             </h2>
             <div className="space-y-2 leading-7 text-foreground/85">
@@ -88,7 +88,7 @@ export default function SyaratKetentuanPage() {
         ))}
 
         <section className="space-y-3">
-          <h2 className="text-xl font-bold text-primary">8. Hubungi Kami</h2>
+          <h2 className="text-xl font-bold text-ink">8. Hubungi Kami</h2>
           <div className="leading-7 text-foreground/85">
             <p>{SITE.name} (Usaha Perorangan)</p>
             <p>{SITE.address}</p>
@@ -96,7 +96,7 @@ export default function SyaratKetentuanPage() {
               Email:{" "}
               <a
                 href={`mailto:${SITE.email}`}
-                className="text-primary hover:underline"
+                className="text-ink hover:underline"
               >
                 {SITE.email}
               </a>
@@ -105,7 +105,7 @@ export default function SyaratKetentuanPage() {
               WhatsApp:{" "}
               <a
                 href={`https://wa.me/62${SITE.phone.replace(/\D/g, "").replace(/^0/, "")}`}
-                className="text-primary hover:underline"
+                className="text-ink hover:underline"
               >
                 0812-3904-7565
               </a>
