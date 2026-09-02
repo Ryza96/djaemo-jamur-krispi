@@ -5,6 +5,7 @@ import {
   HomepagePromoSection,
   WhyDjaemoSection,
   TestimoniSection,
+  FinalCTASection,
 } from "@/components/home";
 
 export const revalidate = 300;
@@ -19,17 +20,19 @@ export default async function Home() {
     <>
       <HeroSection />
 
+      <BestSellerSection products={bestSellers} />
+
       <HomepagePromoSection
         promoName={promo?.promoName ?? ""}
         countdown={promo?.countdown ?? null}
         products={promo?.products ?? []}
       />
 
-      <BestSellerSection products={bestSellers} />
-
       <WhyDjaemoSection />
 
       <TestimoniSection />
+
+      <FinalCTASection />
     </>
   );
 }

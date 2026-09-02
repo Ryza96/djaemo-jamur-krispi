@@ -1,8 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Section } from "@/components/sections/Section";
-import { PromoSectionHeader, PromoBadge } from "@/components/promo";
-import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
+import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
 interface PromoSectionProps {
@@ -11,36 +10,61 @@ interface PromoSectionProps {
   products: Product[];
 }
 
-export function HomepagePromoSection({ promoName, countdown, products }: PromoSectionProps) {
+export function HomepagePromoSection({ products }: PromoSectionProps) {
   if (products.length === 0) return null;
 
-  return (
-    <Section className="bg-gold/5">
-      <PromoSectionHeader
-        name={promoName}
-        countdown={countdown}
-        productCount={products.length}
-      />
+  const isSingle = products.length === 1;
 
-      <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  return (
+    <Section className="bg-[linear-gradient(135deg,var(--gold),var(--gold-bright))]">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#2b220d]/70 sm:text-sm">
+          Promo Hari Ini
+        </p>
+        <h2 className="mt-3 font-display text-3xl font-semibold text-[#2b220d] sm:text-4xl md:text-[38px]">
+          Bundle 3 Varian
+        </h2>
+        <p className="mt-3 font-mono text-xs font-medium text-[#2b220d]/70 sm:text-sm">
+          Berlaku hingga 3 PRODUK · hemat sampai habis kuota
+        </p>
+      </div>
+
+      <div
+        className={
+          isSingle
+            ? "mx-auto mt-10 grid max-w-sm gap-6"
+            : "mt-10 grid gap-6 sm:grid-cols-2 md:gap-7 lg:grid-cols-3"
+        }
+      >
         {products.map((product) => (
-          <HomepageProductCard key={product.id} product={product} />
+          <PromoCard key={product.id} product={product} />
         ))}
       </div>
     </Section>
   );
 }
 
-function HomepageProductCard({ product }: { product: Product }) {
+function PromoCard({ product }: { product: Product }) {
   const imageSrc = product.images?.[0] || "/images/produk/placeholder.svg";
-  const productUrl = `/produk/${product.id}`;
+
+  const hasDiscount =
+    product.has_active_promo &&
+    product.final_price > 0 &&
+    product.normal_price > product.final_price;
+  const discountPercent =
+    hasDiscount && product.normal_price > 0
+      ? Math.round(
+          ((product.normal_price - product.final_price) / product.normal_price) *
+            100
+        )
+      : 0;
 
   return (
     <Link
-      href={productUrl}
-      className="group block rounded-2xl border border-gold/30 bg-white p-4 shadow-sm transition-all duration-200 hover:-rotate-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+      href={`/produk/${product.id}`}
+      className="group flex flex-col overflow-hidden rounded-xl bg-white/95 shadow-[0_6px_20px_-6px_rgba(18,31,29,0.22)] transition-transform duration-200 hover:-translate-y-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2b220d]"
     >
-      <div className="relative aspect-square overflow-hidden rounded-xl">
+      <div className="relative aspect-square overflow-hidden bg-cream-2">
         <Image
           unoptimized={process.env.NODE_ENV === "development"}
           src={imageSrc}
@@ -49,23 +73,31 @@ function HomepageProductCard({ product }: { product: Product }) {
           className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
+        {hasDiscount && discountPercent > 0 && (
+          <span className="absolute right-3 top-3 rounded-md bg-red px-2.5 py-1 font-mono text-xs font-bold text-white shadow-sm">
+            Hemat {discountPercent}%
+          </span>
+        )}
       </div>
 
-      <div className="mt-4 text-center">
-        <h3 className="text-base font-semibold text-ink">{product.name}</h3>
+      <div className="flex flex-1 flex-col px-4 py-4">
+        <h3 className="text-sm font-bold leading-snug text-ink sm:text-[15px]">
+          {product.name}
+        </h3>
 
-        <div className="mt-3">
-          <PartnerPriceDisplay product={product} variant="inline" className="items-center" />
-        </div>
-
-        {product.has_active_promo && (
-          <div className="mt-2 flex justify-center">
-            <PromoBadge data={product} variant="compact" />
+        <div className="mt-auto pt-3">
+          <div className="flex flex-wrap items-baseline gap-x-2.5">
+            <span className="font-mono text-lg font-bold text-red">
+              {formatPrice(product.final_price)}
+            </span>
+            {hasDiscount && (
+              <span className="font-mono text-xs text-ink-soft line-through">
+                {formatPrice(product.normal_price)}
+              </span>
+            )}
           </div>
-        )}
 
-        <div className="mt-4">
-          <span className="inline-block rounded-full border border-gold/30 px-5 py-2 font-mono text-xs font-medium text-ink-soft transition-colors duration-200 group-hover:border-gold group-hover:text-ink">
+          <span className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-gold px-5 py-2.5 font-mono text-xs font-bold text-[#2b220d] transition-colors duration-200 group-hover:bg-gold-bright">
             Lihat Produk
           </span>
         </div>

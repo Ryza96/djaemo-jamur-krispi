@@ -58,7 +58,7 @@ export function MarketingBanner() {
         <div className="relative flex items-end justify-center">
           <div className="relative h-[130px] w-[130px] sm:h-[150px] sm:w-[150px]">
             <Image
-              src="/images/hero/balado.png"
+              src="/images/hero/balado.webp"
               alt="D'JAEMO Balado"
               fill
               className="object-contain drop-shadow-lg"
@@ -67,7 +67,7 @@ export function MarketingBanner() {
           </div>
           <div className="relative -ml-6 h-[140px] w-[140px] sm:-ml-8 sm:h-[160px] sm:w-[160px]">
             <Image
-              src="/images/hero/pedasmanis.png"
+              src="/images/hero/pedasmanis.webp"
               alt="D'JAEMO Pedas Manis"
               fill
               className="object-contain drop-shadow-xl"
@@ -76,7 +76,7 @@ export function MarketingBanner() {
           </div>
           <div className="relative -ml-6 h-[120px] w-[120px] sm:-ml-8 sm:h-[140px] sm:w-[140px]">
             <Image
-              src="/images/hero/bbq.png"
+              src="/images/hero/bbq.webp"
               alt="D'JAEMO BBQ"
               fill
               className="object-contain drop-shadow-lg"

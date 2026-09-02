@@ -74,7 +74,7 @@ export function WhyDjaemoSection() {
         <p className="font-mono text-sm font-medium uppercase tracking-widest text-gold-bright">
           Keunggulan Kami
         </p>
-        <h2 className="mt-2 font-display text-2xl font-semibold text-cream sm:text-3xl">
+        <h2 className="mt-2 font-display text-3xl font-semibold text-cream sm:text-4xl">
           Mengapa D&apos;JAEMO?
         </h2>
       </div>

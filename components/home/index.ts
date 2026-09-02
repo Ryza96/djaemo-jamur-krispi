@@ -5,3 +5,4 @@ export { BestSellerPromoLayout } from "./BestSellerPromoLayout";
 export { HomepagePromoSection } from "./HomepagePromoSection";
 export { WhyDjaemoSection } from "./WhyDjaemoSection";
 export { TestimoniSection } from "./TestimoniSection";
+export { FinalCTASection } from "./FinalCTASection";

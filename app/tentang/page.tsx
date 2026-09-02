@@ -1,59 +1,81 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
-import { PageHeader, Section } from "@/components/sections/Section";
+import { Section } from "@/components/sections/Section";
 import { SITE } from "@/lib/constants";
 
-const features = [
+const values = [
   {
-    title: "Bahan Alami",
-    description:
-      "Hanya jamur pilihan dari petani lokal — tanpa pengawet, tanpa pewarna buatan. Yang kamu dapat adalah rasa jamur asli yang jujur, langsung dari sumbernya.",
+    title: "Bahan Pilihan",
+    description: "Jamur segar pilihan, tanpa pengawet dan pewarna buatan.",
     icon: LeafIcon,
   },
   {
     title: "Rasa Autentik",
-    description:
-      "Setiap varian diracik untuk cita rasa gurih yang bikin nagih. Bukan rasa pabrik — ini rasa yang bikin kamu bilang, \"lagi, lagi, lagi.\"",
+    description: "Diracik untuk cita rasa Indonesia yang gurih dan nagih.",
     icon: HeartIcon,
   },
   {
-    title: "Tekstur Renyah",
-    description:
-      "Proses pengeringan khusus menjaga kerenyahan sampai ke gigitan terakhir. Buka kemasan kapan pun, rasanya tetap sama: renyah, ringan, memuaskan.",
+    title: "Fresh Setiap Hari",
+    description: "Digoreng fresh setiap hari agar renyah sampai di tanganmu.",
     icon: SparkleIcon,
+  },
+  {
+    title: "Kualitas & Kebersihan",
+    description: "Diproses dengan standar sanitasi ketat agar aman untuk keluarga.",
+    icon: BoxIcon,
   },
 ];
 
 const processSteps = [
   {
     step: "01",
-    title: "Seleksi Bahan",
-    description:
-      "Setiap jamur diperiksa satu per satu. Hanya yang memenuhi standar kualitas kami yang lanjut ke tahap berikutnya.",
+    title: "Pilih Bahan",
+    description: "Jamur segar pilihan diperiksa satu per satu sebelum masuk ke proses.",
   },
   {
     step: "02",
-    title: "Pengolahan Higienis",
-    description:
-      "Diproses di fasilitas bersih dengan standar sanitasi ketat — karena camilan yang enak harus juga aman untuk keluarga kamu.",
+    title: "Olah dengan Teliti",
+    description: "Diproses di tempat bersih dengan bumbu alami, tanpa trik kimia.",
   },
   {
     step: "03",
-    title: "Pewarna & Perasa Alami",
-    description:
-      "Bumbu dan warna sepenuhnya dari bahan alami. Tidak ada trik kimia — hanya rasa yang otentik dan bisa kamu percaya.",
+    title: "Goreng Fresh",
+    description: "Digoreng fresh setiap hari agar kerenyahan terjaga sampai gigitan terakhir.",
   },
   {
     step: "04",
-    title: "Kemasan Rapi & Segar",
-    description:
-      "Dikemas rapat untuk menjaga kesegaran dan kerenyahan. Siap dikirim ke mana pun, siap dinikmati kapan pun.",
+    title: "Kemas & Kirim",
+    description: "Dikemas rapat menjaga kesegaran, lalu dikirim aman sampai tujuan.",
+  },
+];
+
+const reasons = [
+  {
+    title: "100% Alami",
+    description: "Tanpa pengawet dan pewarna buatan — rasa jujur dari jamur asli.",
+    icon: AwardIcon,
+  },
+  {
+    title: "Fresh & Higienis",
+    description: "Diproses di lingkungan bersih dan digoreng fresh setiap hari.",
+    icon: BoltIcon,
+  },
+  {
+    title: "Rasa Autentik",
+    description: "Diracik khusus untuk lidah Indonesia — gurih, hangat, dan nagih.",
+    icon: StarIcon,
+  },
+  {
+    title: "Kemasan Rapi",
+    description: "Dikemas rapat menjaga kesegaran dan kerenyahan sampai ke tanganmu.",
+    icon: TruckIcon,
   },
 ];
 
 function LeafIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path d="M6 12c0-4.418 4.082-8 9-8 0 4.418-4.082 8-9 8z" />
       <path d="M15 4c0 3.314-4.582 6-10 6" />
     </svg>
@@ -62,7 +84,7 @@ function LeafIcon() {
 
 function HeartIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path d="M12 21s-5.5-4.2-8.4-7.5C1.5 11 2.8 6.4 6.7 5.2c1.6-.5 3.3 0 4.3 1.3 1-1.3 2.7-1.8 4.3-1.3 3.9 1.2 5.2 5.8 2.1 8.3C17.5 16.8 12 21 12 21z" />
     </svg>
   );
@@ -70,8 +92,51 @@ function HeartIcon() {
 
 function SparkleIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path d="M12 2v20M2 12h20M6.5 6.5l11 11M17.5 6.5l-11 11" />
+    </svg>
+  );
+}
+
+function BoxIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M16.5 9.4 7.55 4.24" />
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <path d="m3.27 6.96 8.73 5.05 8.73-5.05" />
+      <path d="M12 22.08V12" />
+    </svg>
+  );
+}
+
+function AwardIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M6.27 3.46a3 3 0 0 1 1.75-.72 3 3 0 0 1 3.97 0 3 3 0 0 1 1.75.72 3 3 0 0 1 2.81 2.81c.05.64.3 1.25.72 1.75a3 3 0 0 1 0 3.97 3 3 0 0 1-.72 1.75 3 3 0 0 1-2.81 2.81 3 3 0 0 1-1.75.72 3 3 0 0 1-3.97 0 3 3 0 0 1-1.75-.72 3 3 0 0 1-2.81-2.81 3 3 0 0 1-.72-1.75 3 3 0 0 1 0-3.97 3 3 0 0 1 .72-1.75 3 3 0 0 1 2.81-2.81zM13 9a1 1 0 1 0-1.4-1.4L9 10.2l-1.6-1.6a1 1 0 0 0-1.4 1.4l2.3 2.3a1 1 0 0 0 1.4 0l3-3z" />
+    </svg>
+  );
+}
+
+function BoltIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M12 5V2l-5 7h3v5l4-5h-3z" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.07 3.29a1 1 0 0 0 .95.69h3.46c.97 0 1.37 1.24.59 1.81l-2.8 2.03a1 1 0 0 0-.36 1.12l1.07 3.29c.3.92-.76 1.69-1.54 1.12l-2.8-2.03a1 1 0 0 0-1.18 0l-2.8 2.03c-.78.57-1.84-.2-1.54-1.12l1.07-3.29a1 1 0 0 0-.36-1.12L3.53 8.72c-.78-.57-.38-1.81.59-1.81h3.46a1 1 0 0 0 .95-.69l1.07-3.29z" />
+    </svg>
+  );
+}
+
+function TruckIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M2 6h16a1 1 0 0 1 .9 1.4l-2 4A1 1 0 0 1 16 12H8v4H6v-9H2a1 1 0 0 1 0-2zM3 15h6v2H3z" />
     </svg>
   );
 }
@@ -82,119 +147,260 @@ export const metadata: Metadata = {
 };
 
 export default function TentangPage() {
-  const whatsappLink = `https://wa.me/62${SITE.phone.replace(/\D/g, "").replace(/^0/, "")}`;
-
   return (
     <>
-      <Section className="bg-surface-dark">
-        <PageHeader title="Tentang Kami" description={SITE.description} />
-
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-lg leading-8 text-foreground/85">
-            {SITE.name} lahir dari sederhana: menciptakan camilan jamur yang benar-benar enak, benar-benar alami, dan bisa dinikmati siapa saja — tanpa rasa bersalah.
-          </p>
-          <p className="mt-4 text-lg leading-8 text-foreground/85">
-            Dari Bojonegoro, Jawa Timur, kami meramu jamur segar menjadi camilan renyah yang terasa autentik. Bukan camilan pabrik yang seragam — ini camilan yang punya cerita, punya karakter, dan yang terpenting: rasanya bikin ketagihan.
-          </p>
-        </div>
-
-        <div className="mx-auto mt-12 max-w-2xl rounded-3xl border border-primary/10 bg-white p-8 shadow-lg sm:p-10">
-          <div className="rounded-2xl bg-accent/5 p-6 text-center">
-            <p className="text-sm uppercase tracking-[0.4em] text-accent/90">Cita rasa kami</p>
-            <h2 className="mt-4 text-2xl font-bold text-primary sm:text-3xl">
-              Camilan alami yang terasa jujur — dari bahan, rasa, hingga kerenyahan.
-            </h2>
-          </div>
-          <div className="mt-6 space-y-4 text-sm text-foreground/80">
-            <div className="rounded-2xl bg-surface p-5">
-              Kami percaya camilan terbaik tidak perlu bahan kimia untuk terasa enak. Cukup jamur segar, bumbu alami, dan proses yang dibuat dengan hati-hati — maka hadirlah rasa yang autentik.
+      {/* 1 · HERO TENTANG — hijau gelap, sesuai desain yang disetujui */}
+      <section className="relative bg-teal-deep px-6 pb-14 pt-12 text-cream md:pb-[76px] md:pt-16">
+        <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14">
+          <div>
+            <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold">
+              Tentang D&apos;Jaemo
+            </p>
+            <h1 className="mt-4 font-display text-[38px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[54px]">
+              Renyahnya D&apos;Jaemo,
+              <br />
+              <em className="not-italic text-gold-bright">Cerita di Baliknya.</em>
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-cream/70 md:text-lg">
+              D&apos;Jaemo adalah camilan jamur krispi yang dibuat dari bahan alami
+              pilihan dengan cita rasa Indonesia. Digoreng fresh setiap hari,
+              dikemas rapi, dan dikirim aman sampai tujuan.
+            </p>
+            <div className="mt-6 hidden flex-wrap gap-2.5 md:flex">
+              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+                Bahan alami pilihan
+              </span>
+              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+                Digoreng fresh
+              </span>
+              <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+                Bojonegoro, Jawa Timur
+              </span>
             </div>
-            <div className="rounded-2xl bg-surface p-5">
-              Setiap produk kami diproses untuk menjaga kualitas, kesegaran, dan yang paling penting — kepuasan kamu saat menikmatinya.
+          </div>
+
+          <div className="relative">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] border border-gold/35 shadow-[0_16px_40px_-12px_rgba(18,31,29,0.35)]">
+              <Image
+                unoptimized={process.env.NODE_ENV === "development"}
+                src="/images/produk/PEDAS MANIS.webp"
+                alt="D'Jaemo Jamur Krispi"
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 1024px) 100vw, 520px"
+              />
+            </div>
+            <div className="absolute left-[-10px] top-4 hidden items-center gap-2.5 rounded-xl bg-cream/95 px-3.5 py-2.5 shadow-lg backdrop-blur md:flex">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-gold" />
+              <div>
+                <p className="font-mono text-xs font-semibold text-teal-deep">100% Alami</p>
+                <p className="text-[11px] text-ink-soft">tanpa pengawet</p>
+              </div>
+            </div>
+            <div className="absolute bottom-4 right-[-10px] hidden items-center gap-2.5 rounded-xl bg-cream/95 px-3.5 py-2.5 shadow-lg backdrop-blur md:flex">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-gold-bright" />
+              <div>
+                <p className="font-mono text-xs font-semibold text-teal-deep">Fresh Setiap Hari</p>
+                <p className="text-[11px] text-ink-soft">digoreng saat pesanan</p>
+              </div>
+            </div>
+            <span className="absolute bottom-3 left-3 rounded-md bg-teal-deep/85 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-cream md:hidden">
+              100% Alami
+            </span>
+          </div>
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60" />
+      </section>
+
+      {/* 2 · CERITA */}
+      <Section>
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-[60px]">
+          <div>
+            <p className="font-mono text-sm font-medium uppercase tracking-widest text-teal-mid">
+              Cerita Kami
+            </p>
+            <h2 className="mt-4 font-display text-[32px] font-semibold leading-[1.15] tracking-tight text-ink md:text-[38px]">
+              Berawal dari Satu Gigitan.
+            </h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-ink-soft md:text-[15.5px] md:leading-[1.75]">
+              Semua berawal dari satu gigitan — angan sederhana untuk menghadirkan
+              camilan jamur yang benar-benar enak, benar-benar alami, dan bisa
+              dinikmati siapa saja tanpa rasa bersalah. Dari dapur kecil di
+              Bojonegoro, Jawa Timur, D&apos;Jaemo lahir dengan satu fokus: jamur
+              krispi.
+            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-ink-soft md:text-[15.5px] md:leading-[1.75]">
+              Kami memilih jamur segar dengan penuh perhatian, meracik bumbu khas
+              Indonesia, dan mengolahnya dengan teliti. Tujuannya sederhana —
+              camilan berkualitas yang rasanya jujur, dari bahan sampai kerenyahan.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-x-7 gap-y-5 border-t border-cream-2 pt-6">
+              <div>
+                <p className="font-mono text-xl font-semibold text-teal-deep">Bojonegoro</p>
+                <p className="mt-0.5 text-xs text-ink-soft/70">asal D&apos;Jaemo, Jawa Timur</p>
+              </div>
+              <div>
+                <p className="font-mono text-xl font-semibold text-teal-deep">100% Alami</p>
+                <p className="mt-0.5 text-xs text-ink-soft/70">tanpa pengawet &amp; pewarna buatan</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] border border-cream-2 shadow-[0_6px_20px_-6px_rgba(18,31,29,0.16)]">
+              <Image
+                unoptimized={process.env.NODE_ENV === "development"}
+                src="/images/produk/BALADO.webp"
+                alt="D'Jaemo Jamur Krispi Balado"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 560px"
+              />
+              <span className="absolute bottom-3.5 left-3.5 hidden rounded-md bg-teal-deep/85 px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-wider text-cream md:block">
+                Jamur krispi · hasil olahan fresh
+              </span>
             </div>
           </div>
         </div>
       </Section>
 
-      <Section>
-        <div className="grid gap-8 lg:grid-cols-3">
-          {features.map((feature) => (
+      {/* 3 · NILAI / PRINSIP */}
+      <Section className="bg-teal-deep">
+        <div className="text-center">
+          <p className="font-mono text-sm font-medium uppercase tracking-widest text-gold-bright">
+            Nilai Kami
+          </p>
+          <h2 className="mt-4 font-display text-[30px] font-semibold leading-[1.15] tracking-tight text-cream md:text-[38px]">
+            Apa yang Kami Pegang?
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-base text-cream/70">
+            Prinsip yang selalu kami jaga dari memilih bahan hingga sampai ke tanganmu.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-[980px] grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-[22px]">
+          {values.map((value) => (
             <div
-              key={feature.title}
-              className="rounded-3xl border border-primary/10 bg-white p-8 shadow-lg transition duration-200 hover:-translate-y-1 hover:shadow-xl"
+              key={value.title}
+              className="rounded-xl border border-gold/20 bg-white/5 px-4 py-6 text-center transition-all duration-200 hover:-translate-y-1 hover:border-gold/50 hover:bg-white/10"
             >
-              <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5 text-primary">
-                <feature.icon />
+              <div className="mx-auto mb-4 flex h-[50px] w-[50px] items-center justify-center rounded-[14px] border border-gold/30 bg-gold/15 text-gold-bright">
+                <value.icon />
               </div>
-              <h3 className="text-xl font-bold text-primary">{feature.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-muted">{feature.description}</p>
+              <h3 className="text-[13.5px] font-semibold text-cream md:text-[15.5px]">{value.title}</h3>
+              <p className="mt-1.5 text-[11.5px] leading-snug text-cream/60 md:text-[13px] md:leading-snug md:text-cream/70">
+                {value.description}
+              </p>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section className="bg-surface-dark">
-        <div className="mb-10 text-center sm:mb-12">
-          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
-            Proses Produksi Kami
+      {/* 4 · PROSES PEMBUATAN */}
+      <Section className="bg-cream-2">
+        <div className="text-center">
+          <p className="font-mono text-sm font-medium uppercase tracking-widest text-teal-mid">
+            Proses Pembuatan
+          </p>
+          <h2 className="mt-4 font-display text-[32px] font-semibold leading-[1.15] tracking-tight text-ink md:text-[38px]">
+            Dibuat dengan Perhatian.
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-muted sm:text-lg">
-            Dari jamur segar di tangan petani hingga ke tangan kamu — setiap langkah dirancang untuk menghadirkan produk yang bersih, renyah, dan penuh kualitas.
+          <p className="mx-auto mt-4 max-w-lg text-base text-ink-soft">
+            Bukan sekadar digoreng — setiap langkah dijaga agar hasilnya renyah, bersih, dan memuaskan.
           </p>
         </div>
 
-        <div className="mx-auto max-w-4xl">
-          <div className="grid gap-5 sm:grid-cols-2">
-            {processSteps.map((item) => (
-              <div
-                key={item.step}
-                className="group rounded-3xl border border-primary/10 bg-white p-7 shadow-lg transition duration-200 hover:-translate-y-1 hover:shadow-xl"
-              >
-                <span className="inline-block rounded-full bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
-                  Langkah {item.step}
-                </span>
-                <h3 className="mt-4 text-lg font-bold text-primary">{item.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-muted">{item.description}</p>
+        <div className="mx-auto mt-10 grid max-w-[1040px] grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-[22px]">
+          {processSteps.map((item, index) => (
+            <div
+              key={item.step}
+              className="relative flex items-start gap-3.5 sm:block sm:rounded-xl sm:border sm:border-cream-2 sm:bg-white sm:p-5 sm:shadow-sm sm:transition-all sm:duration-200 sm:hover:-translate-y-1 sm:hover:shadow-md"
+            >
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold font-mono text-xs font-semibold text-[#2b220d] sm:h-auto sm:w-auto sm:rounded-full sm:px-2.5 sm:py-1 sm:text-[11px]">
+                {item.step}
+              </span>
+              <div className="pt-0.5 sm:pt-0">
+                <h3 className="text-sm font-semibold text-ink sm:mt-3 sm:text-[15.5px]">{item.title}</h3>
+                <p className="mt-0.5 text-[12.5px] leading-snug text-ink-soft sm:mt-1.5 sm:text-[13px] sm:leading-relaxed">
+                  {item.description}
+                </p>
               </div>
-            ))}
-          </div>
+              {index < processSteps.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-[-20px] left-[19px] top-10 w-px bg-cream-2 sm:hidden"
+                />
+              )}
+            </div>
+          ))}
         </div>
       </Section>
 
+      {/* 5 · KENAPA D'JAEMO */}
       <Section>
-        <div className="rounded-[2.5rem] border border-secondary/15 bg-secondary/5 p-10 text-center shadow-2xl shadow-black/5 sm:p-14">
-          <p className="text-sm font-semibold uppercase tracking-[0.4em] text-secondary/80">
-            Kerja sama & pemesanan
+        <div className="text-center">
+          <p className="font-mono text-sm font-medium uppercase tracking-widest text-teal-mid">
+            Keunggulan Kami
           </p>
-          <h2 className="mt-4 text-3xl font-bold text-foreground sm:text-4xl">
-            Siap mencoba camilan jamur krispi yang otentik?
+          <h2 className="mt-4 font-display text-[32px] font-semibold leading-[1.15] tracking-tight text-ink md:text-[38px]">
+            Kenapa D&apos;Jaemo?
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-muted leading-8">
-            Pesan langsung untuk diri sendiri, keluarga, atau mulai kerja sama bareng kami. Tim kami siap bantu dengan cepat dan ramah.
+          <p className="mx-auto mt-4 max-w-lg text-base text-ink-soft">
+            Alasan pelanggan memilih jamur krispi alami yang dibuat dengan hati-hati.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button href="/kontak" variant="secondary">
-              Hubungi Kami
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-[880px] grid-cols-1 gap-4 md:grid-cols-2 md:gap-[18px]">
+          {reasons.map((reason) => (
+            <div
+              key={reason.title}
+              className="flex items-start gap-3.5 rounded-xl border border-cream-2 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md md:p-[22px]"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gold/30 bg-gold/15 text-[#2b220d]">
+                <reason.icon />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-ink md:text-[15px]">{reason.title}</h3>
+                <p className="mt-1 text-[12.5px] leading-snug text-ink-soft md:text-[13px] md:leading-relaxed">
+                  {reason.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* 6 · CTA */}
+      <section className="bg-teal-deep px-6 pb-16 pt-16 text-center text-cream md:pb-[84px] md:pt-[84px]">
+        <div className="mx-auto max-w-[680px]">
+          <p className="font-mono text-sm font-medium uppercase tracking-widest text-gold">
+            Coba Sekarang
+          </p>
+          <h2 className="mt-4 font-display text-[30px] font-semibold leading-[1.15] tracking-tight text-cream md:text-[40px]">
+            Sudah Siap Coba <em className="not-italic text-gold-bright">D&apos;Jaemo?</em>
+          </h2>
+          <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-relaxed text-cream/70">
+            Pilih varian jamur krispi favoritmu dan rasakan sendiri — dibuat fresh,
+            dikirim aman, dan dijamin bikin ketagihan.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3.5 sm:flex-row">
+            <Button
+              href="/produk"
+              className="w-full rounded-lg bg-gold px-10 py-3.5 text-[15px] font-semibold text-teal-deep shadow-lg shadow-gold/20 hover:bg-gold-bright sm:w-auto"
+            >
+              Beli Sekarang
             </Button>
             <Button
-              href={whatsappLink}
-              className="border-2 border-white bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-600"
+              variant="outline"
+              href="/produk"
+              className="w-full rounded-lg border-cream/40 px-10 py-3.5 text-[15px] font-semibold text-cream hover:bg-cream hover:text-teal-deep sm:w-auto"
             >
-              Chat WhatsApp
+              Lihat Produk
             </Button>
           </div>
-          <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 rounded-3xl bg-white/90 p-6 text-left text-sm text-foreground shadow-sm sm:text-base">
-            <p>
-              <span className="font-semibold text-primary">Telepon:</span>{" "}
-              {SITE.phone}
-            </p>
-            <p>
-              <span className="font-semibold text-primary">Email:</span>{" "}
-              {SITE.email}
-            </p>
-          </div>
         </div>
-      </Section>
+      </section>
     </>
   );
 }

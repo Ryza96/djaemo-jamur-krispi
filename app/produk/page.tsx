@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { PageHeader, Section } from "@/components/sections/Section";
-import { ProdukGrid } from "@/components/produk/ProdukGrid";
+import { ProdukCatalog } from "@/components/produk/ProdukCatalog";
 import type { Product } from "@/types";
 
 export const metadata: Metadata = {
   title: "Produk",
-  description: "Lihat koleksi camilan jamur krispi Djaemo.",
+  description:
+    "Pilih varian jamur krispi favoritmu — D'Jaemo Jamur Krispi premium, digoreng fresh, dikemas rapi dalam kemasan 72 g.",
 };
 
 async function getProducts(): Promise<Product[]> {
@@ -24,28 +24,44 @@ async function getProducts(): Promise<Product[]> {
 export default async function ProdukPage() {
   const products = await getProducts();
 
-  if (products.length === 0) {
-    return (
-      <Section>
-        <PageHeader
-          title="Produk Kami"
-          description="Pilih varian jamur krispi favorit Anda. Semua produk dibuat dari bahan alami pilihan."
-        />
-        <div className="flex flex-col items-center justify-center py-20 text-center">
+  return (
+    <>
+      {/* PAGE HERO — hijau gelap, sesuai design yang disetujui */}
+      <section className="relative overflow-hidden border-b border-teal-line bg-teal-deep px-6 py-14 md:py-[72px]">
+        <div className="mx-auto max-w-[1180px]">
+          <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold">
+            Produk D&apos;Jaemo
+          </p>
+          <h1 className="mt-4 font-display text-[38px] font-semibold leading-[1.08] tracking-tight text-cream md:text-[54px]">
+            Pilih <em className="not-italic text-gold-bright">Favoritmu.</em>
+          </h1>
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-cream/70 md:text-lg">
+            Jamur krispi premium, digoreng fresh, dan dikemas rapi dalam kemasan
+            72 g. Setiap kemasan disiapkan setelah kamu memesan — dikirim aman
+            sampai tujuan.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2.5">
+            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+              {products.length} varian rasa
+            </span>
+            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+              72 g per kemasan
+            </span>
+            <span className="rounded-full border border-gold/25 bg-white/5 px-4 py-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-cream/85">
+              Fresh setiap hari
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {products.length === 0 ? (
+        <section className="flex flex-col items-center justify-center px-6 py-24 text-center">
           <p className="text-lg text-muted">Belum ada produk tersedia.</p>
           <p className="mt-2 text-sm text-muted">Silakan kembali lagi nanti.</p>
-        </div>
-      </Section>
-    );
-  }
-
-  return (
-    <Section>
-      <PageHeader
-        title="Produk Kami"
-        description="Pilih varian jamur krispi favorit Anda. Semua produk dibuat dari bahan alami pilihan."
-      />
-      <ProdukGrid products={products} />
-    </Section>
+        </section>
+      ) : (
+        <ProdukCatalog products={products} />
+      )}
+    </>
   );
 }

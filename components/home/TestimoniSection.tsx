@@ -89,7 +89,7 @@ export function TestimoniSection() {
         <p className="font-mono text-sm font-medium uppercase tracking-widest text-gold">
           Testimoni
         </p>
-        <h2 className="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">
+        <h2 className="mt-2 font-display text-3xl font-semibold text-ink sm:text-4xl">
           Kata Mereka tentang D&apos;JAEMO
         </h2>
         <p className="mt-3 text-ink-soft">
