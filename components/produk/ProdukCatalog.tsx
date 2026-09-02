@@ -49,7 +49,7 @@ export function ProdukCatalog({ products }: ProdukCatalogProps) {
   );
 
   return (
-    <section className="mx-auto w-full min-w-0 max-w-[1180px] px-6 py-10 md:py-14">
+    <section className="mx-auto w-full min-w-0 max-w-6xl px-4 py-16 sm:px-6 md:py-20">
       {/* KATEGORI FILTER — chips dari data produk asli */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cream-2 pb-5">
         <div className="flex min-w-0 gap-2 overflow-x-auto" role="group" aria-label="Kategori produk">
@@ -60,7 +60,7 @@ export function ProdukCatalog({ products }: ProdukCatalogProps) {
               onClick={() => setActive(cat)}
               aria-pressed={active === cat}
               className={cn(
-                "shrink-0 cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
+                "shrink-0 cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors",
                 active === cat
                   ? "bg-teal-deep text-cream"
                   : "border border-cream-2 bg-white text-ink-soft hover:border-teal-mid hover:text-teal-deep",
@@ -70,7 +70,7 @@ export function ProdukCatalog({ products }: ProdukCatalogProps) {
             </button>
           ))}
         </div>
-        <p className="font-mono text-[11px] uppercase tracking-widest text-ink-soft/70">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/75">
           {filtered.length} produk
         </p>
       </div>
