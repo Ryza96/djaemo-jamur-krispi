@@ -89,8 +89,8 @@ export function LiveSelfieCapture({ onCapture }: LiveSelfieCaptureProps) {
   if (state === "idle") {
     return (
       <div className="space-y-4 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          <Camera className="h-8 w-8 text-primary" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal-deep/10">
+          <Camera className="h-8 w-8 text-teal-deep" />
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">Ambil Foto Selfie</h3>
@@ -99,15 +99,15 @@ export function LiveSelfieCapture({ onCapture }: LiveSelfieCaptureProps) {
           </p>
         </div>
         {error && (
-          <div className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-left">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-            <p className="text-xs text-red-600">{error}</p>
+          <div className="flex items-start gap-2 rounded-xl border border-red/20 bg-red/10 p-3 text-left">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red" />
+            <p className="text-xs text-red">{error}</p>
           </div>
         )}
         <button
           type="button"
           onClick={startCamera}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
         >
           <Camera className="h-4 w-4" />
           {error ? "Coba Lagi" : "Ambil Foto Sekarang"}
@@ -134,7 +134,7 @@ export function LiveSelfieCapture({ onCapture }: LiveSelfieCaptureProps) {
           <button
             type="button"
             onClick={handleCapture}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
           >
             <Camera className="h-4 w-4" />
             Ambil Foto
@@ -159,7 +159,7 @@ export function LiveSelfieCapture({ onCapture }: LiveSelfieCaptureProps) {
         <button
           type="button"
           onClick={handleRetake}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
         >
           <RefreshCw className="h-4 w-4" />
           Ambil Ulang

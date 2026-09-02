@@ -71,7 +71,7 @@ function CheckIcon() {
 export default function PartnerPage() {
   return (
     <>
-      <Section className="bg-surface-dark">
+      <Section className="bg-cream-2">
         <PageHeader
           title="Menjadi Partner"
           description="Program Kemitraan Resmi D'JAEMO."
@@ -91,13 +91,13 @@ export default function PartnerPage() {
           {partnerTypes.map((partner) => (
             <div
               key={partner.title}
-              className="rounded-4xl border border-primary/10 bg-white p-8 shadow-sm sm:p-10"
+              className="rounded-4xl border border-ink/10 bg-white p-8 shadow-sm sm:p-10"
             >
-              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-teal-deep/10 text-teal-deep">
                 <partner.icon />
               </div>
 
-              <h2 className="text-2xl font-bold text-primary">{partner.title}</h2>
+              <h2 className="text-2xl font-bold text-ink">{partner.title}</h2>
               <p className="mt-4 text-sm leading-7 text-muted">{partner.description}</p>
 
               <h3 className="mt-6 text-sm font-semibold text-foreground">Syarat Menjadi Partner:</h3>
@@ -113,7 +113,7 @@ export default function PartnerPage() {
               <div className="mt-8">
                 <Link
                   href={partner.href}
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 >
                   Lihat Selengkapnya
                 </Link>
@@ -123,9 +123,9 @@ export default function PartnerPage() {
         </div>
       </Section>
 
-      <Section className="bg-surface-dark">
-        <div className="rounded-[2.5rem] border border-secondary/15 bg-secondary/5 p-10 text-center shadow-2xl shadow-black/5 sm:p-14">
-          <p className="text-sm font-semibold uppercase tracking-[0.4em] text-secondary/80">
+      <Section className="bg-cream-2">
+        <div className="rounded-[2.5rem] border border-gold/15 bg-gold/5 p-10 text-center shadow-2xl shadow-black/5 sm:p-14">
+          <p className="text-sm font-semibold uppercase tracking-[0.4em] text-gold/80">
             Proses Kemitraan
           </p>
           <h2 className="mt-4 text-3xl font-bold text-foreground sm:text-4xl">
@@ -133,15 +133,15 @@ export default function PartnerPage() {
           </h2>
           <div className="mx-auto mt-8 grid max-w-3xl gap-6 sm:grid-cols-3">
             <div className="rounded-3xl bg-white/90 p-6 text-center shadow-sm">
-              <div className="text-3xl font-bold text-primary">01</div>
+              <div className="text-3xl font-bold text-ink">01</div>
               <p className="mt-2 text-sm text-muted">Registrasi Partner</p>
             </div>
             <div className="rounded-3xl bg-white/90 p-6 text-center shadow-sm">
-              <div className="text-3xl font-bold text-primary">02</div>
+              <div className="text-3xl font-bold text-ink">02</div>
               <p className="mt-2 text-sm text-muted">Review oleh Admin</p>
             </div>
             <div className="rounded-3xl bg-white/90 p-6 text-center shadow-sm">
-              <div className="text-3xl font-bold text-primary">03</div>
+              <div className="text-3xl font-bold text-ink">03</div>
               <p className="mt-2 text-sm text-muted">Partner Aktif</p>
             </div>
           </div>

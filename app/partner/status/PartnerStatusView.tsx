@@ -50,7 +50,7 @@ export function PartnerStatusView() {
     <div className="flex flex-1 flex-col px-4 py-8 sm:py-12">
       <div className="mx-auto w-full max-w-xl">
         <div className="mb-6 text-center sm:mb-8">
-          <h1 className="text-2xl font-bold text-primary sm:text-3xl">Status Partner</h1>
+          <h1 className="text-2xl font-bold text-ink sm:text-3xl">Status Partner</h1>
           <p className="mt-2 text-sm text-muted">
             {partner.email}
           </p>
@@ -61,14 +61,14 @@ export function PartnerStatusView() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
           <Link
             href={actions.primary.href}
-            className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
           >
             {actions.primary.label}
           </Link>
           {actions.secondary && (
             <Link
               href={actions.secondary.href}
-              className="inline-flex items-center justify-center rounded-full border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="inline-flex items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
             >
               {actions.secondary.label}
             </Link>
@@ -79,7 +79,7 @@ export function PartnerStatusView() {
               logout();
               router.push("/partner/login");
             }}
-            className="inline-flex items-center justify-center rounded-full bg-primary/10 px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-full bg-teal-deep/10 px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-teal-deep/20 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
           >
             Keluar
           </button>

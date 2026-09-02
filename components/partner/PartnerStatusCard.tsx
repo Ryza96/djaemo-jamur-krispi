@@ -24,8 +24,8 @@ const STATUS_CONFIG: Record<PartnerStatus, StatusConfig> = {
       "Benefit Partner",
     ],
     benefits: [],
-    color: "text-secondary",
-    bgColor: "bg-secondary/10",
+    color: "text-gold",
+    bgColor: "bg-gold/10",
   },
   RESELLER_ACTIVE: {
     label: "Reseller Active",
@@ -65,9 +65,9 @@ const STATUS_CONFIG: Record<PartnerStatus, StatusConfig> = {
       "Checkout Partner",
       "Benefit Partner",
     ],
-    benefits: [],
-    color: "text-red-600",
-    bgColor: "bg-red-50",
+benefits: [],
+    color: "text-red",
+    bgColor: "bg-red/10",
   },
   SUSPENDED: {
     label: "Suspended",
@@ -80,8 +80,8 @@ const STATUS_CONFIG: Record<PartnerStatus, StatusConfig> = {
       "Benefit Partner",
     ],
     benefits: [],
-    color: "text-red-600",
-    bgColor: "bg-red-50",
+    color: "text-red",
+    bgColor: "bg-red/10",
   },
 };
 
@@ -95,7 +95,7 @@ function CheckIcon() {
 
 function XIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0 text-red-500">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0 text-red">
       <path d="M18 6L6 18M6 6l12 12" />
     </svg>
   );
@@ -129,7 +129,7 @@ export function PartnerStatusCard({ status }: { status: PartnerStatus }) {
   const config = STATUS_CONFIG[status];
 
   return (
-    <div className="rounded-4xl border border-primary/10 bg-white p-8 shadow-sm sm:p-10">
+    <div className="rounded-4xl border border-ink/10 bg-white p-8 shadow-sm sm:p-10">
       <div className="mb-6 flex items-center gap-4">
         <div className={`inline-flex h-16 w-16 items-center justify-center rounded-full ${config.bgColor} ${config.color}`}>
           <StatusIcon status={status} />
@@ -141,7 +141,7 @@ export function PartnerStatusCard({ status }: { status: PartnerStatus }) {
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-primary sm:text-2xl">{config.title}</h2>
+      <h2 className="text-xl font-bold text-ink sm:text-2xl">{config.title}</h2>
       <p className="mt-3 text-sm leading-7 text-muted">{config.description}</p>
 
       {config.benefits.length > 0 && (

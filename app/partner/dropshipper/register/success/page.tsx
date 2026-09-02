@@ -17,13 +17,13 @@ export default function DropshipperRegisterSuccessPage() {
       />
 
       <div className="mx-auto max-w-lg text-center">
-        <div className="rounded-4xl border border-primary/10 bg-white p-10 shadow-sm sm:p-14">
+        <div className="rounded-4xl border border-ink/10 bg-white p-10 shadow-sm sm:p-14">
           <div className="mx-auto mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-accent/10 text-accent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
               <path d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-primary">Pengajuan Dropshipper Berhasil</h2>
+          <h2 className="text-xl font-bold text-ink">Pengajuan Dropshipper Berhasil</h2>
           <div className="mt-4 space-y-3 text-sm leading-7 text-muted">
             <p>
               Data pengajuan Anda telah selesai diisi. Tim D&apos;JAEMO akan melakukan peninjauan
@@ -33,7 +33,7 @@ export default function DropshipperRegisterSuccessPage() {
           <div className="mt-8 space-y-3">
             <Link
               href="/partner/dropshipper"
-              className="inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:w-auto"
+              className="inline-flex w-full items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 sm:w-auto"
             >
               Kembali ke Program Dropshipper
             </Link>

@@ -59,7 +59,7 @@ const initialFormData: FormData = {
 };
 
 const inputClass =
-  "mt-2 block w-full rounded-2xl border border-primary/10 bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "mt-2 block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-teal-deep focus:outline-none focus:ring-2 focus:ring-teal-deep/20";
 
 const labelClass = "block text-sm font-medium text-foreground";
 
@@ -80,8 +80,8 @@ function ProgressIndicator({ currentStep }: { currentStep: number }) {
                     isCompleted
                       ? "bg-accent text-white"
                       : isActive
-                        ? "bg-primary text-white"
-                        : "bg-primary/10 text-primary/40"
+                        ? "bg-gold text-teal-deep"
+                        : "bg-teal-deep/10 text-teal-deep/40"
                   }`}
                 >
                   {isCompleted ? (
@@ -94,7 +94,7 @@ function ProgressIndicator({ currentStep }: { currentStep: number }) {
                 </div>
                 <span
                   className={`mt-2 hidden text-center text-xs font-medium sm:block ${
-                    isActive ? "text-primary" : isCompleted ? "text-accent" : "text-muted/50"
+                    isActive ? "text-ink" : isCompleted ? "text-accent" : "text-muted/50"
                   }`}
                 >
                   {label}
@@ -104,7 +104,7 @@ function ProgressIndicator({ currentStep }: { currentStep: number }) {
                 <div className="mx-1 flex-1 sm:mx-2">
                   <div
                     className={`h-0.5 w-full ${
-                      isCompleted ? "bg-accent" : "bg-primary/10"
+                      isCompleted ? "bg-accent" : "bg-teal-deep/10"
                     }`}
                   />
                 </div>
@@ -131,7 +131,7 @@ function StepTentangAnda({
     <div className="space-y-5">
       <div>
         <label htmlFor="fullName" className={labelClass}>
-          Nama Lengkap <span className="text-red-500">*</span>
+          Nama Lengkap <span className="text-red">*</span>
         </label>
         <input
           type="text"
@@ -146,7 +146,7 @@ function StepTentangAnda({
 
       <div>
         <label htmlFor="email" className={labelClass}>
-          Email <span className="text-red-500">*</span>
+          Email <span className="text-red">*</span>
         </label>
         <input
           type="email"
@@ -161,7 +161,7 @@ function StepTentangAnda({
 
       <div>
         <label htmlFor="whatsapp" className={labelClass}>
-          Nomor WhatsApp <span className="text-red-500">*</span>
+          Nomor WhatsApp <span className="text-red">*</span>
         </label>
         <input
           type="tel"
@@ -194,8 +194,8 @@ function StepProgramKemitraan({
       <label
         className={`flex cursor-pointer items-start gap-4 rounded-2xl border-2 p-5 transition-colors ${
           data.partnerType === "reseller"
-            ? "border-primary bg-primary/5"
-            : "border-primary/10 bg-white hover:border-primary/30"
+            ? "border-gold bg-teal-deep/5"
+            : "border-ink/10 bg-white hover:border-ink/30"
         }`}
       >
         <input
@@ -204,10 +204,10 @@ function StepProgramKemitraan({
           value="reseller"
           checked={data.partnerType === "reseller"}
           onChange={() => onChange("partnerType", "reseller")}
-          className="mt-1 h-4 w-4 text-primary focus:ring-primary/20"
+          className="mt-1 h-4 w-4 text-teal-deep focus:ring-teal-deep/20"
         />
         <div>
-          <span className="text-sm font-semibold text-primary">Reseller</span>
+          <span className="text-sm font-semibold text-ink">Reseller</span>
           <p className="mt-1 text-xs text-muted">
             Partner resmi D&apos;JAEMO yang dapat melakukan pembelian produk sesuai Business Rule yang berlaku.
           </p>
@@ -217,8 +217,8 @@ function StepProgramKemitraan({
       <label
         className={`flex cursor-pointer items-start gap-4 rounded-2xl border-2 p-5 transition-colors ${
           data.partnerType === "dropshipper"
-            ? "border-primary bg-primary/5"
-            : "border-primary/10 bg-white hover:border-primary/30"
+            ? "border-gold bg-teal-deep/5"
+            : "border-ink/10 bg-white hover:border-ink/30"
         }`}
       >
         <input
@@ -227,10 +227,10 @@ function StepProgramKemitraan({
           value="dropshipper"
           checked={data.partnerType === "dropshipper"}
           onChange={() => onChange("partnerType", "dropshipper")}
-          className="mt-1 h-4 w-4 text-primary focus:ring-primary/20"
+          className="mt-1 h-4 w-4 text-teal-deep focus:ring-teal-deep/20"
         />
         <div>
-          <span className="text-sm font-semibold text-primary">Dropshipper</span>
+          <span className="text-sm font-semibold text-ink">Dropshipper</span>
           <p className="mt-1 text-xs text-muted">
             Partner yang dapat memasarkan produk D&apos;JAEMO tanpa perlu menyediakan stok produk sendiri.
           </p>
@@ -252,7 +252,7 @@ function StepDataKemitraan({
       <div className="space-y-5">
         <div>
           <label htmlFor="storeName" className={labelClass}>
-            Nama Toko <span className="text-red-500">*</span>
+            Nama Toko <span className="text-red">*</span>
           </label>
           <input
             type="text"
@@ -267,7 +267,7 @@ function StepDataKemitraan({
 
         <div>
           <label htmlFor="storeType" className={labelClass}>
-            Jenis Toko <span className="text-red-500">*</span>
+            Jenis Toko <span className="text-red">*</span>
           </label>
           <select
             id="storeType"
@@ -285,7 +285,7 @@ function StepDataKemitraan({
 
         <div>
           <label htmlFor="address" className={labelClass}>
-            Alamat <span className="text-red-500">*</span>
+            Alamat <span className="text-red">*</span>
           </label>
           <textarea
             id="address"
@@ -301,7 +301,7 @@ function StepDataKemitraan({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="province" className={labelClass}>
-              Provinsi <span className="text-red-500">*</span>
+              Provinsi <span className="text-red">*</span>
             </label>
             <input
               type="text"
@@ -315,7 +315,7 @@ function StepDataKemitraan({
           </div>
           <div>
             <label htmlFor="regency" className={labelClass}>
-              Kabupaten / Kota <span className="text-red-500">*</span>
+              Kabupaten / Kota <span className="text-red">*</span>
             </label>
             <input
               type="text"
@@ -331,7 +331,7 @@ function StepDataKemitraan({
 
         <div>
           <label htmlFor="district" className={labelClass}>
-            Kecamatan <span className="text-red-500">*</span>
+            Kecamatan <span className="text-red">*</span>
           </label>
           <input
             type="text"
@@ -379,7 +379,7 @@ function StepDataKemitraan({
     <div className="space-y-5">
       <div>
         <label htmlFor="nickname" className={labelClass}>
-          Nama Panggilan <span className="text-red-500">*</span>
+          Nama Panggilan <span className="text-red">*</span>
         </label>
         <input
           type="text"
@@ -394,7 +394,7 @@ function StepDataKemitraan({
 
       <div>
         <label htmlFor="dsSocialMedia" className={labelClass}>
-          Sosial Media <span className="text-red-500">*</span>
+          Sosial Media <span className="text-red">*</span>
         </label>
         <input
           type="text"
@@ -409,7 +409,7 @@ function StepDataKemitraan({
 
       <div>
         <label htmlFor="socialLink" className={labelClass}>
-          Link Sosial Media <span className="text-red-500">*</span>
+          Link Sosial Media <span className="text-red">*</span>
         </label>
         <input
           type="url"
@@ -424,7 +424,7 @@ function StepDataKemitraan({
 
       <div>
         <label htmlFor="marketingPlan" className={labelClass}>
-          Bagaimana Anda akan memasarkan produk D&apos;JAEMO? <span className="text-red-500">*</span>
+          Bagaimana Anda akan memasarkan produk D&apos;JAEMO? <span className="text-red">*</span>
         </label>
         <textarea
           id="marketingPlan"
@@ -449,8 +449,8 @@ function StepVerifikasiData({
 }) {
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-primary/10 bg-surface p-5">
-        <h3 className="text-sm font-semibold text-primary">Tentang Anda</h3>
+      <div className="rounded-2xl border border-ink/10 bg-white p-5">
+        <h3 className="text-sm font-semibold text-ink">Tentang Anda</h3>
         <dl className="mt-3 space-y-2 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-muted">Nama Lengkap</dt>
@@ -477,15 +477,15 @@ function StepVerifikasiData({
         </dl>
       </div>
 
-      <div className="rounded-2xl border border-primary/10 bg-surface p-5">
-        <h3 className="text-sm font-semibold text-primary">Program Kemitraan</h3>
+      <div className="rounded-2xl border border-ink/10 bg-white p-5">
+        <h3 className="text-sm font-semibold text-ink">Program Kemitraan</h3>
         <p className="mt-2 text-sm font-medium text-foreground capitalize">
           {data.partnerType || "-"}
         </p>
       </div>
 
-      <div className="rounded-2xl border border-primary/10 bg-surface p-5">
-        <h3 className="text-sm font-semibold text-primary">Data Kemitraan</h3>
+      <div className="rounded-2xl border border-ink/10 bg-white p-5">
+        <h3 className="text-sm font-semibold text-ink">Data Kemitraan</h3>
         {data.partnerType === "reseller" ? (
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex justify-between gap-4">
@@ -547,15 +547,15 @@ function StepVerifikasiData({
         )}
       </div>
 
-      <div className="space-y-4 rounded-2xl border border-primary/10 bg-surface p-5">
-        <h3 className="text-sm font-semibold text-primary">Konfirmasi</h3>
+      <div className="space-y-4 rounded-2xl border border-ink/10 bg-white p-5">
+        <h3 className="text-sm font-semibold text-ink">Konfirmasi</h3>
 
         <label className="flex items-start gap-3">
           <input
             type="checkbox"
             checked={data.confirmData}
             onChange={(e) => onChange("confirmData", e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-primary/20 text-primary focus:ring-primary/20"
+            className="mt-0.5 h-4 w-4 rounded border-ink/20 text-teal-deep focus:ring-teal-deep/20"
           />
           <span className="text-sm text-foreground/80">
             Seluruh data yang saya berikan adalah benar.
@@ -567,7 +567,7 @@ function StepVerifikasiData({
             type="checkbox"
             checked={data.confirmReview}
             onChange={(e) => onChange("confirmReview", e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-primary/20 text-primary focus:ring-primary/20"
+            className="mt-0.5 h-4 w-4 rounded border-ink/20 text-teal-deep focus:ring-teal-deep/20"
           />
           <span className="text-sm text-foreground/80">
             Saya memahami bahwa registrasi Partner akan melalui proses review oleh Admin.
@@ -579,7 +579,7 @@ function StepVerifikasiData({
             type="checkbox"
             checked={data.confirmApproval}
             onChange={(e) => onChange("confirmApproval", e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-primary/20 text-primary focus:ring-primary/20"
+            className="mt-0.5 h-4 w-4 rounded border-ink/20 text-teal-deep focus:ring-teal-deep/20"
           />
           <span className="text-sm text-foreground/80">
             Saya memahami bahwa approval Partner sepenuhnya merupakan keputusan Admin.
@@ -591,7 +591,7 @@ function StepVerifikasiData({
             type="checkbox"
             checked={data.confirmRules}
             onChange={(e) => onChange("confirmRules", e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-primary/20 text-primary focus:ring-primary/20"
+            className="mt-0.5 h-4 w-4 rounded border-ink/20 text-teal-deep focus:ring-teal-deep/20"
           />
           <span className="text-sm text-foreground/80">
             Saya memahami Program Kemitraan D&apos;JAEMO yang berlaku.
@@ -651,13 +651,13 @@ export function RegistrationForm() {
     <div className="flex flex-1 items-start justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-xl">
         <div className="mb-6 text-center sm:mb-8">
-          <h1 className="text-2xl font-bold text-primary sm:text-3xl">Registrasi Partner</h1>
+          <h1 className="text-2xl font-bold text-ink sm:text-3xl">Registrasi Partner</h1>
           <p className="mt-2 text-sm text-muted">
             Program Kemitraan Resmi {SITE.name}
           </p>
         </div>
 
-        <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-lg sm:p-8">
+        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-lg sm:p-8">
           <ProgressIndicator currentStep={step} />
 
           <form onSubmit={handleSubmit}>
@@ -679,14 +679,14 @@ export function RegistrationForm() {
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="inline-flex items-center justify-center rounded-full border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 >
                   Kembali
                 </button>
               ) : (
                 <Link
                   href="/partner"
-                  className="inline-flex items-center justify-center rounded-full border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 >
                   Kembali
                 </Link>
@@ -701,7 +701,7 @@ export function RegistrationForm() {
                     (step === 2 && !canProceedStep2) ||
                     (step === 3 && !canProceedStep3)
                   }
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Selanjutnya
                 </button>
@@ -709,7 +709,7 @@ export function RegistrationForm() {
                 <button
                   type="submit"
                   disabled={!canSubmit}
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Submit
                 </button>

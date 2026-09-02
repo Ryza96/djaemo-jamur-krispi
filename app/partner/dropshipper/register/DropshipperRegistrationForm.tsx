@@ -33,7 +33,7 @@ const initialFormData: DropshipperFormData = {
 };
 
 const inputClass =
-  "mt-2 block w-full rounded-2xl border border-primary/10 bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "mt-2 block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-teal-deep focus:outline-none focus:ring-2 focus:ring-teal-deep/20";
 
 const labelClass = "block text-sm font-medium text-foreground";
 
@@ -77,13 +77,13 @@ export function DropshipperRegistrationForm() {
     <div className="flex flex-1 items-start justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-xl">
         <div className="mb-6 text-center sm:mb-8">
-          <h1 className="text-2xl font-bold text-primary sm:text-3xl">Registrasi Dropshipper</h1>
+          <h1 className="text-2xl font-bold text-ink sm:text-3xl">Registrasi Dropshipper</h1>
           <p className="mt-2 text-sm text-muted">
             Program Kemitraan Resmi {SITE.name}
           </p>
         </div>
 
-        <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-lg sm:p-8">
+        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-lg sm:p-8">
           <RegistrationProgress currentStep={step} stepLabels={STEP_LABELS} />
 
           <form onSubmit={handleSubmit}>
@@ -91,7 +91,7 @@ export function DropshipperRegistrationForm() {
               <div className="space-y-5">
                 <div>
                   <label htmlFor="fullName" className={labelClass}>
-                    Nama Lengkap <span className="text-red-500">*</span>
+                    Nama Lengkap <span className="text-red">*</span>
                   </label>
                   <input
                     type="text"
@@ -105,7 +105,7 @@ export function DropshipperRegistrationForm() {
 
                 <div>
                   <label htmlFor="whatsapp" className={labelClass}>
-                    Nomor WhatsApp <span className="text-red-500">*</span>
+                    Nomor WhatsApp <span className="text-red">*</span>
                   </label>
                   <input
                     type="tel"
@@ -119,7 +119,7 @@ export function DropshipperRegistrationForm() {
 
                 <div>
                   <label htmlFor="email" className={labelClass}>
-                    Email <span className="text-red-500">*</span>
+                    Email <span className="text-red">*</span>
                   </label>
                   <input
                     type="email"
@@ -130,7 +130,7 @@ export function DropshipperRegistrationForm() {
                     onChange={(e) => handleChange("email", e.target.value)}
                   />
                   {data.email.trim() !== "" && !isValidEmail(data.email) && (
-                    <p className="mt-1 text-xs text-red-500">Format email tidak valid.</p>
+                    <p className="mt-1 text-xs text-red">Format email tidak valid.</p>
                   )}
                 </div>
               </div>
@@ -140,7 +140,7 @@ export function DropshipperRegistrationForm() {
               <div className="space-y-5">
                 <div>
                   <label className={labelClass}>
-                    Media / Channel Penjualan <span className="text-red-500">*</span>
+                    Media / Channel Penjualan <span className="text-red">*</span>
                   </label>
                   <p className="mt-1 text-xs text-muted">Pilih satu media atau channel utama Anda.</p>
                   <div className="mt-3 space-y-3">
@@ -151,8 +151,8 @@ export function DropshipperRegistrationForm() {
                           key={option}
                           className={`flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-4 transition-colors ${
                             isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-primary/10 bg-white hover:border-primary/30"
+                              ? "border-gold bg-teal-deep/5"
+                              : "border-ink/10 bg-white hover:border-ink/30"
                           }`}
                         >
                           <input
@@ -161,7 +161,7 @@ export function DropshipperRegistrationForm() {
                             value={option}
                             checked={isSelected}
                             onChange={() => handleChange("salesChannel", option)}
-                            className="h-4 w-4 text-primary focus:ring-primary/20"
+                            className="h-4 w-4 text-teal-deep focus:ring-teal-deep/20"
                           />
                           <span className="text-sm font-medium text-foreground">{option}</span>
                         </label>
@@ -172,7 +172,7 @@ export function DropshipperRegistrationForm() {
 
                 <div>
                   <label htmlFor="channelLink" className={labelClass}>
-                    Link Media / Channel <span className="text-red-500">*</span>
+                    Link Media / Channel <span className="text-red">*</span>
                   </label>
                   <input
                     type="url"
@@ -186,7 +186,7 @@ export function DropshipperRegistrationForm() {
 
                 <div>
                   <label htmlFor="marketingPlan" className={labelClass}>
-                    Bagaimana Anda akan memasarkan produk D&apos;JAEMO? <span className="text-red-500">*</span>
+                    Bagaimana Anda akan memasarkan produk D&apos;JAEMO? <span className="text-red">*</span>
                   </label>
                   <textarea
                     id="marketingPlan"
@@ -202,8 +202,8 @@ export function DropshipperRegistrationForm() {
 
             {step === 3 && (
               <div className="space-y-6">
-                <div className="rounded-2xl border border-primary/10 bg-surface p-5">
-                  <h3 className="text-sm font-semibold text-primary">Data Diri</h3>
+                <div className="rounded-2xl border border-ink/10 bg-white p-5">
+                  <h3 className="text-sm font-semibold text-ink">Data Diri</h3>
                   <dl className="mt-3 space-y-2 text-sm">
                     <div className="flex justify-between gap-4">
                       <dt className="text-muted">Nama Lengkap</dt>
@@ -220,8 +220,8 @@ export function DropshipperRegistrationForm() {
                   </dl>
                 </div>
 
-                <div className="rounded-2xl border border-primary/10 bg-surface p-5">
-                  <h3 className="text-sm font-semibold text-primary">Cara Memasarkan</h3>
+                <div className="rounded-2xl border border-ink/10 bg-white p-5">
+                  <h3 className="text-sm font-semibold text-ink">Cara Memasarkan</h3>
                   <dl className="mt-3 space-y-2 text-sm">
                     <div className="flex justify-between gap-4">
                       <dt className="text-muted">Media / Channel Penjualan</dt>
@@ -240,15 +240,15 @@ export function DropshipperRegistrationForm() {
                   </dl>
                 </div>
 
-                <div className="space-y-4 rounded-2xl border border-primary/10 bg-surface p-5">
-                  <h3 className="text-sm font-semibold text-primary">Konfirmasi</h3>
+                <div className="space-y-4 rounded-2xl border border-ink/10 bg-white p-5">
+                  <h3 className="text-sm font-semibold text-ink">Konfirmasi</h3>
 
                   <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={data.confirmData}
                       onChange={(e) => handleChange("confirmData", e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-primary/20 text-primary focus:ring-primary/20"
+                      className="mt-0.5 h-4 w-4 rounded border-ink/20 text-teal-deep focus:ring-teal-deep/20"
                     />
                     <span className="text-sm text-foreground/80">
                       Data yang saya berikan benar.
@@ -260,7 +260,7 @@ export function DropshipperRegistrationForm() {
                       type="checkbox"
                       checked={data.confirmReview}
                       onChange={(e) => handleChange("confirmReview", e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-primary/20 text-primary focus:ring-primary/20"
+                      className="mt-0.5 h-4 w-4 rounded border-ink/20 text-teal-deep focus:ring-teal-deep/20"
                     />
                     <span className="text-sm text-foreground/80">
                       Saya memahami pendaftaran akan ditinjau oleh D&apos;JAEMO.
@@ -275,14 +275,14 @@ export function DropshipperRegistrationForm() {
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="inline-flex items-center justify-center rounded-full border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 >
                   Kembali
                 </button>
               ) : (
                 <Link
                   href="/partner/dropshipper"
-                  className="inline-flex items-center justify-center rounded-full border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 >
                   Kembali
                 </Link>
@@ -296,7 +296,7 @@ export function DropshipperRegistrationForm() {
                     (step === 1 && !canProceedStep1) ||
                     (step === 2 && !canProceedStep2)
                   }
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Selanjutnya
                 </button>
@@ -304,7 +304,7 @@ export function DropshipperRegistrationForm() {
                 <button
                   type="submit"
                   disabled={!canSubmit}
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Ajukan Pendaftaran Dropshipper
                 </button>

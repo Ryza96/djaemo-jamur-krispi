@@ -20,10 +20,10 @@ export function RegistrationProgress({ currentStep, stepLabels }: RegistrationPr
                 <div
                   className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-colors sm:h-10 sm:w-10 ${
                     isCompleted
-                      ? "bg-accent text-white"
+                      ? "bg-teal-deep text-cream"
                       : isActive
-                        ? "bg-primary text-white"
-                        : "bg-primary/10 text-primary/40"
+                        ? "bg-gold text-teal-deep"
+                        : "bg-teal-deep/10 text-teal-deep/40"
                   }`}
                 >
                   {isCompleted ? (
@@ -36,7 +36,7 @@ export function RegistrationProgress({ currentStep, stepLabels }: RegistrationPr
                 </div>
                 <span
                   className={`mt-2 hidden text-center text-xs font-medium sm:block ${
-                    isActive ? "text-primary" : isCompleted ? "text-accent" : "text-muted/50"
+                    isActive ? "text-teal-deep" : isCompleted ? "text-teal-deep" : "text-muted/50"
                   }`}
                 >
                   {label}
@@ -46,7 +46,7 @@ export function RegistrationProgress({ currentStep, stepLabels }: RegistrationPr
                 <div className="mx-1 flex-1 sm:mx-2">
                   <div
                     className={`h-0.5 w-full ${
-                      isCompleted ? "bg-accent" : "bg-primary/10"
+                      isCompleted ? "bg-teal-deep" : "bg-teal-deep/10"
                     }`}
                   />
                 </div>
