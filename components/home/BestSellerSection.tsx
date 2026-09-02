@@ -32,7 +32,7 @@ function BestSellerCard({ product }: { product: Product }) {
 
       <div className="flex flex-col gap-2 p-5">
         {product.weight && (
-          <span className="inline-flex w-fit items-center rounded-full bg-cream px-2 py-0.5 font-mono text-[11px] font-medium uppercase tracking-widest text-ink-soft">
+          <span className="inline-flex w-fit items-center rounded-full bg-cream px-2 py-0.5 font-mono text-xs font-medium uppercase tracking-widest text-ink-soft">
             {product.weight}
           </span>
         )}

@@ -200,7 +200,7 @@ export function MobileTabBar() {
                   className="flex flex-col items-center gap-0.5 pb-2 pt-2.5 text-ink-soft transition-colors hover:text-teal-deep"
                 >
                   <span className="flex h-7 items-center justify-center">{tab.icon}</span>
-                  <span className="text-[11px] font-semibold">{tab.label}</span>
+                  <span className="text-xs font-semibold">{tab.label}</span>
                 </button>
               );
             }
@@ -229,13 +229,13 @@ export function MobileTabBar() {
                   {tab.id === "keranjang" && totalItems > 0 && (
                     <span
                       key={totalItems}
-                      className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 font-mono text-[10px] font-semibold leading-none text-ink"
+                      className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 font-mono text-xs font-semibold leading-none text-ink"
                     >
                       {totalItems > 99 ? "99+" : totalItems}
                     </span>
                   )}
                 </span>
-                <span className="text-[11px] font-semibold">{tab.label}</span>
+                <span className="text-xs font-semibold">{tab.label}</span>
               </Link>
             );
           })}

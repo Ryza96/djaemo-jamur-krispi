@@ -12,10 +12,10 @@ export function MarketingBanner() {
     <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-gold/20 bg-gradient-to-br from-cream via-cream-2 to-cream-2 shadow-sm ring-1 ring-gold/15">
       <div className="flex flex-1 flex-col p-6 sm:p-7">
         <div className="flex flex-wrap gap-2">
-          <span className="inline-block w-fit rounded-full border border-gold/30 bg-gold/10 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-gold">
+          <span className="inline-block w-fit rounded-full border border-gold/30 bg-gold/10 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-gold">
             Promo Spesial
           </span>
-          <span className="inline-block w-fit rounded-full border border-red/20 bg-red/10 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-red">
+          <span className="inline-block w-fit rounded-full border border-red/20 bg-red/10 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-red">
             Hemat 14%
           </span>
         </div>
@@ -46,7 +46,7 @@ export function MarketingBanner() {
         <div className="mt-5">
           <Button
             href="/produk"
-            className="min-h-[56px] bg-red px-8 text-[15px] font-semibold text-white hover:bg-red/90"
+            className="min-h-[56px] bg-red px-8 text-sm font-semibold text-white hover:bg-red/90"
           >
             Lihat Bundle
           </Button>

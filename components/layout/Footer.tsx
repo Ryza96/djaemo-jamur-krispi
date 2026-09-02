@@ -37,7 +37,7 @@ export function Footer() {
           <p className="max-w-sm text-sm leading-6 text-cream/70">
             {SITE.tagline} Kami hadir sebagai pilihan terpercaya untuk camilan jamur premium di Indonesia.
           </p>
-          <div className="flex flex-wrap gap-3 text-xs text-cream/60">
+          <div className="flex flex-wrap gap-3 text-xs text-cream/75">
             <Link
               href="/kebijakan-privasi"
               className="transition-colors hover:text-gold-bright"
@@ -96,7 +96,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-teal-line py-4 text-center text-xs text-cream/50">
+      <div className="border-t border-teal-line py-4 text-center text-xs text-cream/75">
         © {currentYear} {SITE.name}. Semua hak dilindungi.
       </div>
     </footer>

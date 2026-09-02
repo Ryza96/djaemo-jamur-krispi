@@ -44,7 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         {showPromo && (
-          <span className="absolute left-3 top-3 inline-block rounded-full bg-red px-2.5 py-1 font-mono text-[11px] font-semibold text-white">
+          <span className="absolute left-3 top-3 inline-block rounded-full bg-red px-2.5 py-1 font-mono text-xs font-semibold text-white">
             Hemat {Math.round((product.discount_amount / product.normal_price) * 100)}%
           </span>
         )}
@@ -72,7 +72,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-3 sm:gap-3">
           <div className="shrink-0">
-            <span className="mb-1 block font-mono text-[11px] font-medium uppercase tracking-widest text-ink-soft/60">
+            <span className="mb-1 block font-mono text-xs font-medium uppercase tracking-widest text-ink-soft/75">
               Harga
             </span>
             <div className="[&_.font-mono]:text-lg [&_.font-mono]:font-medium [&_.font-mono]:text-teal-deep">
