@@ -50,10 +50,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               flex items-center gap-3 min-w-64 shadow-lg
               ${
                 toast.type === "success"
-                  ? "bg-green-500 text-white"
+                  ? "bg-teal-deep text-white"
                   : toast.type === "error"
-                    ? "bg-red-500 text-white"
-                    : "bg-blue-500 text-white"
+                    ? "bg-red text-white"
+                    : "bg-gold text-teal-deep"
               }
             `}
           >
