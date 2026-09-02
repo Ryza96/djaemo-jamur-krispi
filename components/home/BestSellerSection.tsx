@@ -97,5 +97,5 @@ export function BestSellerSection({ products, embedded = false }: BestSellerSect
 
   if (embedded) return content;
 
-  return <Section className="py-16 md:py-[84px]">{content}</Section>;
+  return <Section className="py-16 md:py-20">{content}</Section>;
 }

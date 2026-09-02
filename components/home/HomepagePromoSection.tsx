@@ -18,13 +18,13 @@ export function HomepagePromoSection({ products }: PromoSectionProps) {
   return (
     <Section className="bg-[linear-gradient(135deg,var(--gold),var(--gold-bright))]">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#2b220d]/70 sm:text-sm">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#2b220d]/75 sm:text-sm">
           Promo Hari Ini
         </p>
         <h2 className="mt-3 font-display text-3xl font-semibold text-[#2b220d] sm:text-4xl md:text-[38px]">
           Bundle 3 Varian
         </h2>
-        <p className="mt-3 font-mono text-xs font-medium text-[#2b220d]/70 sm:text-sm">
+        <p className="mt-3 font-mono text-xs font-medium text-[#2b220d]/75 sm:text-sm">
           Berlaku hingga 3 PRODUK · hemat sampai habis kuota
         </p>
       </div>
