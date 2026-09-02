@@ -6,7 +6,7 @@ import type { CustomerInfoInput } from "@/lib/validation/checkout";
 import { useState } from "react";
 
 const inputClass =
-  "w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary";
+  "w-full rounded-2xl border border-ink/20 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-teal-deep";
 
 const labelClass = "mb-2 block text-sm font-medium text-muted";
 
@@ -43,7 +43,7 @@ export function CustomerInfo() {
     <div className="space-y-4">
       <div>
         <label htmlFor="customer-name" className={labelClass}>
-          Nama Lengkap <span className="text-red-500">*</span>
+          Nama Lengkap <span className="text-red">*</span>
         </label>
         <input
           id="customer-name"
@@ -57,7 +57,7 @@ export function CustomerInfo() {
           aria-describedby={errors.name ? "customer-name-error" : undefined}
         />
         {errors.name && (
-          <p id="customer-name-error" className="mt-1 text-xs text-red-500">
+          <p id="customer-name-error" className="mt-1 text-xs text-red">
             {errors.name}
           </p>
         )}
@@ -65,7 +65,7 @@ export function CustomerInfo() {
 
       <div>
         <label htmlFor="customer-whatsapp" className={labelClass}>
-          WhatsApp <span className="text-red-500">*</span>
+          WhatsApp <span className="text-red">*</span>
         </label>
         <input
           id="customer-whatsapp"
@@ -83,7 +83,7 @@ export function CustomerInfo() {
         {errors.whatsapp && (
           <p
             id="customer-whatsapp-error"
-            className="mt-1 text-xs text-red-500"
+            className="mt-1 text-xs text-red"
           >
             {errors.whatsapp}
           </p>
@@ -106,7 +106,7 @@ export function CustomerInfo() {
           aria-describedby={errors.email ? "customer-email-error" : undefined}
         />
         {errors.email && (
-          <p id="customer-email-error" className="mt-1 text-xs text-red-500">
+          <p id="customer-email-error" className="mt-1 text-xs text-red">
             {errors.email}
           </p>
         )}
@@ -127,7 +127,7 @@ export function CustomerInfo() {
           className={`${inputClass} min-h-[80px] resize-none`}
         />
         {errors.notes && (
-          <p id="customer-notes-error" className="mt-1 text-xs text-red-500">
+          <p id="customer-notes-error" className="mt-1 text-xs text-red">
             {errors.notes}
           </p>
         )}

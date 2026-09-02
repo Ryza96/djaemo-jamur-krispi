@@ -25,24 +25,24 @@ export function OrderSummary() {
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="flex flex-col gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-3xl border border-ink/10 bg-cream-2 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-primary">
+                  <p className="truncate font-semibold text-ink">
                     {item.product.name}
                   </p>
                   <p className="text-xs text-muted">
                     {item.quantity}x {formatPrice(item.product.final_price)}
                   </p>
                 </div>
-                <p className="whitespace-nowrap font-semibold text-secondary">
+                <p className="whitespace-nowrap font-semibold text-gold">
                   {formatPrice(item.product.final_price * item.quantity)}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="space-y-2 rounded-3xl bg-surface p-4 text-sm">
+          <div className="space-y-2 rounded-3xl bg-cream-2 p-4 text-sm">
             <div className="flex items-center justify-between text-muted">
               <span>Total Item</span>
               <span>{totalItems}</span>
@@ -69,12 +69,12 @@ export function OrderSummary() {
               </span>
             </div>
             {voucherDiscount > 0 && (
-              <div className="flex items-center justify-between text-emerald-600">
+              <div className="flex items-center justify-between text-teal-mid">
                 <span>Diskon Voucher ({state.voucher?.code})</span>
                 <span>-{formatPrice(voucherDiscount)}</span>
               </div>
             )}
-            <div className="border-t border-slate-200 pt-2 text-lg font-semibold text-primary flex items-center justify-between">
+            <div className="border-t border-ink/10 pt-2 text-lg font-semibold text-ink flex items-center justify-between">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
             </div>

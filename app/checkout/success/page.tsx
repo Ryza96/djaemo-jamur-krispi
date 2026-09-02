@@ -266,7 +266,7 @@ export default function CheckoutSuccessPage() {
       <Section>
         <PageHeader title="Memuat Status Pesanan" description="Memeriksa status pembayaran pesanan Anda..." />
         <div className="flex flex-col items-center justify-center gap-6 py-20">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-ink border-t-transparent" />
           <p className="text-sm text-muted">Sedang memeriksa status pembayaran...</p>
         </div>
       </Section>
@@ -280,8 +280,8 @@ export default function CheckoutSuccessPage() {
           title="Tidak Ada Pesanan"
           description="Tidak ada data pesanan yang ditemukan."
         />
-        <div className="rounded-3xl border border-primary/10 bg-white p-12 text-center shadow-sm">
-          <p className="text-lg font-semibold text-primary">Belum ada pesanan terakhir.</p>
+        <div className="rounded-3xl border border-ink/10 bg-white p-12 text-center shadow-sm">
+          <p className="text-lg font-semibold text-ink">Belum ada pesanan terakhir.</p>
           <p className="mt-3 text-sm text-muted">
             Data pesanan tidak ditemukan. Silakan lakukan checkout terlebih dahulu.
           </p>
@@ -331,31 +331,31 @@ export default function CheckoutSuccessPage() {
       icon: "✓",
       title: "Pembayaran Berhasil",
       description: "Pesanan Anda telah dikonfirmasi dan akan segera diproses.",
-      color: "text-green-600",
+      color: "text-teal-deep",
     },
     pending: {
       icon: "⏳",
       title: "Menunggu Pembayaran",
       description: "Pesanan Anda telah tersimpan. Silakan selesaikan pembayaran melalui Midtrans.",
-      color: "text-amber-600",
+      color: "text-gold",
     },
     failed: {
       icon: "✕",
       title: "Pembayaran Gagal",
       description: "Pembayaran tidak berhasil diproses. Silakan coba checkout kembali.",
-      color: "text-red-600",
+      color: "text-red",
     },
     expired: {
       icon: "✕",
       title: "Pembayaran Kedaluwarsa",
       description: "Waktu pembayaran telah habis. Silakan lakukan checkout ulang.",
-      color: "text-slate-500",
+      color: "text-ink-soft",
     },
     unknown: {
       icon: "?",
       title: "Status Tidak Diketahui",
       description: "Status pembayaran tidak dapat ditentukan. Silakan hubungi layanan pelanggan.",
-      color: "text-slate-500",
+      color: "text-ink-soft",
     },
   };
 
@@ -395,18 +395,18 @@ export default function CheckoutSuccessPage() {
         <div className="space-y-6">
           <div className={`rounded-2xl border p-6 text-center shadow-sm ${
             effectiveStatus === "success"
-              ? "border-green-200 bg-green-50"
-              : effectiveStatus === "pending"
-                ? "border-amber-200 bg-amber-50"
-                : "border-red-200 bg-red-50"
+              ? "border-teal-deep/20 bg-teal-deep/5"
+               : effectiveStatus === "pending"
+                 ? "border-gold/30 bg-gold/10"
+                 : "border-red/20 bg-red/10"
           }`}>
             <div className={`text-4xl font-bold ${status.color}`}>{status.icon}</div>
             <h2 className={`mt-3 text-xl font-semibold ${status.color}`}>{status.title}</h2>
             <p className="mt-1 text-sm text-muted">{status.description}</p>
           </div>
 
-          <div className="space-y-4 rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h3 className="text-base font-semibold text-primary">Detail Pesanan</h3>
+          <div className="space-y-4 rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h3 className="text-base font-semibold text-ink">Detail Pesanan</h3>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
               <div>
                 <p className="text-sm text-muted">Nomor Pesanan</p>
@@ -416,7 +416,7 @@ export default function CheckoutSuccessPage() {
                 <button
                   type="button"
                   onClick={handleCopyOrderId}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-ink/20 bg-teal-deep/5 px-3 py-1.5 text-xs font-medium text-teal-deep transition-colors hover:bg-teal-deep/10"
                 >
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   {copied ? "Tersalin!" : "Salin Nomor Pesanan"}
@@ -429,8 +429,8 @@ export default function CheckoutSuccessPage() {
             </div>
           </div>
 
-          <div className="space-y-4 rounded-3xl border border-primary/10 bg-surface p-6">
-            <h3 className="text-base font-semibold text-primary">Informasi Pembeli</h3>
+          <div className="space-y-4 rounded-3xl border border-ink/10 bg-cream-2 p-6">
+            <h3 className="text-base font-semibold text-ink">Informasi Pembeli</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-muted">Nama</p>
@@ -451,16 +451,16 @@ export default function CheckoutSuccessPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-base font-semibold text-primary">Barang Pesanan</h3>
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-base font-semibold text-ink">Barang Pesanan</h3>
             <div className="space-y-3">
               {order.order_items.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
+                <div key={idx} className="flex items-center justify-between rounded-2xl bg-cream-2 p-4">
                   <div>
                     <p className="font-semibold text-foreground">{item.product_name}</p>
                     <p className="text-sm text-muted">Jumlah: {item.quantity}</p>
                   </div>
-                  <p className="font-semibold text-primary">{formatPrice(item.subtotal)}</p>
+                  <p className="font-semibold text-ink">{formatPrice(item.subtotal)}</p>
                 </div>
               ))}
             </div>
@@ -468,8 +468,8 @@ export default function CheckoutSuccessPage() {
         </div>
 
         <aside className="space-y-6">
-          <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-base font-semibold text-primary">Ringkasan Pembayaran</h3>
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-base font-semibold text-ink">Ringkasan Pembayaran</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
@@ -482,7 +482,7 @@ export default function CheckoutSuccessPage() {
               <div className="border-t border-border pt-3">
                 <div className="flex justify-between">
                   <span className="font-semibold text-foreground">Total Bayar</span>
-                  <span className="text-xl font-semibold text-primary">{formatPrice(order.total_amount)}</span>
+                  <span className="text-xl font-semibold text-ink">{formatPrice(order.total_amount)}</span>
                 </div>
               </div>
             </div>
@@ -502,8 +502,8 @@ export default function CheckoutSuccessPage() {
           </div>
 
           {effectiveStatus === "success" && (
-            <div className="rounded-3xl bg-green-950 p-5 text-sm text-green-200">
-              <p className="font-semibold text-green-100">Langkah Selanjutnya</p>
+            <div className="rounded-3xl bg-teal-deep p-5 text-sm text-cream">
+              <p className="font-semibold text-gold">Langkah Selanjutnya</p>
               <ul className="mt-3 space-y-2">
                 <li>1. Pesanan akan segera diproses oleh tim kami.</li>
                 <li>2. Simpan nomor pesanan sebagai referensi.</li>
@@ -513,8 +513,8 @@ export default function CheckoutSuccessPage() {
           )}
 
           {effectiveStatus === "pending" && (
-            <div className="rounded-3xl bg-amber-950 p-5 text-sm text-amber-200">
-              <p className="font-semibold text-amber-100">Menunggu Pembayaran</p>
+            <div className="rounded-3xl bg-teal-deep p-5 text-sm text-cream">
+              <p className="font-semibold text-gold">Menunggu Pembayaran</p>
               <ul className="mt-3 space-y-2">
                 <li>1. Selesaikan pembayaran melalui halaman Midtrans.</li>
                 <li>2. Status akan diperbarui otomatis setelah pembayaran dikonfirmasi.</li>
@@ -524,8 +524,8 @@ export default function CheckoutSuccessPage() {
           )}
 
           {(effectiveStatus === "failed" || effectiveStatus === "expired") && (
-            <div className="rounded-3xl bg-red-950 p-5 text-sm text-red-200">
-              <p className="font-semibold text-red-100">Pembayaran Gagal</p>
+            <div className="rounded-3xl bg-red p-5 text-sm text-cream">
+              <p className="font-semibold text-gold">Pembayaran Gagal</p>
               <ul className="mt-3 space-y-2">
                 <li>1. Silakan lakukan checkout ulang untuk mencoba lagi.</li>
                 <li>2. Pastikan metode pembayaran yang dipilih benar.</li>
@@ -545,7 +545,7 @@ export default function CheckoutSuccessPage() {
                   {resuming ? "Memproses..." : "Lanjutkan Pembayaran"}
                 </Button>
                 {resumeError && (
-                  <p className="text-center text-xs text-red-600">{resumeError}</p>
+                  <p className="text-center text-xs text-red">{resumeError}</p>
                 )}
                 <Button
                   variant="outline"
@@ -600,7 +600,7 @@ export default function CheckoutSuccessPage() {
           }}
         >
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-primary">Batalkan Pesanan?</h3>
+            <h3 className="text-lg font-semibold text-ink">Batalkan Pesanan?</h3>
             <p className="mt-3 text-sm text-muted">
               Yakin ingin membatalkan pesanan ini? Pesanan{" "}
               <span className="font-semibold text-foreground">{order.order_id}</span> akan
@@ -608,7 +608,7 @@ export default function CheckoutSuccessPage() {
               berbeda.
             </p>
             {cancelError && (
-              <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+              <p className="mt-3 rounded-2xl border border-red/20 bg-red/10 p-3 text-xs text-red">
                 {cancelError}
               </p>
             )}

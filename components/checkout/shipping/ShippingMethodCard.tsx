@@ -19,8 +19,8 @@ export function ShippingMethodCard({
     <label
       className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition ${
         isSelected
-          ? "border-secondary bg-secondary/5 ring-1 ring-secondary"
-          : "border-slate-200 bg-white hover:border-primary/30"
+          ? "border-gold bg-gold/5 ring-1 ring-gold"
+          : "border-ink/10 bg-white hover:border-teal-deep/30"
       }`}
     >
       <input
@@ -29,13 +29,13 @@ export function ShippingMethodCard({
         value={rate.id}
         checked={isSelected}
         onChange={() => onSelect(rate.id)}
-        className="h-4 w-4 accent-secondary"
+        className="h-4 w-4 accent-gold"
         aria-label={`${rate.courier} ${rate.service}`}
       />
 
       <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-primary">
+          <p className="truncate font-semibold text-ink">
             {rate.courier}
           </p>
           <p className="text-xs text-muted">
@@ -44,7 +44,7 @@ export function ShippingMethodCard({
           </p>
         </div>
 
-        <p className="whitespace-nowrap font-semibold text-secondary">
+        <p className="whitespace-nowrap font-semibold text-gold">
           {formatPrice(rate.price)}
         </p>
       </div>

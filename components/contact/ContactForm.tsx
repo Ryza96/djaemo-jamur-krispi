@@ -48,7 +48,7 @@ export function ContactForm() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-primary/20 bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="mt-1 w-full rounded-lg border border-ink/20 bg-white px-3 py-2 text-sm outline-none focus:border-teal-deep focus:ring-2 focus:ring-teal-deep/20"
             placeholder="Nama lengkap"
           />
         </label>
@@ -59,7 +59,7 @@ export function ContactForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             type="email"
-            className="mt-1 w-full rounded-lg border border-primary/20 bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="mt-1 w-full rounded-lg border border-ink/20 bg-white px-3 py-2 text-sm outline-none focus:border-teal-deep focus:ring-2 focus:ring-teal-deep/20"
             placeholder="email@example.com"
           />
         </label>
@@ -70,7 +70,7 @@ export function ContactForm() {
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-primary/20 bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="mt-1 w-full rounded-lg border border-ink/20 bg-white px-3 py-2 text-sm outline-none focus:border-teal-deep focus:ring-2 focus:ring-teal-deep/20"
           placeholder="0812xxxxxxxx"
         />
       </label>
@@ -81,7 +81,7 @@ export function ContactForm() {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={5}
-          className="mt-1 w-full resize-none rounded-lg border border-primary/20 bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="mt-1 w-full resize-none rounded-lg border border-ink/20 bg-white px-3 py-2 text-sm outline-none focus:border-teal-deep focus:ring-2 focus:ring-teal-deep/20"
           placeholder="Tulis pesan Anda..."
         />
       </label>
@@ -90,7 +90,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-teal-deep transition-transform hover:bg-gold-bright hover:scale-[1.02] disabled:opacity-60"
         >
           {loading ? "Mengirim..." : "Kirim Pesan"}
         </button>

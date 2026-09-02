@@ -99,57 +99,57 @@ const STATUS_CONFIG: Record<
     message:
       "Pesanan Anda telah dibuat. Selesaikan pembayaran agar pesanan segera kami proses.",
     icon: "⏳",
-    color: "text-amber-600",
+    color: "text-gold",
   },
   payment_failed: {
     title: "Pembayaran Gagal",
     message:
       "Pembayaran Anda tidak berhasil. Silakan buat pesanan baru atau hubungi kami untuk bantuan.",
     icon: "⚠️",
-    color: "text-red-600",
+    color: "text-red",
   },
   payment_expired: {
     title: "Pembayaran Kedaluwarsa",
     message:
       "Waktu pembayaran telah berakhir sehingga pesanan dibatalkan otomatis. Silakan buat pesanan baru.",
     icon: "🕒",
-    color: "text-slate-600",
+    color: "text-ink-soft",
   },
   cancelled: {
     title: "Pesanan Dibatalkan",
     message: "Pesanan Anda telah dibatalkan. Hubungi kami jika ada pertanyaan.",
     icon: "❌",
-    color: "text-red-600",
+    color: "text-red",
   },
   paid: {
     title: "Pembayaran Berhasil",
     message: "Pembayaran Anda telah kami terima dan pesanan sedang menunggu konfirmasi.",
     icon: "💰",
-    color: "text-green-600",
+    color: "text-teal-deep",
   },
   confirmed: {
     title: "Pesanan Dikonfirmasi",
     message: "Pesanan Anda telah dikonfirmasi dan akan segera kami siapkan.",
     icon: "✅",
-    color: "text-blue-600",
+    color: "text-teal-mid",
   },
   preparing: {
     title: "Pesanan Sedang Disiapkan",
     message: "Pesanan Anda sedang kami siapkan dan akan segera dikirim.",
     icon: "📦",
-    color: "text-indigo-600",
+    color: "text-teal-deep",
   },
   shipped: {
     title: "Pesanan Telah Dikirim",
     message: "Pesanan Anda telah dikirim dan sedang menuju alamat tujuan.",
     icon: "🚚",
-    color: "text-cyan-600",
+    color: "text-teal-mid",
   },
   delivered: {
     title: "Pesanan Telah Diterima",
     message: "Pesanan Anda telah berhasil diterima. Terima kasih telah berbelanja di D'Jaemo Jamur Krispi.",
     icon: "🎉",
-    color: "text-green-600",
+    color: "text-teal-deep",
   },
 };
 
@@ -264,7 +264,7 @@ export default function TrackOrderDetailPage() {
       <Section>
         <PageHeader title="Lacak Pesanan" description="Memuat data pesanan..." />
         <div className="flex flex-col items-center justify-center gap-6 py-20">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-ink border-t-transparent" />
           <p className="text-sm text-muted">Sedang mencari pesanan Anda...</p>
         </div>
       </Section>
@@ -304,14 +304,14 @@ export default function TrackOrderDetailPage() {
   const currentTimelineIndex = TIMELINE_ORDER.indexOf(customerStatus);
 
   const CARD_STYLES: Partial<Record<CustomerStatus, string>> = {
-    awaiting_payment: "border-amber-200 bg-amber-50",
-    payment_failed: "border-red-200 bg-red-50",
-    payment_expired: "border-slate-200 bg-slate-50",
-    cancelled: "border-red-200 bg-red-50",
-    delivered: "border-green-200 bg-green-50",
+    awaiting_payment: "border-gold/30 bg-gold/10",
+    payment_failed: "border-red/20 bg-red/10",
+    payment_expired: "border-ink/10 bg-cream-2",
+    cancelled: "border-red/20 bg-red/10",
+    delivered: "border-teal-deep/20 bg-teal-deep/5",
   };
   const cardStyle =
-    CARD_STYLES[customerStatus] ?? "border-primary/10 bg-white";
+    CARD_STYLES[customerStatus] ?? "border-ink/10 bg-white";
 
   const firstItem = order.order_items[0];
   const remainingCount = order.order_items.length - 1;
@@ -342,7 +342,7 @@ export default function TrackOrderDetailPage() {
         </div>
 
         {WAYBILL_RELEVANT_STATUSES.includes(customerStatus) && order.waybill_id && (
-          <div className="rounded-3xl border border-primary/10 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold text-foreground">
               Informasi Pengiriman
             </h3>
@@ -365,7 +365,7 @@ export default function TrackOrderDetailPage() {
                   href={order.tracking_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 block rounded-2xl bg-primary/10 px-4 py-2.5 text-center text-sm font-semibold text-primary transition-colors hover:bg-primary/20"
+                  className="mt-1 block rounded-2xl bg-teal-deep/10 px-4 py-2.5 text-center text-sm font-semibold text-ink transition-colors hover:bg-teal-deep/20"
                 >
                   Lacak Paket di Kurir ↗
                 </a>
@@ -374,7 +374,7 @@ export default function TrackOrderDetailPage() {
           </div>
         )}
 
-        <div className="rounded-3xl border border-primary/10 bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-ink/10 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
               <p className="text-xs text-muted">Nomor Pesanan</p>
@@ -385,7 +385,7 @@ export default function TrackOrderDetailPage() {
             <button
               type="button"
               onClick={handleCopyOrderId}
-              className="shrink-0 rounded-xl border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+              className="shrink-0 rounded-xl border border-ink/20 bg-teal-deep/5 px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-teal-deep/10"
             >
               {copied ? "Tersalin!" : "Salin Nomor Pesanan"}
             </button>
@@ -393,7 +393,7 @@ export default function TrackOrderDetailPage() {
         </div>
 
         {currentTimelineIndex !== -1 && (
-          <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-semibold text-foreground">Status Pesanan</h3>
             <div className="space-y-0">
               {TIMELINE_STEPS.map((step, idx) => {
@@ -406,8 +406,8 @@ export default function TrackOrderDetailPage() {
                       <div
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                           isCompleted || isCurrent
-                            ? "bg-primary text-white"
-                            : "bg-slate-100 text-slate-400"
+                            ? "bg-teal-deep text-cream"
+                            : "bg-ink/10 text-ink-soft"
                         }`}
                       >
                         {isCompleted ? "✓" : idx + 1}
@@ -415,7 +415,7 @@ export default function TrackOrderDetailPage() {
                       {idx < TIMELINE_STEPS.length - 1 && (
                         <div
                           className={`w-0.5 flex-1 ${
-                            isCompleted ? "bg-primary" : "bg-slate-200"
+                            isCompleted ? "bg-teal-deep" : "bg-ink/20"
                           }`}
                         />
                       )}
@@ -423,7 +423,7 @@ export default function TrackOrderDetailPage() {
                     <div className="pb-6">
                       <p
                         className={`text-sm font-medium ${
-                          isCompleted || isCurrent ? "text-foreground" : "text-slate-400"
+                          isCompleted || isCurrent ? "text-foreground" : "text-ink-soft"
                         }`}
                       >
                         {step.label}
@@ -439,7 +439,7 @@ export default function TrackOrderDetailPage() {
           </div>
         )}
 
-        <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-foreground">Ringkasan Produk</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -457,7 +457,7 @@ export default function TrackOrderDetailPage() {
           <div className="mt-4 border-t border-border pt-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-foreground">Total Pembayaran</span>
-              <span className="text-lg font-semibold text-primary">
+              <span className="text-lg font-semibold text-ink">
                 {formatPrice(order.total_amount)}
               </span>
             </div>

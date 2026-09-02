@@ -27,7 +27,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove, compact }: CartI
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-full border border-primary/15">
+          <div className="flex items-center rounded-full border border-ink/15">
             <button
               type="button"
               onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
@@ -63,9 +63,9 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove, compact }: CartI
   }
 
   return (
-    <div className="mb-4 rounded-2xl border border-primary/10 bg-white p-4 shadow-sm sm:p-5">
+    <div className="mb-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex gap-4 sm:gap-5">
-        <div className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-xl bg-surface sm:w-24">
+        <div className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-xl bg-cream-2 sm:w-24">
           <Image
             unoptimized={process.env.NODE_ENV === "development"}
             src={imageSrc}
@@ -87,7 +87,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove, compact }: CartI
             <button
               type="button"
               onClick={() => onRemove(item.product.id)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted/40 transition-colors hover:bg-red-50 hover:text-red-500"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted/40 transition-colors hover:bg-red/10 hover:text-red"
               aria-label={`Hapus ${item.product.name} dari keranjang`}
             >
               <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
@@ -102,10 +102,10 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove, compact }: CartI
         </div>
       </div>
 
-      <div className="mt-4 border-t border-primary/10" />
+      <div className="mt-4 border-t border-ink/10" />
 
       <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center rounded-full border border-primary/15">
+        <div className="flex items-center rounded-full border border-ink/15">
           <button
             type="button"
             onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}

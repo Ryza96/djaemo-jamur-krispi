@@ -187,13 +187,13 @@ export function CheckoutForm() {
       <div className="grid gap-8 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-8">
           {state.resume && (
-            <section className="rounded-3xl border border-amber-500/30 bg-amber-50 p-6 shadow-sm">
-              <h2 className="mb-1 text-lg font-semibold text-primary">
+            <section className="rounded-3xl border border-gold/30 bg-gold/10 p-6 shadow-sm">
+              <h2 className="mb-1 text-lg font-semibold text-ink">
                 Pesanan Belum Dibayar
               </h2>
               <p className="text-sm text-muted">
                 Pesanan{" "}
-                <span className="font-semibold text-primary">
+                <span className="font-semibold text-ink">
                   {state.resume.orderId}
                 </span>{" "}
                 masih menunggu pembayaran. Lanjutkan pembayaran, atau batalkan
@@ -210,8 +210,8 @@ export function CheckoutForm() {
             </section>
           )}
 
-          <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h2 className="mb-1 text-lg font-semibold text-primary">
+          <section className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h2 className="mb-1 text-lg font-semibold text-ink">
               Informasi Pembeli
             </h2>
             <p className="mb-4 text-sm text-muted">
@@ -220,8 +220,8 @@ export function CheckoutForm() {
             <CustomerInfo />
           </section>
 
-          <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h2 className="mb-1 text-lg font-semibold text-primary">
+          <section className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h2 className="mb-1 text-lg font-semibold text-ink">
               Alamat Pengiriman
             </h2>
             <p className="mb-4 text-sm text-muted">
@@ -230,8 +230,8 @@ export function CheckoutForm() {
             <ShippingAddress />
           </section>
 
-          <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h2 className="mb-1 text-lg font-semibold text-primary">
+          <section className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h2 className="mb-1 text-lg font-semibold text-ink">
               Metode Pengiriman
             </h2>
             <p className="mb-4 text-sm text-muted">
@@ -242,15 +242,15 @@ export function CheckoutForm() {
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-primary">
+          <section className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-ink">
               Ringkasan Pesanan
             </h2>
             <OrderSummary />
           </section>
 
-          <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-primary">
+          <section className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-ink">
               Voucher
             </h2>
             <VoucherSection />
@@ -259,7 +259,7 @@ export function CheckoutForm() {
           {state.error && (
             <div
               role="alert"
-              className="rounded-3xl border border-red-500/20 bg-red-50 p-4 text-sm text-red-700"
+              className="rounded-3xl border border-red/20 bg-red/10 p-4 text-sm text-red"
             >
               {state.error}
             </div>

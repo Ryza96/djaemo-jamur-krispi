@@ -107,11 +107,11 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Keranjang Belanja"
-        className={`fixed inset-y-0 right-0 z-[70] flex w-full flex-col bg-surface shadow-2xl transition-transform duration-300 sm:w-[420px] ${
+        className={`fixed inset-y-0 right-0 z-[70] flex w-full flex-col bg-cream shadow-2xl transition-transform duration-300 sm:w-[420px] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-primary/10 px-6 py-5">
+        <div className="flex items-center justify-between border-b border-ink/10 px-6 py-5">
           <h2 className="text-lg font-semibold text-foreground">
             Keranjang
             {totalItems > 0 && (
@@ -123,7 +123,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-primary/5 hover:text-foreground"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-teal-deep/5 hover:text-foreground"
             aria-label="Tutup keranjang"
           >
             <svg viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor" aria-hidden="true">
@@ -134,7 +134,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-dark">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-cream-2">
               <svg viewBox="0 0 24 24" className="h-7 w-7 text-muted" fill="currentColor" aria-hidden="true">
                 <path d="M7 4h10l1.5 6H6.5L7 4zm0 8h10l1.5 6H5.5L7 12zm-1.5-8l-1 4h16l-1-4H5.5z" />
               </svg>
@@ -146,7 +146,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
             <Link
               href="/produk"
               onClick={onClose}
-              className="mt-6 inline-flex items-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-light"
+              className="mt-6 inline-flex items-center rounded-full bg-gold px-5 py-2 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright"
             >
               Lihat Produk
             </Link>
@@ -165,7 +165,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               ))}
             </div>
 
-            <div className="border-t border-primary/10 px-6 py-5">
+            <div className="border-t border-ink/10 px-6 py-5">
               <CartSummary items={items} />
 
               <div className="mt-5 space-y-3">
@@ -173,7 +173,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   href="/checkout"
                   onClick={handleResumeClick}
                   aria-disabled={resuming}
-                  className={`flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light ${
+                  className={`flex w-full items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright ${
                     resuming ? "pointer-events-none opacity-70" : ""
                   }`}
                 >
@@ -182,7 +182,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                 <Link
                   href="/cart"
                   onClick={onClose}
-                  className="flex w-full items-center justify-center rounded-full border border-primary/20 px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5"
+                  className="flex w-full items-center justify-center rounded-full border border-teal-deep/20 px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-teal-deep/5"
                 >
                   Lihat Keranjang
                 </Link>

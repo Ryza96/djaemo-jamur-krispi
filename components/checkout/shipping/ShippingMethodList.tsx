@@ -43,12 +43,12 @@ export function ShippingMethodList({
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-left text-sm transition focus:border-primary focus:outline-none"
+        className="w-full rounded-2xl border border-ink/20 bg-white px-4 py-3 text-left text-sm transition focus:border-teal-deep focus:outline-none"
       >
         {selected ? (
           <span className="flex items-center justify-between gap-2">
             <span className="min-w-0">
-              <span className="font-semibold text-primary">
+              <span className="font-semibold text-ink">
                 {selected.courier}
               </span>{" "}
               <span className="text-muted">{selected.service}</span>
@@ -58,7 +58,7 @@ export function ShippingMethodList({
                 </span>
               )}
             </span>
-            <span className="whitespace-nowrap font-semibold text-secondary">
+            <span className="whitespace-nowrap font-semibold text-gold">
               {formatPrice(selected.price)}
             </span>
           </span>
@@ -80,7 +80,7 @@ export function ShippingMethodList({
         <ul
           role="listbox"
           aria-label="Pilih kurir pengiriman"
-          className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg"
+          className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-2xl border border-ink/10 bg-white shadow-lg"
         >
           {rates.map((rate) => (
             <li
@@ -89,8 +89,8 @@ export function ShippingMethodList({
               aria-selected={selectedId === rate.id}
               className={`flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm transition ${
                 selectedId === rate.id
-                  ? "bg-secondary/10 text-secondary"
-                  : "text-foreground hover:bg-slate-50"
+                  ? "bg-gold/10 text-gold"
+                  : "text-foreground hover:bg-cream-2"
               }`}
               onMouseDown={() => handleSelect(rate.id)}
             >

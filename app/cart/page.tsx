@@ -17,8 +17,8 @@ export default function CartPage() {
       />
 
       {items.length === 0 ? (
-        <div className="rounded-3xl border border-primary/10 bg-white p-12 text-center shadow-sm">
-          <p className="text-lg font-semibold text-primary">Keranjang Anda kosong</p>
+        <div className="rounded-3xl border border-ink/10 bg-white p-12 text-center shadow-sm">
+          <p className="text-lg font-semibold text-ink">Keranjang Anda kosong</p>
           <p className="mt-3 text-sm text-muted">
             Tambahkan produk dari halaman Produk untuk melihatnya di sini.
           </p>
@@ -28,7 +28,7 @@ export default function CartPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-10 lg:flex-row">
-          <div className="min-w-0 flex-[7] divide-y divide-primary/10">
+          <div className="min-w-0 flex-[7] divide-y divide-ink/10">
             {items.map((item) => (
               <CartItemRow
                 key={item.product.id}
@@ -41,8 +41,8 @@ export default function CartPage() {
 
           <aside className="flex-[3]">
             <div className="space-y-6 lg:sticky lg:top-24">
-              <div className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-primary">Ringkasan Belanja</h2>
+              <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-ink">Ringkasan Belanja</h2>
                 <div className="mt-5">
                   <CartSummary items={items} />
                 </div>

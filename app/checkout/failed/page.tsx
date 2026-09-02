@@ -58,7 +58,7 @@ export default function CheckoutFailedPage() {
       <Section>
         <PageHeader title="Pembayaran Gagal" description="Sedang memuat detail pesanan..." />
         <div className="flex flex-col items-center justify-center gap-6 py-20">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-ink border-t-transparent" />
           <p className="text-sm text-muted">Mohon tunggu.</p>
         </div>
       </Section>
@@ -72,8 +72,8 @@ export default function CheckoutFailedPage() {
           title="Pembayaran Gagal"
           description="Tidak ada data pesanan yang ditemukan."
         />
-        <div className="rounded-3xl border border-primary/10 bg-white p-12 text-center shadow-sm">
-          <p className="text-lg font-semibold text-primary">Belum ada pesanan terakhir.</p>
+        <div className="rounded-3xl border border-ink/10 bg-white p-12 text-center shadow-sm">
+          <p className="text-lg font-semibold text-ink">Belum ada pesanan terakhir.</p>
           <p className="mt-3 text-sm text-muted">
             Data pesanan tidak ditemukan di penyimpanan browser.
           </p>
@@ -98,18 +98,18 @@ export default function CheckoutFailedPage() {
       />
 
       <div className="grid gap-10 xl:grid-cols-[2fr_1fr]">
-        <div className="space-y-6 rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
+        <div className="space-y-6 rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-primary">Status Transaksi</h2>
+            <h2 className="text-lg font-semibold text-ink">Status Transaksi</h2>
             <p className="text-sm text-muted">Pembayaran gagal diproses</p>
           </div>
 
           {orderId ? (
-            <div className="rounded-3xl border border-red-500/20 bg-red-50 p-4 text-sm text-red-700">
+            <div className="rounded-3xl border border-red/20 bg-red/10 p-4 text-sm text-red">
               Nomor Pesanan: <span className="font-semibold">{orderId}</span>
             </div>
           ) : (
-            <div className="rounded-3xl border border-red-500/20 bg-red-50 p-4 text-sm text-red-700">
+            <div className="rounded-3xl border border-red/20 bg-red/10 p-4 text-sm text-red">
               Nomor pesanan tidak ditemukan di penyimpanan browser.
             </div>
           )}
@@ -128,9 +128,9 @@ export default function CheckoutFailedPage() {
           </div>
         </div>
 
-        <aside className="space-y-6 rounded-3xl border border-primary/10 bg-white p-6 shadow-sm">
-          <div className="rounded-3xl bg-slate-950 p-5 text-sm text-slate-300">
-            <p className="font-semibold text-slate-100">Catatan</p>
+        <aside className="space-y-6 rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl bg-teal-deep p-5 text-sm text-cream">
+            <p className="font-semibold text-cream">Catatan</p>
             <ul className="mt-3 space-y-2">
               <li>1. Pastikan kamu memilih metode pembayaran dengan benar.</li>
               <li>2. Jika pembatalan terjadi karena batas waktu, silakan ulang checkout.</li>

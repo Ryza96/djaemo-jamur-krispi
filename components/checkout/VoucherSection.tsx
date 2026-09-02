@@ -6,7 +6,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { formatPrice } from "@/lib/utils";
 
 const inputClass =
-  "flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary";
+  "flex-1 rounded-2xl border border-ink/20 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-teal-deep";
 
 interface ValidateResponse {
   success?: boolean;
@@ -72,9 +72,9 @@ export function VoucherSection() {
   return (
     <div>
       {state.voucher ? (
-        <div className="flex items-center justify-between rounded-2xl border border-secondary/30 bg-secondary/5 p-3 text-sm">
+        <div className="flex items-center justify-between rounded-2xl border border-gold/30 bg-gold/5 p-3 text-sm">
           <div>
-            <span className="font-medium text-secondary">
+            <span className="font-medium text-gold">
               {state.voucher.code}
             </span>
             {state.voucher.discount > 0 && (
@@ -86,7 +86,7 @@ export function VoucherSection() {
           <button
             type="button"
             onClick={handleRemove}
-            className="text-sm text-red-500 underline-offset-2 hover:underline"
+            className="text-sm text-red underline-offset-2 hover:underline"
           >
             Hapus
           </button>
@@ -111,12 +111,12 @@ export function VoucherSection() {
               type="button"
               onClick={handleApply}
               disabled={!code.trim() || loading}
-              className="inline-flex items-center rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-light disabled:opacity-50"
+              className="inline-flex items-center rounded-2xl bg-gold px-4 py-2 text-sm font-semibold text-teal-deep transition hover:bg-gold-bright disabled:opacity-50"
             >
               {loading ? "..." : "Pakai"}
             </button>
           </div>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-red">{error}</p>}
         </div>
       )}
     </div>

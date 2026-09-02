@@ -28,7 +28,7 @@ export function CheckoutActions() {
             href="/syarat-ketentuan"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-ink hover:underline"
           >
             Syarat &amp; Ketentuan
           </Link>{" "}
@@ -37,7 +37,7 @@ export function CheckoutActions() {
             href="/kebijakan-privasi"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-ink hover:underline"
           >
             Kebijakan Privasi
           </Link>

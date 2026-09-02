@@ -20,7 +20,7 @@ interface AddressItem {
 }
 
 const inputClass =
-  "w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary";
+  "w-full rounded-2xl border border-ink/20 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-teal-deep";
 
 const labelClass = "mb-2 block text-sm font-medium text-muted";
 
@@ -198,7 +198,7 @@ export function ShippingAddress() {
     <div className="space-y-4">
       <div>
         <label htmlFor="address-street" className={labelClass}>
-          Alamat Jalan <span className="text-red-500">*</span>
+          Alamat Jalan <span className="text-red">*</span>
         </label>
         <textarea
           id="address-street"
@@ -212,7 +212,7 @@ export function ShippingAddress() {
           aria-describedby={errors.street ? "address-street-error" : undefined}
         />
         {errors.street && (
-          <p id="address-street-error" className="mt-1 text-xs text-red-500">
+          <p id="address-street-error" className="mt-1 text-xs text-red">
             {errors.street}
           </p>
         )}
@@ -275,7 +275,7 @@ export function ShippingAddress() {
 
       <div>
         <label htmlFor="address-postal-code" className={labelClass}>
-          Kode Pos <span className="text-red-500">*</span>
+          Kode Pos <span className="text-red">*</span>
         </label>
         <input
           id="address-postal-code"
@@ -295,7 +295,7 @@ export function ShippingAddress() {
           <p className="mt-1 text-xs text-muted">Tidak tersedia</p>
         )}
         {errors.postalCode && (
-          <p id="address-postal-code-error" className="mt-1 text-xs text-red-500">
+          <p id="address-postal-code-error" className="mt-1 text-xs text-red">
             {errors.postalCode}
           </p>
         )}

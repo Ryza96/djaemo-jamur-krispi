@@ -33,7 +33,7 @@ interface AreaSelectProps
 }
 
 const inputBase =
-  "w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary";
+  "w-full rounded-2xl border border-ink/20 bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-teal-deep";
 const labelClass = "mb-2 block text-sm font-medium text-muted";
 
 export function AreaSelect({
@@ -188,7 +188,7 @@ export function AreaSelect({
   return (
     <div className="relative" ref={wrapperRef}>
       <label htmlFor={optionListId} className={labelClass}>
-        {label} <span className="text-red-500">*</span>
+        {label} <span className="text-red">*</span>
       </label>
       <input
         ref={inputRef}
@@ -246,7 +246,7 @@ export function AreaSelect({
           ref={listRef}
           id={`${optionListId}-list`}
           role="listbox"
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg"
+          className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-2xl border border-ink/10 bg-white shadow-lg"
         >
           {options.map((option, index) => (
             <li
@@ -256,8 +256,8 @@ export function AreaSelect({
               aria-selected={highlightedIndex === index}
               className={`cursor-pointer px-4 py-2.5 text-sm transition ${
                 highlightedIndex === index
-                  ? "bg-secondary/10 text-secondary"
-                  : "text-foreground hover:bg-slate-50"
+                  ? "bg-gold/10 text-gold"
+                  : "text-foreground hover:bg-cream-2"
               }`}
               onMouseDown={() => handleSelect(option)}
               onMouseEnter={() => setHighlightedIndex(index)}
@@ -273,17 +273,17 @@ export function AreaSelect({
       )}
 
       {isOpen && options.length === 0 && !isLoading && !fetchError && query.length >= 3 && (
-        <div className="absolute z-50 mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-muted shadow-lg">
+        <div className="absolute z-50 mt-1 w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-muted shadow-lg">
           Tidak ditemukan
         </div>
       )}
 
       {fetchError && (
-        <p className="mt-1 text-xs text-red-500">{fetchError}</p>
+        <p className="mt-1 text-xs text-red">{fetchError}</p>
       )}
 
       {error && !fetchError && (
-        <p className="mt-1 text-xs text-red-500">{error}</p>
+        <p className="mt-1 text-xs text-red">{error}</p>
       )}
     </div>
   );
