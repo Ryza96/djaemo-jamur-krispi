@@ -12,7 +12,6 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 export function Header() {
   const currentPath = usePathname();
   const { totalItems } = useCart();
-  const [isOpen, setIsOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -36,25 +35,6 @@ export function Header() {
           <Logo priority className="sm:gap-2" />
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-expanded={isOpen}
-              aria-label={isOpen ? "Tutup menu" : "Buka menu"}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-cream transition hover:border-gold hover:text-gold-bright md:hidden"
-              onClick={() => setIsOpen((value) => !value)}
-            >
-              <span className="sr-only">{isOpen ? "Tutup navigasi" : "Buka navigasi"}</span>
-              {isOpen ? (
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
-                  <path d="M18.3 5.71a1 1 0 0 0-1.42 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.9 4.89a1 1 0 1 0 1.42 1.42L12 13.41l4.89 4.9a1 1 0 0 0 1.42-1.42L13.41 12l4.9-4.89a1 1 0 0 0 0-1.4z" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
-                  <path d="M4 6h16a1 1 0 1 0 0-2H4a1 1 0 1 0 0 2zm16 6H4a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2zm0 6H4a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2z" />
-                </svg>
-              )}
-            </button>
-
             <div className="hidden md:flex items-center gap-2">
               {navLinks.map((link) => {
                 const isActive =
@@ -116,7 +96,7 @@ export function Header() {
               )}
             </button>
 
-            <div className="relative" ref={userMenuRef}>
+            <div className="relative hidden md:block" ref={userMenuRef}>
               <button
                 type="button"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -152,56 +132,6 @@ export function Header() {
             </div>
           </div>
         </div>
-
-        {isOpen && (
-          <div className="md:hidden border-t border-teal-line bg-teal-deep/95 px-4 py-4">
-            <nav className="space-y-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "block rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
-                    currentPath === link.href
-                      ? "bg-gold text-ink"
-                      : "text-cream hover:bg-white/10 hover:text-gold-bright",
-                  )}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <Link
-                href="/track-order"
-                className={cn(
-                  "block rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
-                  (currentPath ?? "").startsWith("/track-order")
-                    ? "bg-gold text-ink"
-                    : "text-cream hover:bg-white/10 hover:text-gold-bright",
-                )}
-                onClick={() => setIsOpen(false)}
-              >
-                Lacak Pesanan
-              </Link>
-              <div className="border-t border-teal-line pt-2 mt-2">
-                <Link
-                  href="/login"
-                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-cream hover:bg-white/10 hover:text-gold-bright"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Masuk
-                </Link>
-                <Link
-                  href="/partner"
-                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-cream hover:bg-white/10 hover:text-gold-bright"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Daftar Menjadi Partner
-                </Link>
-              </div>
-            </nav>
-          </div>
-        )}
       </header>
 
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
