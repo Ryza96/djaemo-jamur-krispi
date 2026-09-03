@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { formatPrice } from "@/lib/utils";
 
 function CheckIcon() {
   return (
@@ -26,7 +27,7 @@ function TruckIcon() {
   );
 }
 
-export function HeroSection() {
+export function HeroSection({ initialPrice = null }: { initialPrice?: number | null }) {
   return (
     <section className="relative overflow-hidden bg-teal-deep pt-5 pb-16 md:pt-6 md:pb-20">
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
@@ -48,14 +49,16 @@ export function HeroSection() {
             rasa autentik Indonesia yang bikin ketagihan.
           </p>
 
-          <div className="w-full max-w-[430px] rounded-2xl border border-gold/25 bg-white/5 px-5 py-4">
-            <div>
-              <span className="block text-xs text-cream/75">Harga mulai</span>
-              <span className="mt-1 block font-mono text-xl font-semibold text-gold-bright">
-                Rp 22.000
-              </span>
+          {initialPrice != null && (
+            <div className="w-full max-w-[430px] rounded-2xl border border-gold/25 bg-white/5 px-5 py-4">
+              <div>
+                <span className="block text-xs text-cream/75">Harga mulai</span>
+                <span className="mt-1 block font-mono text-xl font-semibold text-gold-bright">
+                  {formatPrice(initialPrice)}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mt-2 flex flex-wrap items-center gap-4">
             <Button

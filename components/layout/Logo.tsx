@@ -29,7 +29,7 @@ export function Logo({
         height={56}
         priority={priority}
         className={cn(
-          "h-10 w-10 shrink-0 object-contain sm:h-12 sm:w-12 transition-transform duration-300 ease-out group-hover:rotate-90",
+          "h-10 w-10 shrink-0 object-contain sm:h-12 sm:w-12 transition-transform duration-300 ease-out group-hover:rotate-90 drop-shadow-[0_0_1px_rgba(255,255,255,0.85)] drop-shadow-[0_0_3px_rgba(255,255,255,0.5)]",
           imageClassName,
         )}
       />

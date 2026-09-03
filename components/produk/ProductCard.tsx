@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ShoppingCart, Loader2 } from "lucide-react";
 import type { Product } from "@/types";
 import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
 import { useCart } from "@/components/cart/CartProvider";
@@ -84,9 +85,15 @@ export function ProductCard({ product }: ProductCardProps) {
             type="button"
             onClick={handleAddToCart}
             disabled={isAdding}
-            className="min-w-0 shrink-0 cursor-pointer whitespace-nowrap self-center rounded-lg bg-gold px-4 py-2.5 min-h-11 text-sm font-semibold text-teal-deep transition-all duration-200 hover:bg-gold-bright active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            aria-label={isAdding ? "Menambahkan ke keranjang" : "Tambah ke keranjang"}
+            title={isAdding ? "Menambahkan ke keranjang" : "Tambah ke keranjang"}
+            className="inline-flex min-h-11 w-11 shrink-0 cursor-pointer items-center justify-center self-center rounded-lg bg-gold text-teal-deep transition-all duration-200 hover:bg-gold-bright active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isAdding ? "Menambahkan..." : "+ Keranjang"}
+            {isAdding ? (
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+            ) : (
+              <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+            )}
           </button>
         </div>
       </div>

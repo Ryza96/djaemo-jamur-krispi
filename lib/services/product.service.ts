@@ -60,6 +60,13 @@ export async function getBestSellers(count: number): Promise<Product[]> {
   return ranked.slice(0, count);
 }
 
+export async function getLowestPrice(): Promise<number | null> {
+  const allProducts = await getCatalogProducts();
+  const inStock = allProducts.filter((p) => p.stock > 0 && p.final_price > 0);
+  if (inStock.length === 0) return null;
+  return Math.min(...inStock.map((p) => p.final_price));
+}
+
 export interface HomepagePromoData {
   promoName: string;
   countdown: Product["promo_countdown"];

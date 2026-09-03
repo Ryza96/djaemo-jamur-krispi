@@ -1,4 +1,4 @@
-import { getBestSellers, getHomepagePromo } from "@/lib/services/product.service";
+import { getBestSellers, getHomepagePromo, getLowestPrice } from "@/lib/services/product.service";
 import {
   HeroSection,
   BestSellerSection,
@@ -11,14 +11,15 @@ import {
 export const revalidate = 300;
 
 export default async function Home() {
-  const [bestSellers, promo] = await Promise.all([
+  const [bestSellers, promo, lowestPrice] = await Promise.all([
     getBestSellers(3),
     getHomepagePromo(),
+    getLowestPrice(),
   ]);
 
   return (
     <>
-      <HeroSection />
+      <HeroSection initialPrice={lowestPrice} />
 
       <BestSellerSection products={bestSellers} />
 
