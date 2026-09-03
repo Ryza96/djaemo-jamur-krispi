@@ -1,4 +1,5 @@
 import { OrderRepository, VoucherRepository } from "@/lib/repositories";
+import { after } from "next/server";
 import { AuditLogService } from "./audit-log.service";
 import { InventoryService } from "./inventory.service";
 import { FULFILLMENT_STATUS, PAYMENT_STATUS } from "./payment/types";
@@ -309,7 +310,15 @@ async function executeTransition(
 
   const notificationEvent = CUSTOMER_NOTIFIABLE[targetStatus];
   if (notificationEvent) {
-    getNotificationEngine().notify(notificationEvent, orderId);
+    // `notify` itself is fire-and-forget (returns void, swallows the underlying
+    // promise), so to guarantee the dispatch completes before the serverless
+    // instance is frozen after the response, schedule the real `dispatch`
+    // promise via `after()` — `after` keeps the instance alive until the
+    // returned promise settles. Fires only from the admin order-action route
+    // (request scope), so `after()` is valid here.
+    after(() =>
+      getNotificationEngine().dispatch(notificationEvent, orderId).catch(() => {}),
+    );
   }
 
   return {

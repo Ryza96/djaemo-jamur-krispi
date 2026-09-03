@@ -9,6 +9,7 @@ import { verifyMidtransSignature } from "./payment/verifySignature";
 import { isTransactionSettledAtMidtrans } from "./payment/midtrans-verify";
 import { AuditLogService } from "./audit-log.service";
 import { FulfillmentService } from "./fulfillment.service";
+import { after } from "next/server";
 import { PAYMENT_STATUS, FULFILLMENT_STATUS } from "./payment/types";
 
 import type {
@@ -682,7 +683,7 @@ export const OrderService = {
         };
       }
 
-      maybeNotifyAdminOfNewPayment(order_id, currentStatus);
+      after(() => maybeNotifyAdminOfNewPayment(order_id, currentStatus));
 
       return {
         success: true,
@@ -765,7 +766,7 @@ export const OrderService = {
     }
 
     if (newStatus === PAYMENT_STATUS.PAID) {
-      maybeNotifyAdminOfNewPayment(order_id, currentStatus);
+      after(() => maybeNotifyAdminOfNewPayment(order_id, currentStatus));
     }
 
     await AuditLogService.logPaymentEvent({
