@@ -1,5 +1,8 @@
-import { OrderRepository, CustomerRepository } from "@/lib/repositories";
+import { OrderRepository, CustomerRepository, NotificationLogRepository } from "@/lib/repositories";
 import { AuditLogRepository } from "@/lib/repositories/audit-log.repository";
+import { normalizeWaTarget } from "@/lib/notifications/channels/whatsapp/normalize-phone";
+import { createFonnteProvider } from "@/lib/notifications/channels/whatsapp/fonnte-provider";
+import { formatAdminWaMessage } from "@/lib/notifications/channels/whatsapp/admin-formatter";
 import { combineAddress, mapMidtransStatus } from "./payment/mapper";
 import { extractWeightGrams } from "./payment/checkoutValidation";
 import { verifyMidtransSignature } from "./payment/verifySignature";
@@ -33,6 +36,97 @@ export interface ProcessCallbackResult {
   orderId: string;
   paymentStatus: PaymentStatus;
   message: string;
+}
+
+const ADMIN_WA_EVENT = "payment.paid";
+const ADMIN_WA_CHANNEL_ID = "whatsapp-admin";
+
+/**
+ * Fire-and-forget WhatsApp notification to the admin when an order becomes
+ * PAID. Runs entirely outside the payment-critical path: it never throws and
+ * is always invoked without `await`, so a failure here can never fail, retry
+ * or roll back the Midtrans callback / transaction.
+ *
+ * Notification failures are swallowed and recorded in `notification_log`
+ * (status 'failed') so they are visible via the Supabase dashboard without
+ * ever disturbing the payment flow.
+ */
+async function maybeNotifyAdminOfNewPayment(
+  orderId: string,
+  fromStatus: PaymentStatus | string | null,
+): Promise<void> {
+  try {
+    const rawNumber = process.env.ADMIN_WHATSAPP_NUMBER;
+    if (!rawNumber) {
+      console.warn("[notify] ADMIN_WHATSAPP_NUMBER kosong; skip notif admin", { orderId, fromStatus });
+      return;
+    }
+
+    const adminTarget = normalizeWaTarget(rawNumber);
+    if (!adminTarget) {
+      console.warn("[notify] ADMIN_WHATSAPP_NUMBER format invalid; skip notif admin", { orderId, fromStatus });
+      return;
+    }
+
+    const alreadySent = await NotificationLogRepository.isSent(
+      ADMIN_WA_EVENT,
+      orderId,
+      ADMIN_WA_CHANNEL_ID,
+    );
+    if (alreadySent) {
+      return;
+    }
+
+    const order = await OrderRepository.findDetailByOrderId(orderId);
+    if (!order) {
+      console.warn("[notify] order tidak ditemukan; skip notif admin", { orderId, fromStatus });
+      return;
+    }
+
+    const apiKey = process.env.FONNTE_API_KEY ?? "";
+    const provider = createFonnteProvider(apiKey);
+    const rawDashboardUrl = process.env.ADMIN_DASHBOARD_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? null;
+    const dashboardUrl = rawDashboardUrl
+      ? /^https?:\/\//i.test(rawDashboardUrl)
+        ? rawDashboardUrl
+        : `https://${rawDashboardUrl}`
+      : null;
+
+    let logId: string | null = null;
+    try {
+      logId = await NotificationLogRepository.insertPending(
+        ADMIN_WA_EVENT,
+        orderId,
+        ADMIN_WA_CHANNEL_ID,
+      );
+
+      const message = formatAdminWaMessage(
+        order,
+        adminTarget,
+        dashboardUrl ? dashboardUrl.replace(/\/+$/, "") : null,
+      );
+
+      const result = await provider.send(message);
+
+      if (result.success) {
+        await NotificationLogRepository.tryMarkSent(logId);
+      } else {
+        await NotificationLogRepository.markFailed(logId);
+        console.error("[notify] WA admin send failed", { orderId, error: result.error });
+      }
+    } catch (err) {
+      console.error("[notify] admin notif error (swallowed)", { orderId, error: err instanceof Error ? err.message : String(err) });
+      if (logId) {
+        try {
+          await NotificationLogRepository.markFailed(logId);
+        } catch (cleanupErr) {
+          console.error("[notify] cleanup markFailed gagal (ignored)", { orderId, error: cleanupErr });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[notify] admin notif unexpected error (swallowed)", { orderId, error: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 export const OrderService = {
@@ -588,6 +682,8 @@ export const OrderService = {
         };
       }
 
+      maybeNotifyAdminOfNewPayment(order_id, currentStatus);
+
       return {
         success: true,
         orderId: order_id,
@@ -666,6 +762,10 @@ export const OrderService = {
           },
         });
       }
+    }
+
+    if (newStatus === PAYMENT_STATUS.PAID) {
+      maybeNotifyAdminOfNewPayment(order_id, currentStatus);
     }
 
     await AuditLogService.logPaymentEvent({
