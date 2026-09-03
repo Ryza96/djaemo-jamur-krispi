@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import bcrypt from "bcryptjs";
 import {
   ADMIN_SESSION_COOKIE,
   adminSessionCookieOptions,
@@ -11,6 +12,12 @@ import {
   isLoginRateLimited,
   recordFailedLogin,
 } from "@/lib/services/admin-login-rate-limit.service";
+
+// Dummy bcrypt hash used solely to equalize response timing between the
+// "username wrong" path and the "password wrong" path, so a timing side
+// channel does not reveal whether a username is valid or not.
+const DUMMY_TIMING_HASH =
+  "$2b$10$qourL73e9C78Ia0/xhTVB.HDXX2FoqJmu/gsvm.D2ucTtJt/3ZIgS";
 
 export async function POST(request: Request) {
   const identifier = getClientIdentifier(request);
@@ -53,7 +60,30 @@ export async function POST(request: Request) {
     );
   }
 
-  if (username !== adminUsername || password !== adminPassword) {
+  if (username !== adminUsername) {
+    // Run a dummy bcrypt compare so the "username wrong" path takes roughly
+    // the same time as the "password wrong" path (timing side-channel guard).
+    await bcrypt.compare(password ?? "", DUMMY_TIMING_HASH);
+    await recordFailedLogin(identifier, username);
+    return NextResponse.json(
+      { success: false, error: "Username atau password salah." },
+      { status: 401 },
+    );
+  }
+
+  if (!adminPassword.startsWith("$2")) {
+    console.error(
+      "ADMIN_PASSWORD di env belum berformat bcrypt hash. " +
+        "Generate hash dulu dan update env sebelum login bisa berhasil.",
+    );
+    return NextResponse.json(
+      { success: false, error: "Server configuration error." },
+      { status: 500 },
+    );
+  }
+
+  const passwordOk = await bcrypt.compare(password ?? "", adminPassword);
+  if (!passwordOk) {
     await recordFailedLogin(identifier, username);
     return NextResponse.json(
       { success: false, error: "Username atau password salah." },
