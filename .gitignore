@@ -70,3 +70,10 @@ Reff_card.webp
 
 # Local data backups (not for version control)
 backup/
+
+# Local log files
+server-log.txt
+server.log
+
+# Design reference folder (keep local, not versioned)
+reff_desain/
