@@ -11,6 +11,7 @@ import type {
   MovementQueryOptions,
   AdjustStockParams,
   CheckoutStockItem,
+  OrderStockItem,
 } from "./types";
 
 /**
@@ -28,7 +29,21 @@ export interface IInventoryRepository {
     quantity: number,
   ): Promise<StockValidationResult>;
 
+  validateStockBatch(
+    items: Array<{ productId: string; quantity: number }>,
+  ): Promise<OrderStockItem[]>;
+
   deductStock(params: DeductStockParams): Promise<number>;
+
+  deductStockBatch(
+    items: Array<{ productId: string; quantity: number }>,
+    reason: string,
+    orderId?: string,
+    idempotencyKey?: string,
+  ): Promise<{
+    success: boolean;
+    items: Array<{ productId: string; deducted: number; newStock: number }>;
+  }>;
 
   restoreStock(params: RestoreStockParams): Promise<number>;
 

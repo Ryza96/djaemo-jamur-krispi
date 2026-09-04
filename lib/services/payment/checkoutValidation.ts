@@ -8,7 +8,6 @@ import {
 import { BITESHIP_API_BASE_URL, DEFAULT_COURIERS, getBiteshipApiKey } from "@/lib/services/shipping/constants";
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
 import { VoucherRepository } from "@/lib/repositories";
-import { validateVoucherRules } from "@/lib/services/voucher-engine";
 import type { CreatePaymentRequest } from "./types";
 
 interface ValidatedCheckoutItem {
@@ -251,21 +250,19 @@ export async function validateCheckoutRequest(
   let voucher: ValidatedCheckout["voucher"] = null;
   if (params.voucherCode && params.voucherCode.trim()) {
     const normalizedCode = params.voucherCode.trim().toUpperCase();
-    const voucherRow = await VoucherRepository.findByCode(normalizedCode);
-    const validation = validateVoucherRules({ voucher: voucherRow, subtotal });
-
-    if (!validation.valid) {
+    try {
+      const preview = await VoucherRepository.preview(normalizedCode, subtotal);
+      voucher = {
+        code: preview.code,
+        discount_percent: preview.discount_percent,
+        discount_amount: preview.discount_amount,
+      };
+    } catch {
       throw new CheckoutValidationError(
-        validation.message || "Kode voucher tidak valid",
+        "Kode voucher tidak valid",
         400,
       );
     }
-
-    voucher = {
-      code: normalizedCode,
-      discount_percent: validation.discount_percent!,
-      discount_amount: validation.discount_amount!,
-    };
   }
 
   const discountAmount = voucher?.discount_amount ?? 0;

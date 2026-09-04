@@ -122,7 +122,11 @@ function validateProductPayload(body: Record<string, unknown>): ValidationResult
 export const GET = async () => {
   try {
     const products = await getCatalogProducts();
-    return NextResponse.json(products);
+    return NextResponse.json(products, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to read products" }, { status: 500 });
   }

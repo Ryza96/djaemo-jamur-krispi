@@ -13,8 +13,7 @@ export async function GET(
 ) {
   const params = await context.params;
   const orderId = params.id;
-  const { searchParams } = new URL(request.url);
-  const token = searchParams.get("token");
+  const token = request.headers.get("X-Order-Token");
 
   try {
     if (token) {

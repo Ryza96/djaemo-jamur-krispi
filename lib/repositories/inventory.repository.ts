@@ -5,6 +5,7 @@ import type {
   DeductStockParams,
   RestoreStockParams,
   AdjustStockParams,
+  OrderStockItem,
 } from "@/lib/inventory/types";
 import type { IInventoryRepository } from "@/lib/inventory/contracts";
 
@@ -12,6 +13,25 @@ interface RpcResult {
   movement_id: string;
   previous_stock: number;
   new_stock: number;
+}
+
+interface BatchDeductItem {
+  productId: string;
+  quantity: number;
+}
+
+interface BatchDeductRpcResult {
+  success: boolean;
+  items: Array<{
+    productId: string;
+    deducted: number;
+    newStock: number;
+  }>;
+}
+
+interface StockRow {
+  id: string;
+  stock: number;
 }
 
 /**
@@ -103,5 +123,77 @@ export const InventoryRepository: IInventoryRepository = {
     });
 
     if (error) throw error;
+  },
+
+  async validateStockBatch(
+    items: Array<{ productId: string; quantity: number }>,
+  ): Promise<OrderStockItem[]> {
+    const ids = [...new Set(items.map((i) => i.productId))];
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, stock")
+      .in("id", ids);
+
+    if (error) throw error;
+
+    const stockMap = new Map<string, number>();
+    for (const row of (data ?? []) as StockRow[]) {
+      stockMap.set(row.id, row.stock);
+    }
+
+    // Group quantities by productId to handle duplicate products correctly.
+    // If 2 order_items reference the same product, their quantities must be
+    // summed before comparing against available stock.
+    const aggregated = new Map<string, number>();
+    for (const item of items) {
+      aggregated.set(
+        item.productId,
+        (aggregated.get(item.productId) ?? 0) + item.quantity,
+      );
+    }
+
+    const results: OrderStockItem[] = [];
+    for (const [productId, totalQty] of aggregated) {
+      const currentStock = stockMap.get(productId) ?? 0;
+      results.push({
+        productId,
+        productName: "",
+        requested: totalQty,
+        available: currentStock,
+        sufficient: currentStock >= totalQty,
+      });
+    }
+
+    return results;
+  },
+
+  async deductStockBatch(
+    items: BatchDeductItem[],
+    reason: string,
+    orderId?: string,
+    idempotencyKey?: string,
+  ): Promise<{
+    success: boolean;
+    items: Array<{ productId: string; deducted: number; newStock: number }>;
+  }> {
+    const { data, error } = await supabase.rpc("inventory_deduct_batch", {
+      p_items: items,
+      p_reason: reason,
+      p_order_id: orderId ?? null,
+      p_actor_type: "system",
+      p_idempotency_key: idempotencyKey ?? null,
+    });
+
+    if (error) throw error;
+
+    const result = data as BatchDeductRpcResult;
+    return {
+      success: result.success,
+      items: result.items.map((item) => ({
+        productId: item.productId,
+        deducted: item.deducted,
+        newStock: item.newStock,
+      })),
+    };
   },
 };

@@ -18,5 +18,17 @@ export function verifyMidtransSignature(params: {
     .update(`${orderId}${statusCode}${grossAmount}${serverKey}`)
     .digest("hex");
 
-  return hash === signatureKey;
+  let expected: Buffer;
+  let actual: Buffer;
+
+  try {
+    expected = Buffer.from(hash, "hex");
+    actual = Buffer.from(signatureKey, "hex");
+  } catch {
+    return false;
+  }
+
+  if (expected.length !== actual.length) return false;
+
+  return crypto.timingSafeEqual(expected, actual);
 }

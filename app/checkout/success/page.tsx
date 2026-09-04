@@ -90,7 +90,9 @@ export default function CheckoutSuccessPage() {
   const paymentStatus = mapTransactionStatus(transactionStatusFromUrl);
 
   const fetchOrder = useCallback(async (orderId: string, token: string) => {
-    const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`);
+    const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+      headers: { "X-Order-Token": token },
+    });
     if (!res.ok) {
       if (res.status === 401) throw new Error("Akses ditolak");
       if (res.status === 403) throw new Error("Token tidak valid");
@@ -214,8 +216,8 @@ export default function CheckoutSuccessPage() {
     setCancelError(null);
     try {
       const res = await fetch(
-        `/api/orders/${encodeURIComponent(order.order_id)}/expire?token=${encodeURIComponent(token)}`,
-        { method: "POST" },
+        `/api/orders/${encodeURIComponent(order.order_id)}/expire`,
+        { method: "POST", headers: { "X-Order-Token": token } },
       );
       const json = await res.json().catch(() => null);
 

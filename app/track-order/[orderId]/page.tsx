@@ -222,11 +222,11 @@ export default function TrackOrderDetailPage() {
     }
 
     try {
-      const query = token
-        ? `?token=${encodeURIComponent(token)}`
-        : "";
+      const headers: Record<string, string> = {};
+      if (token) headers["X-Order-Token"] = token;
       const res = await fetch(
-        `/api/orders/${encodeURIComponent(orderId)}${query}`
+        `/api/orders/${encodeURIComponent(orderId)}`,
+        { headers },
       );
 
       if (!res.ok) {

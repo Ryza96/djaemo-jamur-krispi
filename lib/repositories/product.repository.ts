@@ -5,6 +5,7 @@ export async function findCatalog(): Promise<ProductRow[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*, product_images(image_url)")
+    .gt("stock", 0)
     .order("created_at", { ascending: false });
 
   if (error) throw error;

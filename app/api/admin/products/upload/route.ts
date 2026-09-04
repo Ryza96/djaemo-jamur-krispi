@@ -5,6 +5,49 @@ import { UPLOAD } from "@/lib/constants/upload";
 
 const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
 
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+/**
+ * Validate file content via magic bytes (first 12 bytes).
+ * Returns true if the bytes match a known image format.
+ */
+async function hasValidMagicBytes(file: File, ext: string): Promise<boolean> {
+  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+
+  switch (ext) {
+    case "jpg":
+    case "jpeg":
+      // JPEG: starts with FF D8 FF
+      return header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    case "png":
+      // PNG: starts with 89 50 4E 47 (89PNG)
+      return (
+        header[0] === 0x89 &&
+        header[1] === 0x50 &&
+        header[2] === 0x4e &&
+        header[3] === 0x47
+      );
+    case "webp":
+      // WebP: RIFF....WEBP — bytes 0-3 = "RIFF", bytes 8-11 = "WEBP"
+      return (
+        header[0] === 0x52 &&
+        header[1] === 0x49 &&
+        header[2] === 0x46 &&
+        header[3] === 0x46 &&
+        header[8] === 0x57 &&
+        header[9] === 0x45 &&
+        header[10] === 0x42 &&
+        header[11] === 0x50
+      );
+    default:
+      return false;
+  }
+}
+
 export async function POST(request: Request) {
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
@@ -32,6 +75,20 @@ export async function POST(request: Request) {
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       return NextResponse.json(
         { error: `Format file tidak didukung: .${ext}` },
+        { status: 400 },
+      );
+    }
+
+    if (file.type && !ALLOWED_MIME_TYPES.has(file.type)) {
+      return NextResponse.json(
+        { error: `Tipe MIME tidak valid: ${file.type}` },
+        { status: 400 },
+      );
+    }
+
+    if (!(await hasValidMagicBytes(file, ext))) {
+      return NextResponse.json(
+        { error: "File bukan gambar yang valid (magic bytes tidak cocok)" },
         { status: 400 },
       );
     }

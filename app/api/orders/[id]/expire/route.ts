@@ -8,8 +8,7 @@ export async function POST(
 ) {
   const params = await context.params;
   const orderId = params.id;
-  const { searchParams } = new URL(request.url);
-  const token = searchParams.get("token");
+  const token = request.headers.get("X-Order-Token");
 
   if (!token) {
     return NextResponse.json(

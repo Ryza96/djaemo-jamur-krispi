@@ -105,8 +105,8 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
         if (!orderId || !accessToken) return;
 
         const res = await fetch(
-          `/api/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(accessToken)}`,
-          { cache: "no-store" },
+          `/api/orders/${encodeURIComponent(orderId)}`,
+          { cache: "no-store", headers: { "X-Order-Token": accessToken } },
         );
         if (!res.ok) return;
 

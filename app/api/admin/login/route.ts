@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 
   await clearFailedLogins(identifier);
 
-  const token = createAdminSessionToken();
+  const token = await createAdminSessionToken();
   if (!token) {
     console.error("ADMIN_AUTH_SECRET environment variable is not configured.");
     return NextResponse.json(

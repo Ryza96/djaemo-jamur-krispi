@@ -57,20 +57,28 @@ export const InventoryService = {
       throw new Error("ORDER_NOT_FOUND");
     }
 
-    const items: OrderStockItem[] = await Promise.all(
-      order.order_items.map(async (item) => {
-        const { available, currentStock } =
-          await InventoryRepository.validateStock(item.product_id, item.quantity);
-
-        return {
-          productId: item.product_id,
-          productName: item.product_name,
-          requested: item.quantity,
-          available: currentStock,
-          sufficient: available,
-        };
+    const batchItems = order.order_items.map(
+      (item: { product_id: string; product_name: string; quantity: number }) => ({
+        productId: item.product_id,
+        quantity: item.quantity,
       }),
     );
+
+    const results = await InventoryRepository.validateStockBatch(batchItems);
+
+    const nameMap = new Map(
+      order.order_items.map(
+        (item: { product_id: string; product_name: string }) => [
+          item.product_id,
+          item.product_name,
+        ],
+      ),
+    );
+
+    const items: OrderStockItem[] = results.map((r) => ({
+      ...r,
+      productName: nameMap.get(r.productId) ?? "",
+    }));
 
     return {
       valid: items.every((i) => i.sufficient),
@@ -81,20 +89,21 @@ export const InventoryService = {
   async validateCheckoutStock(
     checkoutItems: CheckoutStockItem[],
   ): Promise<ValidateOrderStockResult> {
-    const items: OrderStockItem[] = await Promise.all(
-      checkoutItems.map(async (item) => {
-        const { available, currentStock } =
-          await InventoryRepository.validateStock(item.productId, item.quantity);
+    const batchItems = checkoutItems.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    }));
 
-        return {
-          productId: item.productId,
-          productName: item.productName,
-          requested: item.quantity,
-          available: currentStock,
-          sufficient: available,
-        };
-      }),
+    const results = await InventoryRepository.validateStockBatch(batchItems);
+
+    const nameMap = new Map(
+      checkoutItems.map((item) => [item.productId, item.productName]),
     );
+
+    const items: OrderStockItem[] = results.map((r) => ({
+      ...r,
+      productName: nameMap.get(r.productId) ?? "",
+    }));
 
     return {
       valid: items.every((i) => i.sufficient),
@@ -109,34 +118,49 @@ export const InventoryService = {
       throw new Error("ORDER_NOT_FOUND");
     }
 
-    const succeeded: DeductOrderStockItem[] = [];
+    const batchItems = order.order_items.map(
+      (item: { product_id: string; quantity: number }) => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+      }),
+    );
 
-    for (const item of order.order_items) {
-      try {
-        const newStock = await InventoryRepository.deductStock({
-          productId: item.product_id,
-          quantity: item.quantity,
-          reason: MOVEMENT_REASON.ORDER_CONFIRM,
-          actor: "system",
-        });
+    try {
+      const result = await InventoryRepository.deductStockBatch(
+        batchItems,
+        MOVEMENT_REASON.ORDER_CONFIRM,
+        orderId,
+        `order:${orderId}:confirm`,
+      );
 
-        succeeded.push({
-          productId: item.product_id,
-          productName: item.product_name,
-          deducted: item.quantity,
-          newStock,
-        });
-      } catch (err) {
-        await rollbackDeduct(succeeded);
-        return {
-          success: false,
-          items: succeeded,
-          message: err instanceof Error ? err.message : "DEDUCT_FAILED",
-        };
+      if (!result.success) {
+        return { success: false, items: [], message: "DEDUCT_FAILED" };
       }
-    }
 
-    return { success: true, items: succeeded };
+      const nameMap = new Map(
+        order.order_items.map(
+          (item: { product_id: string; product_name: string }) => [
+            item.product_id,
+            item.product_name,
+          ],
+        ),
+      );
+
+      const items: DeductOrderStockItem[] = result.items.map((r) => ({
+        productId: r.productId,
+        productName: nameMap.get(r.productId) ?? "",
+        deducted: r.deducted,
+        newStock: r.newStock,
+      }));
+
+      return { success: true, items };
+    } catch (err) {
+      return {
+        success: false,
+        items: [],
+        message: err instanceof Error ? err.message : "DEDUCT_FAILED",
+      };
+    }
   },
 
   async restoreOrderStock(orderId: string): Promise<RestoreOrderStockResult> {
@@ -199,53 +223,52 @@ export const InventoryService = {
       throw new Error("ORDER_NOT_FOUND");
     }
 
-    const succeeded: DeductOrderStockItem[] = [];
+    const batchItems = order.order_items.map(
+      (item: { product_id: string; quantity: number }) => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+      }),
+    );
 
-    for (const item of order.order_items) {
-      try {
-        const newStock = await InventoryRepository.deductStock({
-          productId: item.product_id,
-          quantity: item.quantity,
-          reason: MOVEMENT_REASON.RESUME_FULFILLMENT,
-          actor: "system",
-        });
+    try {
+      const result = await InventoryRepository.deductStockBatch(
+        batchItems,
+        MOVEMENT_REASON.RESUME_FULFILLMENT,
+        orderId,
+        `order:${orderId}:resume`,
+      );
 
-        succeeded.push({
-          productId: item.product_id,
-          productName: item.product_name,
-          deducted: item.quantity,
-          newStock,
-        });
-      } catch (err) {
-        await rollbackDeduct(succeeded);
-        return {
-          success: false,
-          items: succeeded,
-          message: err instanceof Error ? err.message : "RESUME_FAILED",
-        };
+      if (!result.success) {
+        return { success: false, items: [], message: "RESUME_FAILED" };
       }
-    }
 
-    return { success: true, items: succeeded };
+      const nameMap = new Map(
+        order.order_items.map(
+          (item: { product_id: string; product_name: string }) => [
+            item.product_id,
+            item.product_name,
+          ],
+        ),
+      );
+
+      const items: DeductOrderStockItem[] = result.items.map((r) => ({
+        productId: r.productId,
+        productName: nameMap.get(r.productId) ?? "",
+        deducted: r.deducted,
+        newStock: r.newStock,
+      }));
+
+      return { success: true, items };
+    } catch (err) {
+      return {
+        success: false,
+        items: [],
+        message: err instanceof Error ? err.message : "RESUME_FAILED",
+      };
+    }
   },
 
   async getStock(productId: string): Promise<StockInfo> {
     return InventoryRepository.getStock(productId);
   },
 };
-
-async function rollbackDeduct(succeeded: DeductOrderStockItem[]): Promise<void> {
-  for (const s of succeeded) {
-    try {
-      await InventoryRepository.restoreStock({
-        productId: s.productId,
-        quantity: s.deducted,
-        reason: MOVEMENT_REASON.DEDUCT_ROLLBACK,
-        actor: "system",
-      });
-    } catch {
-      // Restore failure during rollback must not block the rollback
-      // of other items. Manual intervention required for this item.
-    }
-  }
-}

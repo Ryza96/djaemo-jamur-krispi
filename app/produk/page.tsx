@@ -13,7 +13,9 @@ async function getProducts(): Promise<Product[]> {
   try {
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/products`, { cache: "no-store" });
+    const res = await fetch(`${baseUrl}/api/products`, {
+      next: { revalidate: 60 },
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return Array.isArray(data) ? data : [];

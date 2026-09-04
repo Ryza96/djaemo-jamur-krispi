@@ -98,8 +98,8 @@ export async function expireStaleOrder(
 ): Promise<void> {
   try {
     await fetch(
-      `/api/orders/${encodeURIComponent(orderId)}/expire?token=${encodeURIComponent(accessToken)}`,
-      { method: "POST" },
+      `/api/orders/${encodeURIComponent(orderId)}/expire`,
+      { method: "POST", headers: { "X-Order-Token": accessToken } },
     );
   } catch {
     // best effort; order tetap diabaikan untuk resume
@@ -116,8 +116,8 @@ export async function decideResume(): Promise<ResumeDecision> {
   let res: Response;
   try {
     res = await fetch(
-      `/api/orders/${encodeURIComponent(identity.orderId)}?token=${encodeURIComponent(identity.accessToken)}`,
-      { cache: "no-store" },
+      `/api/orders/${encodeURIComponent(identity.orderId)}`,
+      { cache: "no-store", headers: { "X-Order-Token": identity.accessToken } },
     );
   } catch {
     return { kind: "none" };
