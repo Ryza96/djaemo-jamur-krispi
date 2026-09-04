@@ -129,8 +129,8 @@ export const InventoryService = {
       const result = await InventoryRepository.deductStockBatch(
         batchItems,
         MOVEMENT_REASON.ORDER_CONFIRM,
-        orderId,
-        `order:${orderId}:confirm`,
+        order.id,
+        `order:${order.id}:confirm`,
       );
 
       if (!result.success) {
@@ -234,8 +234,8 @@ export const InventoryService = {
       const result = await InventoryRepository.deductStockBatch(
         batchItems,
         MOVEMENT_REASON.RESUME_FULFILLMENT,
-        orderId,
-        `order:${orderId}:resume`,
+        order.id,
+        `order:${order.id}:resume`,
       );
 
       if (!result.success) {
