@@ -4,7 +4,7 @@ import { normalizeWaTarget } from "@/lib/notifications/channels/whatsapp/normali
 import { createFonnteProvider } from "@/lib/notifications/channels/whatsapp/fonnte-provider";
 import { formatAdminWaMessage } from "@/lib/notifications/channels/whatsapp/admin-formatter";
 import { combineAddress, mapMidtransStatus } from "./payment/mapper";
-import { extractWeightGrams } from "./payment/checkoutValidation";
+import { extractWeightGrams } from "./shipping/constants";
 import { verifyMidtransSignature } from "./payment/verifySignature";
 import { isTransactionSettledAtMidtrans } from "./payment/midtrans-verify";
 import { AuditLogService } from "./audit-log.service";

@@ -1,6 +1,7 @@
 import type { ShippingRate, ShippingAddress } from "@/types/checkout";
 import type { CartItem } from "@/types";
 import { mapBiteshipRates, type RawRate } from "./mapper";
+import { DEFAULT_COURIERS, extractWeightGrams } from "./constants";
 
 interface GetRatesParams {
   address: ShippingAddress;
@@ -73,12 +74,6 @@ function getOriginCoords(): { lat: number; lng: number } {
   };
 }
 
-function extractWeight(product: { weight?: string }): number {
-  return Number(product.weight?.replace(/[^0-9.]/g, "")) || 100;
-}
-
-const DEFAULT_COURIERS = "jne,jnt,sicepat,anteraja,idexpress";
-
 export async function getRates(
   params: GetRatesParams,
   signal?: AbortSignal,
@@ -112,7 +107,7 @@ export async function getRates(
         name: item.product.name,
         quantity: item.quantity,
         value: item.product.final_price * item.quantity,
-        weight: extractWeight(item.product),
+        weight: extractWeightGrams(item.product.weight),
       })),
       couriers: DEFAULT_COURIERS,
     };

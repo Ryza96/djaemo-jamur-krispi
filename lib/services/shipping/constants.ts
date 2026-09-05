@@ -1,8 +1,15 @@
 export const BITESHIP_API_BASE_URL = "https://api.biteship.com/v1";
 
-export const DEFAULT_COURIERS = "jne,jnt,sicepat,anteraja,idexpress";
+export const DEFAULT_COURIERS = "jne";
 
 export const DEFAULT_ITEM_WEIGHT_GRAMS = 100;
+
+export function extractWeightGrams(weight: string | undefined): number {
+  const value = Number(weight?.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(value) && value > 0
+    ? Math.round(value)
+    : DEFAULT_ITEM_WEIGHT_GRAMS;
+}
 
 export function getBiteshipApiKey(): string {
   const key = process.env.BITESHIP_API_KEY;

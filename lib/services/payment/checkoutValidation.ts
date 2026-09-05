@@ -5,7 +5,12 @@ import {
   InventoryService,
   type ValidateOrderStockResult,
 } from "@/lib/services/inventory.service";
-import { BITESHIP_API_BASE_URL, DEFAULT_COURIERS, getBiteshipApiKey } from "@/lib/services/shipping/constants";
+import {
+  BITESHIP_API_BASE_URL,
+  DEFAULT_COURIERS,
+  extractWeightGrams,
+  getBiteshipApiKey,
+} from "@/lib/services/shipping/constants";
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
 import { VoucherRepository } from "@/lib/repositories";
 import type { CreatePaymentRequest } from "./types";
@@ -63,11 +68,6 @@ interface BiteshipRatesResponse {
 }
 
 const REQUEST_TIMEOUT_MS = 10000;
-
-export function extractWeightGrams(weight: string | undefined): number {
-  const value = Number(weight?.replace(/[^0-9.]/g, ""));
-  return Number.isFinite(value) && value > 0 ? Math.round(value) : 100;
-}
 
 function normalizeText(value: string): string {
   return value.trim().toLowerCase();
