@@ -73,25 +73,49 @@ function delay(ms: number): Promise<void> {
 }
 
 function describeMidtransError(error: unknown): string {
-  const err = error as {
-    message?: string;
-    ApiResponse?: unknown;
-    httpStatusCode?: number;
-    response?: { data?: unknown; status?: number };
-    rawHttpClientData?: unknown;
-  };
-  return JSON.stringify(
-    {
-      message: err.message ?? String(error),
-      apiResponse: err.ApiResponse ?? null,
-      httpStatusCode: err.httpStatusCode ?? null,
-      responseData: err.response?.data ?? null,
-      responseStatus: err.response?.status ?? null,
-      rawHttpClientData: err.rawHttpClientData ?? null,
-    },
-    null,
-    2,
-  );
+  try {
+    const err = error as {
+      message?: string;
+      ApiResponse?: unknown;
+      httpStatusCode?: number;
+      response?: { data?: unknown; status?: number };
+      rawHttpClientData?: unknown;
+    };
+
+    const safeReplacer = (_key: string, value: unknown): unknown => {
+      if (typeof value === "object" && value !== null) {
+        if (value instanceof Error) {
+          return { message: value.message, name: value.name };
+        }
+        const skip = [
+          "request",
+          "httpAgent",
+          "httpsAgent",
+          "socket",
+          "connection",
+        ];
+        if (skip.includes(_key)) return "[Circular/Heavy]";
+      }
+      if (typeof value === "function") return "[Function]";
+      if (typeof value === "symbol") return "[Symbol]";
+      return value;
+    };
+
+    return JSON.stringify(
+      {
+        message: err.message ?? String(error),
+        apiResponse: err.ApiResponse ?? null,
+        httpStatusCode: err.httpStatusCode ?? null,
+        responseData: err.response?.data ?? null,
+        responseStatus: err.response?.status ?? null,
+        rawHttpClientData: err.rawHttpClientData ?? null,
+      },
+      safeReplacer,
+      2,
+    );
+  } catch (serializeError) {
+    return `Failed to serialize error: ${String(error)} | serializeError: ${String(serializeError)} | keys: ${Object.keys(error as Record<string, unknown> || {}).join(",")}`;
+  }
 }
 
 export async function createSnapTransaction(
