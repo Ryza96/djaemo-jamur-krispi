@@ -72,6 +72,28 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function describeMidtransError(error: unknown): string {
+  const err = error as {
+    message?: string;
+    ApiResponse?: unknown;
+    httpStatusCode?: number;
+    response?: { data?: unknown; status?: number };
+    rawHttpClientData?: unknown;
+  };
+  return JSON.stringify(
+    {
+      message: err.message ?? String(error),
+      apiResponse: err.ApiResponse ?? null,
+      httpStatusCode: err.httpStatusCode ?? null,
+      responseData: err.response?.data ?? null,
+      responseStatus: err.response?.status ?? null,
+      rawHttpClientData: err.rawHttpClientData ?? null,
+    },
+    null,
+    2,
+  );
+}
+
 export async function createSnapTransaction(
   params: SnapParams,
 ): Promise<SnapResult> {
@@ -126,6 +148,11 @@ export async function createSnapTransaction(
       return { token, redirectUrl: redirect_url };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
+
+      console.error(
+        `[Midtrans CreateTransaction] Attempt ${attempt} failed:`,
+        describeMidtransError(err),
+      );
 
       if (attempt < MAX_RETRIES) {
         await AuditLogService.logPaymentEvent({
