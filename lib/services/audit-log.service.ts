@@ -5,6 +5,7 @@ const AUDIT_EVENTS = {
   ORDER_CREATED: "order.created",
   SNAP_CREATED: "snap.created",
   SNAP_RETRY: "snap.retry",
+  SNAP_ERROR_DEBUG: "snap.error_debug",
   CALLBACK_RECEIVED: "callback.received",
   STATUS_CHANGED: "status.changed",
   CALLBACK_SKIPPED: "callback.skipped",

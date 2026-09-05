@@ -154,6 +154,14 @@ export async function createSnapTransaction(
         describeMidtransError(err),
       );
 
+      await AuditLogService.logPaymentEvent({
+        orderId,
+        event: AuditLogService.events.SNAP_ERROR_DEBUG,
+        fromStatus: PAYMENT_STATUS.UNPAID,
+        toStatus: PAYMENT_STATUS.UNPAID,
+        metadata: { attempt, detail: describeMidtransError(err) },
+      });
+
       if (attempt < MAX_RETRIES) {
         await AuditLogService.logPaymentEvent({
           orderId,
