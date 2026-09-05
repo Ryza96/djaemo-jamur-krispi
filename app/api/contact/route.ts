@@ -90,7 +90,7 @@ async function sendContactEmail(name: string, email: string, phone: string | nul
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      from: "onboarding@resend.dev",
+      from: "hello@mail.djaemo.com",
       to: [CONTACT_EMAIL],
       subject: `Pesan Baru dari Form Kontak - ${safeSubject}`,
       html,

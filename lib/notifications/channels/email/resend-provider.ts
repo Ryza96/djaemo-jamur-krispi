@@ -14,7 +14,7 @@ export function createResendProvider(apiKey: string): EmailProvider {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          from: "onboarding@resend.dev",
+          from: "noreply@mail.djaemo.com",
           to: [message.to],
           subject: message.subject,
           html: message.html,
