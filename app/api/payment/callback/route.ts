@@ -14,34 +14,41 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 },
-    );
+    return NextResponse.json({
+      received: true,
+      processed: false,
+      reason: "Invalid JSON body",
+    });
   }
 
   if (!body.order_id || !body.signature_key) {
-    return NextResponse.json(
-      { error: "Missing required fields: order_id, signature_key" },
-      { status: 400 },
-    );
+    return NextResponse.json({
+      received: true,
+      processed: false,
+      reason: "Missing required fields: order_id, signature_key",
+    });
   }
 
   try {
     const result = await OrderService.processCallback(body);
-    const httpStatus = result.success ? 200 : 422;
 
     if (result.success && result.paymentStatus === PAYMENT_STATUS.PAID) {
       revalidatePath("/");
     }
 
-    return NextResponse.json(result, { status: httpStatus });
+    return NextResponse.json({
+      received: true,
+      processed: result.success,
+      reason: result.message,
+      result,
+    });
   } catch (error) {
     console.error("Callback processing error:", error);
     return NextResponse.json(
       {
-        success: false,
-        message:
+        received: true,
+        processed: false,
+        reason:
           error instanceof Error
             ? error.message
             : "Internal server error",
