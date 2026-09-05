@@ -4,6 +4,10 @@ import type { MidtransNotification } from "@/lib/services/payment/types";
 import { PAYMENT_STATUS } from "@/lib/services/payment/types";
 import { OrderService } from "@/lib/services/order.service";
 
+export async function GET() {
+  return NextResponse.json({ status: "ok" });
+}
+
 export async function POST(request: Request) {
   let body: MidtransNotification;
 
