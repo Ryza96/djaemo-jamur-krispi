@@ -12,6 +12,7 @@ import {
   getBiteshipApiKey,
 } from "@/lib/services/shipping/constants";
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
+import { computeFlatRateFallback } from "@/lib/services/shipping/flatRateFallback";
 import { VoucherRepository } from "@/lib/repositories";
 import type { CreatePaymentRequest } from "./types";
 
@@ -87,23 +88,51 @@ function assertClientTotalsMatch(
   }
 }
 
+interface RatesResult {
+  pricing: RawBiteshipRate[];
+  isFallback: boolean;
+}
+
+function flatRatePricing(
+  province: string,
+  city: string,
+): RawBiteshipRate[] {
+  const fee = computeFlatRateFallback(province, city);
+  return [
+    {
+      courier_code: fee.courier,
+      courier_service_code: fee.service,
+      price: fee.price,
+    },
+  ];
+}
+
 async function fetchBiteshipRates(params: {
   request: CreatePaymentRequest;
   items: ValidatedCheckoutItem[];
-}): Promise<RawBiteshipRate[]> {
+}): Promise<RatesResult> {
   const { request, items } = params;
-  const destination =
-    request.shippingAddress.latitude && request.shippingAddress.longitude
-      ? {
-          lat: request.shippingAddress.latitude,
-          lng: request.shippingAddress.longitude,
-        }
-      : getDestinationCoords(request.shippingAddress.city);
+  const address = request.shippingAddress;
+  const areaId = address.areaId?.trim();
 
-  if (!destination) {
-    throw new CheckoutValidationError(
-      `Kota "${request.shippingAddress.city}" belum didukung.`,
-    );
+  const hasClientCoords =
+    Number.isFinite(address.latitude) &&
+    Number.isFinite(address.longitude) &&
+    !!address.latitude &&
+    !!address.longitude;
+  const coords = hasClientCoords
+    ? { lat: address.latitude!, lng: address.longitude! }
+    : getDestinationCoords(address.city);
+
+  // Jaring pengaman: area id & koordinat tidak ter-resolve → flat rate
+  // deterministik (idem dengan nilai yang ditampilkan client).
+  const fallback = (): RatesResult => ({
+    pricing: flatRatePricing(address.province, address.city),
+    isFallback: true,
+  });
+
+  if (!areaId && !coords) {
+    return fallback();
   }
 
   const apiKey = getBiteshipApiKey();
@@ -112,6 +141,25 @@ async function fetchBiteshipRates(params: {
     lat: Number(process.env.NEXT_PUBLIC_ORIGIN_LAT) || -7.32893,
     lng: Number(process.env.NEXT_PUBLIC_ORIGIN_LNG) || 111.92316,
   };
+
+  const payload: Record<string, unknown> = {
+    origin_latitude: origin.lat,
+    origin_longitude: origin.lng,
+    items: items.map((item) => ({
+      name: item.product.name,
+      quantity: item.quantity,
+      value: item.product.price * item.quantity,
+      weight: extractWeightGrams(item.product.weight),
+    })),
+    couriers: DEFAULT_COURIERS,
+  };
+
+  if (areaId) {
+    payload.destination_area_id = areaId;
+  } else {
+    payload.destination_latitude = coords!.lat;
+    payload.destination_longitude = coords!.lng;
+  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -123,40 +171,28 @@ async function fetchBiteshipRates(params: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        origin_latitude: origin.lat,
-        origin_longitude: origin.lng,
-        destination_latitude: destination.lat,
-        destination_longitude: destination.lng,
-        items: items.map((item) => ({
-          name: item.product.name,
-          quantity: item.quantity,
-          value: item.product.price * item.quantity,
-          weight: extractWeightGrams(item.product.weight),
-        })),
-        couriers: DEFAULT_COURIERS,
-      }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
 
     const body = (await response.json()) as BiteshipRatesResponse;
 
     if (!response.ok) {
-      const message =
-        body.message ||
-        body.error ||
-        "Gagal memvalidasi ongkos kirim.";
-      throw new CheckoutValidationError(message, response.status);
+      console.error(
+        "Biteship rates error:",
+        response.status,
+        body.message || body.error,
+      );
+      return fallback();
     }
 
-    return Array.isArray(body.pricing) ? body.pricing : [];
+    return {
+      pricing: Array.isArray(body.pricing) ? body.pricing : [],
+      isFallback: false,
+    };
   } catch (error) {
-    if (error instanceof CheckoutValidationError) throw error;
-    const message =
-      error instanceof Error && error.name === "AbortError"
-        ? "Timeout saat memvalidasi ongkos kirim."
-        : "Gagal memvalidasi ongkos kirim.";
-    throw new CheckoutValidationError(message, 502);
+    console.error("Biteship rates error:", error);
+    return fallback();
   } finally {
     clearTimeout(timeoutId);
   }
@@ -167,9 +203,25 @@ async function validateShippingFee(params: {
   items: ValidatedCheckoutItem[];
 }): Promise<number> {
   const { request, items } = params;
-  const rates = await fetchBiteshipRates({ request, items });
+  const { pricing: rates, isFallback } = await fetchBiteshipRates({
+    request,
+    items,
+  });
   const selectedCourier = normalizeText(request.shippingCourier);
   const selectedService = normalizeText(request.shippingService);
+
+  if (isFallback) {
+    // Rate fallback bersifat deterministik; pastikan metode yang dipilih
+    // client sesuai dengan rate fallback yang disajikan.
+    const fee = computeFlatRateFallback(
+      request.shippingAddress.province,
+      request.shippingAddress.city,
+    );
+    if (selectedCourier !== fee.courier || selectedService !== fee.service) {
+      throw new CheckoutValidationError("Metode pengiriman tidak valid.");
+    }
+    return fee.price;
+  }
 
   const matchingRate = rates.find((rate) => {
     const courier = String(rate.courier_code || rate.courier || rate.company || "");

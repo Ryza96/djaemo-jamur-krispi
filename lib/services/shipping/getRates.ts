@@ -11,6 +11,7 @@ interface GetRatesParams {
 interface RatesResponse {
   rates: ShippingRate[];
   error?: string;
+  isFallback?: boolean;
 }
 
 const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
@@ -85,24 +86,16 @@ export async function getRates(
   }
 
   const origin = getOriginCoords();
+  const areaId = address.areaId?.trim();
   const coords =
     address.latitude && address.longitude
       ? { lat: address.latitude, lng: address.longitude }
       : getDestinationCoords(address.city);
 
-  if (!coords) {
-    return {
-      rates: [],
-      error: `Kota "${address.city}" belum didukung. Hubungi kami untuk bantuan.`,
-    };
-  }
-
   try {
     const body: Record<string, unknown> = {
       origin_latitude: origin.lat,
       origin_longitude: origin.lng,
-      destination_latitude: coords.lat,
-      destination_longitude: coords.lng,
       items: items.map((item) => ({
         name: item.product.name,
         quantity: item.quantity,
@@ -110,7 +103,17 @@ export async function getRates(
         weight: extractWeightGrams(item.product.weight),
       })),
       couriers: DEFAULT_COURIERS,
+      province: address.province,
+      city: address.city,
     };
+
+    if (areaId) {
+      body.destination_area_id = areaId;
+    } else if (coords) {
+      body.destination_latitude = coords.lat;
+      body.destination_longitude = coords.lng;
+    }
+    // Tanpa areaId maupun coords, /api/biteship-rates memakai flat-rate fallback.
 
     const res = await fetch("/api/biteship-rates", {
       method: "POST",
@@ -126,7 +129,10 @@ export async function getRates(
     }
 
     const raw: RawRate[] = data.rates ?? [];
-    const rates = mapBiteshipRates(raw);
+    const isFallback = data.isFallback === true;
+    const rates = mapBiteshipRates(raw).map((rate) =>
+      isFallback ? { ...rate, isFallback: true } : rate,
+    );
 
     if (rates.length === 0) {
       return {
@@ -135,7 +141,7 @@ export async function getRates(
       };
     }
 
-    return { rates };
+    return { rates, isFallback };
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Gagal terhubung ke server";

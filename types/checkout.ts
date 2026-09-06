@@ -30,6 +30,7 @@ export interface ShippingRate {
   service: string;
   price: number;
   etd: string | null;
+  isFallback?: boolean;
 }
 
 export interface CheckoutResume {

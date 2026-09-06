@@ -60,7 +60,10 @@ const createPaymentSchema = z.object({
         .string()
         .min(1, "Kode pos wajib diisi")
         .regex(/^[0-9]{5}$/, "Kode pos harus 5 digit angka"),
-      areaId: z.string().optional(),
+      areaId: z.string().max(50).optional(),
+      districtName: z.string().max(100).optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
     }),
   shippingCourier: z.string().min(1, "Kurir wajib dipilih"),
   shippingService: z.string().min(1, "Layanan kurir wajib dipilih"),

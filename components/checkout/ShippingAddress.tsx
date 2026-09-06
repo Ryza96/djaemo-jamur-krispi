@@ -111,6 +111,41 @@ export function ShippingAddress() {
     [districtId],
   );
 
+  interface ResolvedArea {
+    areaId: string;
+    latitude?: number;
+    longitude?: number;
+  }
+
+  async function resolveBiteshipArea(params: {
+    province: string;
+    city: string;
+    district: string;
+    kelurahan?: string;
+    postalCode?: string;
+  }): Promise<ResolvedArea | null> {
+    try {
+      const res = await fetch("/api/address/resolve-area", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.success && typeof data.areaId === "string" && data.areaId) {
+        return {
+          areaId: data.areaId,
+          latitude: typeof data.latitude === "number" ? data.latitude : undefined,
+          longitude:
+            typeof data.longitude === "number" ? data.longitude : undefined,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   function handleProvinceSelect(_value: string, option?: AreaOption) {
     if (option) {
       const pid = option.areaId || "";
@@ -158,36 +193,72 @@ export function ShippingAddress() {
     }
   }
 
-  function handleDistrictSelect(_value: string, option?: AreaOption) {
-    if (option) {
-      const did = option.areaId || "";
-      const coords = getDestinationCoords(shippingAddress.city);
+  async function handleDistrictSelect(_value: string, option?: AreaOption) {
+    if (!option) return;
+    const did = option.areaId || "";
+    const coords = getDestinationCoords(shippingAddress.city);
+    dispatch({
+      type: "SET_SHIPPING_ADDRESS",
+      payload: {
+        kecamatan: option.name,
+        kelurahan: "",
+        districtName: option.name,
+        postalCode: "",
+        areaId: "",
+        latitude: coords?.lat ?? shippingAddress.latitude,
+        longitude: coords?.lng ?? shippingAddress.longitude,
+      },
+    });
+    setDistrictId(did);
+    resetShipping();
+
+    const resolved = await resolveBiteshipArea({
+      province: shippingAddress.province,
+      city: shippingAddress.city,
+      district: option.name,
+      postalCode: shippingAddress.postalCode || undefined,
+    });
+    if (resolved) {
       dispatch({
         type: "SET_SHIPPING_ADDRESS",
         payload: {
-          kecamatan: option.name,
-          kelurahan: "",
-          districtName: option.name,
-          postalCode: "",
-          areaId: "",
-          latitude: coords?.lat ?? shippingAddress.latitude,
-          longitude: coords?.lng ?? shippingAddress.longitude,
+          areaId: resolved.areaId,
+          latitude: resolved.latitude ?? coords?.lat ?? shippingAddress.latitude,
+          longitude:
+            resolved.longitude ?? coords?.lng ?? shippingAddress.longitude,
         },
       });
-      setDistrictId(did);
-      resetShipping();
     }
   }
 
-  function handleVillageSelect(_value: string, option?: AreaOption) {
-    if (option) {
-      dispatch({
-        type: "SET_SHIPPING_ADDRESS",
-        payload: {
-          kelurahan: option.name,
-          postalCode: option.postalCode || "",
-        },
+  async function handleVillageSelect(_value: string, option?: AreaOption) {
+    if (!option) return;
+    dispatch({
+      type: "SET_SHIPPING_ADDRESS",
+      payload: {
+        kelurahan: option.name,
+        postalCode: option.postalCode || "",
+      },
+    });
+
+    if (!shippingAddress.areaId) {
+      const resolved = await resolveBiteshipArea({
+        province: shippingAddress.province,
+        city: shippingAddress.city,
+        district: shippingAddress.kecamatan,
+        kelurahan: option.name,
+        postalCode: option.postalCode || shippingAddress.postalCode || undefined,
       });
+      if (resolved) {
+        dispatch({
+          type: "SET_SHIPPING_ADDRESS",
+          payload: {
+            areaId: resolved.areaId,
+            latitude: resolved.latitude ?? shippingAddress.latitude,
+            longitude: resolved.longitude ?? shippingAddress.longitude,
+          },
+        });
+      }
     }
   }
 

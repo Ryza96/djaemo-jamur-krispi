@@ -47,17 +47,22 @@ export function ShippingMethodList({
       >
         {selected ? (
           <span className="flex items-center justify-between gap-2">
-            <span className="min-w-0">
-              <span className="font-semibold text-ink">
-                {selected.courier}
-              </span>{" "}
-              <span className="text-muted">{selected.service}</span>
-              {selected.etd && (
-                <span className="ml-1 text-xs text-muted">
-                  ({formatEtd(selected.etd)})
-                </span>
-              )}
-            </span>
+<span className="min-w-0">
+                <span className="font-semibold text-ink">
+                  {selected.courier}
+                </span>{" "}
+                <span className="text-muted">{selected.service}</span>
+                {selected.etd && (
+                  <span className="ml-1 text-xs text-muted">
+                    ({formatEtd(selected.etd)})
+                  </span>
+                )}
+                {selected.isFallback && (
+                  <span className="ml-1 text-xs italic text-muted">
+                    (Estimasi ongkir)
+                  </span>
+                )}
+              </span>
             <span className="whitespace-nowrap font-semibold text-gold">
               {formatPrice(selected.price)}
             </span>
@@ -100,6 +105,11 @@ export function ShippingMethodList({
                 {rate.etd && (
                   <span className="ml-1 text-xs text-muted">
                     ({formatEtd(rate.etd)})
+                  </span>
+                )}
+                {rate.isFallback && (
+                  <span className="ml-1 text-xs italic text-muted">
+                    (Estimasi ongkir)
                   </span>
                 )}
               </span>
