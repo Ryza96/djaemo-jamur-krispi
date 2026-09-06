@@ -1,6 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { escapeHtml } from "@/lib/utils";
+import { SITE } from "@/lib/constants";
 import { getClientIdentifier } from "@/lib/services/admin-login-rate-limit.service";
 import {
   isContactRateLimited,
@@ -77,17 +78,21 @@ async function sendContactEmail(name: string, email: string, phone: string | nul
         <tr><td style="padding:8px 0;font-weight:bold">Telepon</td><td style="padding:8px 0">${safePhone}</td></tr>
         <tr><td style="padding:8px 0;font-weight:bold;vertical-align:top">Pesan</td><td style="padding:8px 0;white-space:pre-wrap">${safeMessage}</td></tr>
       </table>
-      <p style="font-size:12px;color:#999;margin-top:24px">Dikirim melalui form kontak di djaemojamurkrispi.com</p>
+      <div style="font-size:12px;color:#999;margin-top:24px;border-top:1px solid #e5e7eb;padding-top:12px">
+        <p>Pesan ini dikirim melalui formulir kontak di djaemojamurkrispi.com — ${SITE.name}.</p>
+        <p>${SITE.address} • ${SITE.phone}</p>
+      </div>
     </div>
   `;
 
-  const text = `Pesan Baru dari Form Kontak\n\nNama: ${name}\nEmail: ${email}\nTelepon: ${phone || "-"}\nPesan:\n${message}\n\n---\nDikirim melalui form kontak di djaemojamurkrispi.com`;
+  const text = `Pesan Baru dari Form Kontak\n\nNama: ${name}\nEmail: ${email}\nTelepon: ${phone || "-"}\nPesan:\n${message}\n\n---\nPesan ini dikirim melalui formulir kontak di djaemojamurkrispi.com — ${SITE.name}, ${SITE.address}, ${SITE.phone}`;
 
   try {
     const response = await sendResendEmail(
       {
         from: "hello@mail.djaemo.com",
         to: [CONTACT_EMAIL],
+        reply_to: email,
         subject: `Pesan Baru dari Form Kontak - ${safeSubject}`,
         html,
         text,

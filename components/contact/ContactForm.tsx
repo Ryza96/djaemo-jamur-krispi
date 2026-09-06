@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
 export function ContactForm() {
@@ -29,12 +30,15 @@ export function ContactForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Terjadi kesalahan");
 
-      showToast("Pesan berhasil dikirim. Terima kasih!", "success");
+      showToast("Pesan Anda berhasil dikirim, kami akan segera merespons.", "success");
       setName("");
+      setEmail("");
+      setPhone("");
       setMessage("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Contact submit error:", err);
-      showToast(err.message || "Gagal mengirim pesan", "error");
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      showToast(errorMessage || "Gagal mengirim pesan", "error");
     } finally {
       setLoading(false);
     }
@@ -90,9 +94,16 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-teal-deep transition-transform hover:bg-gold-bright hover:scale-[1.02] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-teal-deep transition-transform hover:bg-gold-bright hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Mengirim..." : "Kirim Pesan"}
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Mengirim...
+            </>
+          ) : (
+            "Kirim Pesan"
+          )}
         </button>
         <button
           type="button"
