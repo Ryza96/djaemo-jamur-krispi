@@ -59,7 +59,7 @@ export function ShippingMethodList({
                 )}
                 {selected.isFallback && (
                   <span className="ml-1 text-xs italic text-muted">
-                    (Estimasi ongkir)
+                    (Estimasi — dapat disesuaikan admin)
                   </span>
                 )}
               </span>
@@ -109,7 +109,7 @@ export function ShippingMethodList({
                 )}
                 {rate.isFallback && (
                   <span className="ml-1 text-xs italic text-muted">
-                    (Estimasi ongkir)
+                    (Estimasi — dapat disesuaikan admin)
                   </span>
                 )}
               </span>

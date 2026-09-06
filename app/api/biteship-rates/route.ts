@@ -33,15 +33,24 @@ interface BiteshipPricingItem {
   shipment_duration_range?: unknown;
 }
 
-function buildFallback(province: unknown, city: unknown) {
+function buildFallback(province: unknown, city: unknown, weightGrams = 0) {
   const fee = computeFlatRateFallback(
     typeof province === "string" ? province : "",
     typeof city === "string" ? city : "",
+    weightGrams,
   );
   const rates: RateSandbox[] = [
     { courier: fee.courier, service: fee.service, price: fee.price, etd: null },
   ];
   return NextResponse.json({ success: true, rates, isFallback: true });
+}
+
+function sumItemWeightsGrams(itemsUnknown: unknown): number {
+  if (!Array.isArray(itemsUnknown)) return 0;
+  return itemsUnknown.reduce((total, item) => {
+    const weight = Number((item as { weight?: unknown }).weight);
+    return total + (Number.isFinite(weight) && weight > 0 ? weight : 0);
+  }, 0);
 }
 
 export const POST = async (request: Request) => {
@@ -99,14 +108,14 @@ export const POST = async (request: Request) => {
     // Tujuan tidak ter-resolve (tidak ada area id maupun koordinat) →
     // jaring pengaman flat rate supaya checkout tidak mentok.
     if (!hasDestArea && !hasDestCoords) {
-      return buildFallback(province, city);
+      return buildFallback(province, city, sumItemWeightsGrams(items));
     }
 
     if (!BITESHIP_API_KEY) {
       console.error(
         "Biteship rates: BITESHIP_API_KEY tidak dikonfigurasi — memakai flat-rate fallback."
       );
-      return buildFallback(province, city);
+      return buildFallback(province, city, sumItemWeightsGrams(items));
     }
 
     const courierList = couriers
@@ -137,6 +146,11 @@ export const POST = async (request: Request) => {
         weight: Number(incoming.weight ?? 0),
       };
     });
+
+    const normalizedWeightGrams = normalizedItems.reduce(
+      (total, item) => total + (Number.isFinite(item.weight) ? item.weight : 0),
+      0,
+    );
 
     const payload: Record<string, unknown> = {
       items: normalizedItems,
@@ -173,7 +187,7 @@ export const POST = async (request: Request) => {
       });
     } catch (error) {
       console.error("Biteship rates error:", error);
-      return buildFallback(province, city);
+      return buildFallback(province, city, normalizedWeightGrams);
     } finally {
       clearTimeout(timeoutId);
     }
@@ -190,7 +204,7 @@ export const POST = async (request: Request) => {
 
     if (!response.ok || !responseData || !Array.isArray(responseData.pricing)) {
       console.error("Biteship rates error:", response.status, responseData);
-      return buildFallback(province, city);
+      return buildFallback(province, city, normalizedWeightGrams);
     }
 
     const pricing = responseData.pricing as BiteshipPricingItem[];

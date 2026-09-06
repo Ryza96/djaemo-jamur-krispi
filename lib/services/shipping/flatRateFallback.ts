@@ -41,9 +41,10 @@ export function getFlatRateDestination(
 export function computeFlatRateFallback(
   province: string,
   city: string,
+  weightGrams = 0,
 ): FallbackShippingFee {
   const destination = getFlatRateDestination(province, city);
   const service: ShippingService = "Reguler";
-  const price = calculateFlatRateShipping(destination, service);
+  const price = calculateFlatRateShipping(destination, service, weightGrams);
   return { courier: "jne", service: "reg", price };
 }

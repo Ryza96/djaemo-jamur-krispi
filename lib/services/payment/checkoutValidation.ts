@@ -96,8 +96,9 @@ interface RatesResult {
 function flatRatePricing(
   province: string,
   city: string,
+  weightGrams = 0,
 ): RawBiteshipRate[] {
-  const fee = computeFlatRateFallback(province, city);
+  const fee = computeFlatRateFallback(province, city, weightGrams);
   return [
     {
       courier_code: fee.courier,
@@ -110,8 +111,9 @@ function flatRatePricing(
 async function fetchBiteshipRates(params: {
   request: CreatePaymentRequest;
   items: ValidatedCheckoutItem[];
+  totalWeightGrams: number;
 }): Promise<RatesResult> {
-  const { request, items } = params;
+  const { request, items, totalWeightGrams } = params;
   const address = request.shippingAddress;
   const areaId = address.areaId?.trim();
 
@@ -127,7 +129,7 @@ async function fetchBiteshipRates(params: {
   // Jaring pengaman: area id & koordinat tidak ter-resolve → flat rate
   // deterministik (idem dengan nilai yang ditampilkan client).
   const fallback = (): RatesResult => ({
-    pricing: flatRatePricing(address.province, address.city),
+    pricing: flatRatePricing(address.province, address.city, totalWeightGrams),
     isFallback: true,
   });
 
@@ -203,9 +205,17 @@ async function validateShippingFee(params: {
   items: ValidatedCheckoutItem[];
 }): Promise<number> {
   const { request, items } = params;
+  // Berat total harus dikalkulasi dari source yang sama dengan yang
+  // ditampilkan client (berat product di item keranjang), supaya fee
+  // fallback deterministik dan cocok client ↔ server.
+  const totalWeightGrams = items.reduce(
+    (total, item) => total + extractWeightGrams(item.product.weight),
+    0,
+  );
   const { pricing: rates, isFallback } = await fetchBiteshipRates({
     request,
     items,
+    totalWeightGrams,
   });
   const selectedCourier = normalizeText(request.shippingCourier);
   const selectedService = normalizeText(request.shippingService);
@@ -216,6 +226,7 @@ async function validateShippingFee(params: {
     const fee = computeFlatRateFallback(
       request.shippingAddress.province,
       request.shippingAddress.city,
+      totalWeightGrams,
     );
     if (selectedCourier !== fee.courier || selectedService !== fee.service) {
       throw new CheckoutValidationError("Metode pengiriman tidak valid.");
