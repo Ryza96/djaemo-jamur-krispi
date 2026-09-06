@@ -16,7 +16,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       .order("created_at", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Error fetching order timeline:", error);
+      return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi." }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, data: data ?? [] });

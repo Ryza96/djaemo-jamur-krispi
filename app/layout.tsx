@@ -30,7 +30,7 @@ function baseUrl(): string {
   if (configured && configured.trim() !== "") {
     return configured.replace(/\/+$/, "");
   }
-  return "https://jamurkrispi.com";
+  return "https://djaemo.com";
 }
 
 export const metadata: Metadata = {

@@ -152,14 +152,16 @@ export const POST = async (request: Request) => {
       .select()
       .single();
     if (error) {
-      return NextResponse.json({ error: error.message, details: error.details ?? null }, { status: 500 });
+      console.error("POST /api/products insert error:", error);
+      return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi." }, { status: 500 });
     }
 
     if (images.length > 0) {
       const rows = images.map((image_url) => ({ product_id: product.id, image_url }));
       const { error: imgErr } = await supabase.from("product_images").insert(rows);
       if (imgErr) {
-        return NextResponse.json({ error: imgErr.message, details: imgErr.details, hint: imgErr.hint, code: imgErr.code }, { status: 500 });
+        console.error("POST /api/products image insert error:", imgErr);
+        return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi." }, { status: 500 });
       }
     }
 

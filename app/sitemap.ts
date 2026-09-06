@@ -8,7 +8,7 @@ function baseUrl(): string {
   if (configured && configured.trim() !== "") {
     return configured.replace(/\/+$/, "");
   }
-  return "https://jamurkrispi.com";
+  return "https://djaemo.com";
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

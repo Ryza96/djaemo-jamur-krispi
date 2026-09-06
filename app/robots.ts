@@ -5,7 +5,7 @@ function baseUrl(): string {
   if (configured && configured.trim() !== "") {
     return configured.replace(/\/+$/, "");
   }
-  return "https://jamurkrispi.com";
+  return "https://djaemo.com";
 }
 
 export default function robots(): MetadataRoute.Robots {

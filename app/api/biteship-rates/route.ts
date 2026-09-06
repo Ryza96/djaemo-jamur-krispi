@@ -95,15 +95,9 @@ export const POST = async (request: Request) => {
     }
 
     if (!response.ok) {
-      const apiError =
-        responseData?.message ||
-        responseData?.error ||
-        responseData?.errors?.[0] ||
-        responseText ||
-        `Biteship sandbox returned status ${response.status}`;
-
+      console.error("Biteship API error:", response.status, responseData);
       return NextResponse.json(
-        { error: apiError },
+        { error: 'Gagal mengambil data ongkos kirim. Silakan coba lagi.' },
         { status: response.status }
       );
     }
@@ -111,8 +105,9 @@ export const POST = async (request: Request) => {
     const pricing = responseData?.pricing;
 
     if (!Array.isArray(pricing)) {
+      console.error("Biteship unexpected response format:", responseData);
       return NextResponse.json(
-        { error: 'Unexpected response format from Biteship sandbox.', raw: responseData },
+        { error: 'Gagal mengambil data ongkos kirim. Silakan coba lagi.' },
         { status: 502 }
       );
     }
@@ -129,10 +124,11 @@ export const POST = async (request: Request) => {
 
     return NextResponse.json({ success: true, rates: cleanedRates });
   } catch (error: any) {
+    console.error("Biteship rates error:", error);
     const message =
       error?.name === 'AbortError'
-        ? 'Request timeout saat menghubungi Biteship sandbox.'
-        : error?.message || 'Terjadi kesalahan internal server.';
+        ? 'Request timeout saat menghubungi Biteship.'
+        : 'Terjadi kesalahan saat mengambil ongkos kirim.';
 
     return NextResponse.json(
       { error: message },

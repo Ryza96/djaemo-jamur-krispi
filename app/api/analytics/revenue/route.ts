@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     if (error) {
       console.error('Supabase error:', error);
       return NextResponse.json(
-        { error: error.message },
+        { error: "Terjadi kesalahan server. Silakan coba lagi." },
         { status: 500 }
       );
     }

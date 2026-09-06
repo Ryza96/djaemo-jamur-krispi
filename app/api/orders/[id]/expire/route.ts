@@ -26,7 +26,8 @@ export async function POST(
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Error verifying order token:", error);
+      return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi." }, { status: 500 });
     }
 
     if (!order) {
