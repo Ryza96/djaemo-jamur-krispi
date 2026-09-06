@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { escapeHtml } from "@/lib/utils";
 import { getClientIdentifier } from "@/lib/services/admin-login-rate-limit.service";
@@ -6,8 +6,8 @@ import {
   isContactRateLimited,
   recordContactAttempt,
 } from "@/lib/services/contact-rate-limit.service";
+import { sendResendEmail } from "@/lib/notifications/channels/email/resend-fetch";
 
-const RESEND_API_URL = "https://api.resend.com/emails";
 const CONTACT_EMAIL = "nguntaljamor@gmail.com";
 
 const MAX_NAME_LENGTH = 100;
@@ -83,24 +83,24 @@ async function sendContactEmail(name: string, email: string, phone: string | nul
 
   const text = `Pesan Baru dari Form Kontak\n\nNama: ${name}\nEmail: ${email}\nTelepon: ${phone || "-"}\nPesan:\n${message}\n\n---\nDikirim melalui form kontak di djaemojamurkrispi.com`;
 
-  const response = await fetch(RESEND_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      from: "hello@mail.djaemo.com",
-      to: [CONTACT_EMAIL],
-      subject: `Pesan Baru dari Form Kontak - ${safeSubject}`,
-      html,
-      text,
-    }),
-  });
+  try {
+    const response = await sendResendEmail(
+      {
+        from: "hello@mail.djaemo.com",
+        to: [CONTACT_EMAIL],
+        subject: `Pesan Baru dari Form Kontak - ${safeSubject}`,
+        html,
+        text,
+      },
+      apiKey,
+    );
 
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    console.error("[Contact] Resend email error:", response.status, body?.message || body?.error || "Unknown error");
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      console.error("[Contact] Resend email error:", response.status, body?.message || body?.error || "Unknown error");
+    }
+  } catch (error) {
+    console.error("[Contact] Resend email error:", error instanceof Error ? error.message : error);
   }
 }
 
@@ -159,16 +159,21 @@ export async function POST(request: Request) {
       {
         error: isMissingTable
           ? "Gagal menyimpan pesan: tabel kontak belum dibuat di Supabase. Jalankan SQL di database/schema.sql dan restart server."
-          : `Gagal menyimpan pesan: ${error.message || JSON.stringify(error)}`,
+          : "Terjadi kesalahan server. Silakan coba lagi.",
       },
       { status: 500 }
     );
   }
 
-  // 5. Send the notification email (fire-and-forget).
-  sendContactEmail(name, email, phone || null, message).catch((err) => {
-    console.error("Failed to send contact email:", err);
-  });
+  // 5. Send the notification email after the response is flushed. `after` runs
+  //    post-response (on Vercel it is backed by waitUntil, so the invocation
+  //    stays alive), guaranteeing the fetch to Resend — including its retries —
+  //    completes before the serverless runtime can freeze the function.
+  after(() =>
+    sendContactEmail(name, email, phone || null, message).catch((err) => {
+      console.error("Failed to send contact email:", err);
+    }),
+  );
 
   return NextResponse.json({ success: true, data });
 }
