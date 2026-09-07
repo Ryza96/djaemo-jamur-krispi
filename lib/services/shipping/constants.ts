@@ -1,6 +1,6 @@
 export const BITESHIP_API_BASE_URL = "https://api.biteship.com/v1";
 
-export const DEFAULT_COURIERS = "jne";
+export const DEFAULT_COURIERS = "jne,jnt,sicepat";
 
 export const DEFAULT_ITEM_WEIGHT_GRAMS = 100;
 

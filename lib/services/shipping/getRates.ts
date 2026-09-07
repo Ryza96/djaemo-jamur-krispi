@@ -87,10 +87,14 @@ export async function getRates(
 
   const origin = getOriginCoords();
   const areaId = address.areaId?.trim();
-  const coords =
-    address.latitude && address.longitude
+  const clientCoords =
+    Number.isFinite(address.latitude) &&
+    Number.isFinite(address.longitude) &&
+    !!address.latitude &&
+    !!address.longitude
       ? { lat: address.latitude, lng: address.longitude }
-      : getDestinationCoords(address.city);
+      : null;
+  const cityCoords = clientCoords ? null : getDestinationCoords(address.city);
 
   try {
     const body: Record<string, unknown> = {
@@ -107,13 +111,17 @@ export async function getRates(
       city: address.city,
     };
 
-    if (areaId) {
+    // Prioritas rates: koordinat klien → area id → lookup kota lama → fallback.
+    if (clientCoords) {
+      body.destination_latitude = clientCoords.lat;
+      body.destination_longitude = clientCoords.lng;
+    } else if (areaId) {
       body.destination_area_id = areaId;
-    } else if (coords) {
-      body.destination_latitude = coords.lat;
-      body.destination_longitude = coords.lng;
+    } else if (cityCoords) {
+      body.destination_latitude = cityCoords.lat;
+      body.destination_longitude = cityCoords.lng;
     }
-    // Tanpa areaId maupun coords, /api/biteship-rates memakai flat-rate fallback.
+    // Tanpa koordinat maupun areaId, /api/biteship-rates memakai flat-rate fallback.
 
     const res = await fetch("/api/biteship-rates", {
       method: "POST",

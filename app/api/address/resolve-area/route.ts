@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { resolveBiteshipArea } from "@/lib/services/address/biteshipArea";
+import { geocodeAddress } from "@/lib/services/address/geocoding";
 
 const resolveAreaSchema = z.object({
   province: z.string().optional(),
@@ -35,7 +36,25 @@ export async function POST(request: Request) {
         message: "Area tidak dapat di-resolve",
       });
     }
-    return NextResponse.json({ success: true, ...area });
+
+    const body: Record<string, unknown> = {
+      success: true,
+      areaId: area.areaId,
+      postalCode: area.postalCode,
+    };
+
+    if (area.latitude && area.longitude) {
+      body.latitude = area.latitude;
+      body.longitude = area.longitude;
+    } else {
+      const coords = await geocodeAddress(parsed.data);
+      if (coords) {
+        body.latitude = coords.lat;
+        body.longitude = coords.lng;
+      }
+    }
+
+    return NextResponse.json(body);
   } catch {
     return NextResponse.json({
       success: false,

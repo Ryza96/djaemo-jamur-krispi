@@ -122,9 +122,10 @@ async function fetchBiteshipRates(params: {
     Number.isFinite(address.longitude) &&
     !!address.latitude &&
     !!address.longitude;
-  const coords = hasClientCoords
+  const clientCoords = hasClientCoords
     ? { lat: address.latitude!, lng: address.longitude! }
-    : getDestinationCoords(address.city);
+    : null;
+  const cityCoords = clientCoords ? null : getDestinationCoords(address.city);
 
   // Jaring pengaman: area id & koordinat tidak ter-resolve → flat rate
   // deterministik (idem dengan nilai yang ditampilkan client).
@@ -133,7 +134,7 @@ async function fetchBiteshipRates(params: {
     isFallback: true,
   });
 
-  if (!areaId && !coords) {
+  if (!clientCoords && !areaId && !cityCoords) {
     return fallback();
   }
 
@@ -156,11 +157,14 @@ async function fetchBiteshipRates(params: {
     couriers: DEFAULT_COURIERS,
   };
 
-  if (areaId) {
+  if (clientCoords) {
+    payload.destination_latitude = clientCoords.lat;
+    payload.destination_longitude = clientCoords.lng;
+  } else if (areaId) {
     payload.destination_area_id = areaId;
   } else {
-    payload.destination_latitude = coords!.lat;
-    payload.destination_longitude = coords!.lng;
+    payload.destination_latitude = cityCoords!.lat;
+    payload.destination_longitude = cityCoords!.lng;
   }
 
   const controller = new AbortController();
