@@ -77,3 +77,6 @@ server.log
 
 # Design reference folder (keep local, not versioned)
 reff_desain/
+
+# Local ops scripts (one-off data cleanup/debug, never commit)
+.tmp-ops/
