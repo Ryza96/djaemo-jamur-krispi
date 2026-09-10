@@ -62,6 +62,11 @@ export function ShippingMethodList({
                     (Estimasi — dapat disesuaikan admin)
                   </span>
                 )}
+                {selected.codAvailable && (
+                  <span className="ml-1.5 inline-block rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    COD
+                  </span>
+                )}
               </span>
             <span className="whitespace-nowrap font-semibold text-gold">
               {formatPrice(selected.price)}
@@ -110,6 +115,11 @@ export function ShippingMethodList({
                 {rate.isFallback && (
                   <span className="ml-1 text-xs italic text-muted">
                     (Estimasi — dapat disesuaikan admin)
+                  </span>
+                )}
+                {rate.codAvailable && (
+                  <span className="ml-1.5 inline-block rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    COD
                   </span>
                 )}
               </span>

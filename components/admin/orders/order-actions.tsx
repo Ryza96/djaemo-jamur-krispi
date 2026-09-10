@@ -17,6 +17,7 @@ interface OrderActionsProps {
   orderId: string;
   fulfillmentStatus: string | null;
   paymentStatus: string | null;
+  paymentMethod: string | null;
   shipmentId: string | null;
   waybillId: string | null;
   totalAmount: number | null;
@@ -27,10 +28,14 @@ function getActions(
   status: string | null,
   paymentStatus: string | null,
   shipmentId: string | null,
+  isCod: boolean,
 ): ActionDef[] {
   switch (status?.toLowerCase()) {
     case "new":
-      if (paymentStatus !== "paid") {
+      // COD order tetap boleh dikonfirmasi/diproses sebelum lunas — server
+      // (FulfillmentService) mengizinkan; payment diterima saat pengantaran.
+      // Non-COD tetap wajib payment_status = "paid" sebelum diproses.
+      if (!(isCod || paymentStatus === "paid")) {
         return [
           {
             action: "cancel",
@@ -305,6 +310,7 @@ export function OrderActions({
   orderId,
   fulfillmentStatus,
   paymentStatus,
+  paymentMethod,
   shipmentId,
   waybillId,
   totalAmount,
@@ -319,7 +325,8 @@ export function OrderActions({
 
   const loading = actionsLoading || shipmentLoading;
 
-  const actions = getActions(fulfillmentStatus, paymentStatus, shipmentId);
+  const isCod = (paymentMethod ?? "").toLowerCase() === "cod";
+  const actions = getActions(fulfillmentStatus, paymentStatus, shipmentId, isCod);
 
   const handleConfirm = async () => {
     if (!confirmAction) return;

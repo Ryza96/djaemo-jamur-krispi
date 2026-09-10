@@ -7,6 +7,9 @@ const DEFAULT_FILTERS: OrderFilters = {
   search: "",
   payment_status: "",
   fulfillment_status: "",
+  payment_method: "",
+  date_from: "",
+  date_to: "",
   sort: "newest",
   page: 1,
   limit: 20,
@@ -42,6 +45,9 @@ export function useOrders() {
       if (f.search) params.set("search", f.search);
       if (f.payment_status) params.set("payment_status", f.payment_status);
       if (f.fulfillment_status) params.set("fulfillment_status", f.fulfillment_status);
+      if (f.payment_method) params.set("payment_method", f.payment_method);
+      if (f.date_from) params.set("date_from", f.date_from);
+      if (f.date_to) params.set("date_to", f.date_to);
 
       const res = await fetch(`/api/admin/orders?${params.toString()}`, {
         signal: controller.signal,

@@ -10,6 +10,7 @@ export interface OrderListItem {
   payment_status: string | null;
   fulfillment_status: string | null;
   payment_method: string | null;
+  courier_company?: string | null;
   waybill_id: string | null;
   created_at: string;
 }
@@ -27,6 +28,9 @@ export interface OrderFilters {
   search: string;
   payment_status: string;
   fulfillment_status: string;
+  payment_method: string;
+  date_from: string;
+  date_to: string;
   sort: "newest" | "oldest";
   page: number;
   limit: number;
@@ -39,11 +43,18 @@ export const SORT_OPTIONS = [
 
 export const PAYMENT_STATUS_OPTIONS = [
   { value: "", label: "All Payments" },
+  { value: "cod_awaiting_confirmation", label: "COD Menunggu Konfirmasi" },
   { value: "unpaid", label: "Unpaid" },
   { value: "pending", label: "Pending" },
   { value: "paid", label: "Paid" },
   { value: "failed", label: "Failed" },
   { value: "expired", label: "Expired" },
+] as const;
+
+export const PAYMENT_METHOD_OPTIONS = [
+  { value: "", label: "All Methods" },
+  { value: "cod", label: "COD" },
+  { value: "online", label: "Online" },
 ] as const;
 
 export const FULFILLMENT_STATUS_OPTIONS = [

@@ -24,6 +24,7 @@ import { CustomerSection } from "./customer-section";
 import { ItemsSection } from "./items-section";
 import { OrderTimeline } from "./order-timeline";
 import { OrderActions } from "./order-actions";
+import { CodConfirm } from "./cod-confirm";
 import { AdminNotes } from "./admin-notes";
 import { TrackingPanel } from "./tracking-panel";
 import { ActionBanner } from "./action-banner";
@@ -202,6 +203,7 @@ export function OrderDetailClient({ id }: DetailClientProps) {
         <ActionBanner
           fulfillmentStatus={order.fulfillment_status}
           paymentStatus={order.payment_status}
+          paymentMethod={order.payment_method}
           items={items.map((item) => ({
             id: item.id,
             product_name: item.product_name,
@@ -268,11 +270,22 @@ export function OrderDetailClient({ id }: DetailClientProps) {
           {/* Right Column (~30%) — Sticky */}
           <div className="space-y-6 lg:col-span-2 xl:col-auto">
             <div className="sticky top-6 space-y-6">
+              {/* COD Lunas Confirmation */}
+              {(order.payment_method ?? "").toLowerCase() === "cod" && (
+                <CodConfirm
+                  orderId={order.order_id}
+                  paymentStatus={order.payment_status}
+                  totalAmount={order.total_amount ?? null}
+                  onSuccess={handleOrderUpdate}
+                />
+              )}
+
               {/* Order Actions */}
               <OrderActions
                 orderId={order.order_id}
                 fulfillmentStatus={order.fulfillment_status}
                 paymentStatus={order.payment_status}
+                paymentMethod={order.payment_method}
                 shipmentId={order.shipment_id}
                 waybillId={order.waybill_id}
                 totalAmount={order.total_amount ?? null}

@@ -7,6 +7,7 @@ export const paginatedOrdersSchema = z.object({
   search: z.string().optional(),
   payment_status: z.string().optional(),
   fulfillment_status: z.enum(validFulfillmentStatuses).optional(),
+  payment_method: z.enum(["cod", "online"]).optional(),
   date_from: z.string().optional(),
   date_to: z.string().optional(),
   sort: z.enum(["newest", "oldest"]).optional().default("newest"),
@@ -15,7 +16,7 @@ export const paginatedOrdersSchema = z.object({
 });
 
 export const adminActionSchema = z.object({
-  action: z.enum(["confirm", "pack", "ship", "complete", "cancel"]),
+  action: z.enum(["confirm", "pack", "ship", "complete", "cancel", "confirm_cod"]),
   waybill_id: z.string().optional(),
   cancellation_reason: z.string().optional(),
 });

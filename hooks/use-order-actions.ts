@@ -15,7 +15,13 @@ export function useOrderActions() {
   const execute = useCallback(
     async (
       orderId: string,
-      action: "confirm" | "pack" | "ship" | "complete" | "cancel",
+      action:
+        | "confirm"
+        | "pack"
+        | "ship"
+        | "complete"
+        | "cancel"
+        | "confirm_cod",
       extra?: { waybill_id?: string; cancellation_reason?: string },
     ): Promise<ActionResult> => {
       abortRef.current?.abort();

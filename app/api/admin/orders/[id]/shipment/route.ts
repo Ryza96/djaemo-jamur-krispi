@@ -26,7 +26,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       );
     }
 
-    if (order.payment_status !== "paid") {
+    const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+    if (!isCod && order.payment_status !== "paid") {
       return NextResponse.json(
         { error: "Payment must be completed before creating a shipment." },
         { status: 422 },

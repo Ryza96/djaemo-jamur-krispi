@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
 import { OrderRepository } from "@/lib/repositories";
 import { FulfillmentService } from "@/lib/services/fulfillment.service";
+import { OrderService } from "@/lib/services/order.service";
 import { adminActionSchema } from "@/lib/validation/admin-orders";
 import { requireAdmin } from "@/lib/services/admin-auth.service";
 
@@ -50,6 +51,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         break;
       case "cancel":
         result = await FulfillmentService.cancel(id, cancellation_reason);
+        break;
+      case "confirm_cod":
+        result = await OrderService.confirmCodPayment(id);
         break;
     }
 

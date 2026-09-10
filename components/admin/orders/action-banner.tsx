@@ -12,21 +12,26 @@ interface BannerItem {
 interface ActionBannerProps {
   fulfillmentStatus: string | null;
   paymentStatus: string | null;
+  paymentMethod: string | null;
   items: BannerItem[];
   onResume?: () => void;
   loading?: boolean;
 }
 
-export function ActionBanner({ fulfillmentStatus, paymentStatus, items, onResume, loading }: ActionBannerProps) {
+export function ActionBanner({ fulfillmentStatus, paymentStatus, paymentMethod, items, onResume, loading }: ActionBannerProps) {
   if (fulfillmentStatus !== "waiting_for_restock") return null;
+
+  const isCod = (paymentMethod ?? "").toLowerCase() === "cod";
 
   const itemsWithShortage = items.map((item) => ({
     ...item,
     shortage: Math.max(0, item.quantity - item.stock),
   }));
 
+  // COD tidak wajib lunas sebelum fulfillment dilanjutkan — payment diterima
+  // di tempat saat pengantaran. Non-COD tetap wajib payment_status = "paid".
   const canResume =
-    paymentStatus === "paid" &&
+    (isCod || paymentStatus === "paid") &&
     itemsWithShortage.every((item) => item.stock >= item.quantity);
 
   return (
@@ -87,7 +92,7 @@ export function ActionBanner({ fulfillmentStatus, paymentStatus, items, onResume
         </button>
         {!canResume && (
           <span className="text-xs text-slate-400">
-            {paymentStatus !== "paid"
+            {!isCod && paymentStatus !== "paid"
               ? "Pembayaran belum selesai."
               : "Stok belum mencukupi untuk melanjutkan."}
           </span>

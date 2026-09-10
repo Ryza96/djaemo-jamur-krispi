@@ -13,6 +13,7 @@ export async function GET(request: Request) {
       search: searchParams.get("search") || undefined,
       payment_status: searchParams.get("payment_status") || undefined,
       fulfillment_status: searchParams.get("fulfillment_status") || undefined,
+      payment_method: searchParams.get("payment_method") || undefined,
       date_from: searchParams.get("date_from") || undefined,
       date_to: searchParams.get("date_to") || undefined,
       sort: searchParams.get("sort") || undefined,

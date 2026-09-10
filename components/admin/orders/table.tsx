@@ -29,7 +29,8 @@ export function OrderTable({ orders, onView }: OrderTableProps) {
         <AdminTableHeader>Total</AdminTableHeader>
         <AdminTableHeader>Payment</AdminTableHeader>
         <AdminTableHeader>Fulfillment</AdminTableHeader>
-        <AdminTableHeader>Courier</AdminTableHeader>
+        <AdminTableHeader>Kurir</AdminTableHeader>
+        <AdminTableHeader>Waybill</AdminTableHeader>
         <AdminTableHeader>Action</AdminTableHeader>
       </AdminTableHead>
       <AdminTableBody>
@@ -73,6 +74,11 @@ export function OrderTable({ orders, onView }: OrderTableProps) {
               >
                 {fulfillmentStatusLabel(order.fulfillment_status)}
               </AdminBadge>
+            </AdminTableCell>
+            <AdminTableCell className="font-medium uppercase tracking-wide text-slate-700">
+              {order.courier_company || (
+                <span className="normal-case text-slate-400">-</span>
+              )}
             </AdminTableCell>
             <AdminTableCell className="text-slate-600">
               {order.waybill_id ? (

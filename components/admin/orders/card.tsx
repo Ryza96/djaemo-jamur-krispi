@@ -68,10 +68,23 @@ export function OrderCard({ order, onView }: OrderCardProps) {
           </AdminBadge>
         </div>
       </div>
-      {order.waybill_id && (
+      {(order.courier_company || order.waybill_id) && (
         <div className="mt-3 text-xs text-slate-500">
-          Waybill:{" "}
-          <span className="font-mono text-slate-700">{order.waybill_id}</span>
+          {order.courier_company && (
+            <>
+              Kurir:{" "}
+              <span className="font-medium uppercase tracking-wide text-slate-700">
+                {order.courier_company}
+              </span>
+              {order.waybill_id && <span className="mx-1">·</span>}
+            </>
+          )}
+          {order.waybill_id && (
+            <>
+              Waybill:{" "}
+              <span className="font-mono text-slate-700">{order.waybill_id}</span>
+            </>
+          )}
         </div>
       )}
     </AdminSection>

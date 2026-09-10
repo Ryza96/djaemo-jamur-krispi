@@ -107,6 +107,8 @@ const createPaymentSchema = z.object({
     }),
   subtotal: z.number().nonnegative(),
   voucherCode: z.string().max(50).optional(),
+  paymentMethod: z.enum(["online", "cod"]).optional().default("online"),
+  codFee: z.number().nonnegative().optional().default(0),
 });
 
 function extractErrorMessage(error: unknown): string {
@@ -148,6 +150,7 @@ export async function POST(request: Request) {
     shippingAddress,
     shippingCourier,
     shippingService,
+    paymentMethod,
   } = parsed.data;
 
   try {
@@ -222,6 +225,22 @@ export async function POST(request: Request) {
     );
 
     const totalAmount = validated.totalAmount;
+
+    // COD: tidak ada Midtrans Snap sama sekali. Order dibuat dengan
+    // payment_method=cod & status unpaid; pelunasan terjadi saat kurir
+    // antar, dan admin mengonfirmasi lewat aksi "confirm_cod".
+    if (paymentMethod === "cod") {
+      return NextResponse.json({
+        success: true,
+        orderId,
+        accessToken,
+        totalAmount,
+        paymentMethod: "cod",
+        message:
+          "Pesanan dibuat. Silakan siapkan dana tunai saat kurir sampai di tempat Anda.",
+      });
+    }
+
     const fullAddress = combineAddress(shippingAddress);
 
     const snapItems = validated.items.map((item) => ({

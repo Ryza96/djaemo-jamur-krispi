@@ -18,6 +18,7 @@ interface OrderItem {
 interface OrderData {
   order_id: string;
   payment_status?: string;
+  payment_method?: string | null;
   fulfillment_status?: string;
   total_amount: number;
   created_at: string;
@@ -58,9 +59,27 @@ const FULFILLMENT_PREPARING = [
 function resolveCustomerView(
   paymentRaw: string | undefined,
   fulfillmentRaw: string | undefined,
+  paymentMethod?: string | null,
 ): CustomerStatus {
   const payment = (paymentRaw ?? "").toLowerCase();
   const fulfillment = (fulfillmentRaw ?? "").toLowerCase();
+  const isCod = (paymentMethod ?? "").toLowerCase() === "cod";
+
+  // COD orders: payment is always pending/unpaid, so derive the view from
+  // fulfillment progress only (matches checkout/success: codDelivered,
+  // codShipped, else = confirmed).
+  if (isCod) {
+    if (fulfillment === "cancelled") return "cancelled";
+    if (fulfillment === "delivered") return "delivered";
+    if (
+      fulfillment === "waybill_created" ||
+      fulfillment === "picked_up" ||
+      fulfillment === "shipped"
+    ) {
+      return "shipped";
+    }
+    return "confirmed";
+  }
 
   switch (payment) {
     case "failed":
@@ -162,14 +181,6 @@ const TIMELINE_STEPS: {
   { key: "preparing", label: "Pesanan Sedang Disiapkan" },
   { key: "shipped", label: "Pesanan Telah Dikirim" },
   { key: "delivered", label: "Pesanan Telah Diterima" },
-];
-
-const TIMELINE_ORDER: CustomerStatus[] = [
-  "paid",
-  "confirmed",
-  "preparing",
-  "shipped",
-  "delivered",
 ];
 
 // Customer statuses for which a waybill (resi) becomes relevant. These map
@@ -296,12 +307,33 @@ export default function TrackOrderDetailPage() {
   const customerStatus = resolveCustomerView(
     order.payment_status,
     order.fulfillment_status,
+    order.payment_method,
   );
   const statusConfig = STATUS_CONFIG[customerStatus];
 
+  // COD orders: override status card with COD-aware messages (matching
+  // the pattern used on /checkout/success).
+  const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+  const codStatusCard = isCod
+    ? customerStatus === "delivered"
+      ? { icon: "📦", title: "Pesanan Selesai", message: "Paket telah diterima. Terima kasih atas pembelian Anda di D'Jaemo Jamur Krispi.", color: "text-teal-deep" }
+      : customerStatus === "shipped"
+        ? { icon: "🚚", title: "Pesanan Dalam Pengiriman", message: "Paket sedang dalam perjalanan. Pembayaran dilakukan tunai saat kurir sampai di tempat Anda.", color: "text-gold" }
+        : { icon: "✅", title: "Pesanan Dikonfirmasi", message: "Pesanan Anda telah kami terima dan sedang diproses. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.", color: "text-teal-deep" }
+    : null;
+
+  const displayStatus = codStatusCard ?? statusConfig;
+
   // Payment-pending / failed / expired / cancelled views are outside the
   // fulfillment timeline; indexOf returns -1 and the timeline is hidden.
-  const currentTimelineIndex = TIMELINE_ORDER.indexOf(customerStatus);
+  // COD orders never "pay online", so the "Pembayaran Berhasil" step is
+  // omitted from their timeline.
+  const timelineSteps = isCod
+    ? TIMELINE_STEPS.filter((step) => step.key !== "paid")
+    : TIMELINE_STEPS;
+  const currentTimelineIndex = timelineSteps.findIndex(
+    (step) => step.key === customerStatus,
+  );
 
   const CARD_STYLES: Partial<Record<CustomerStatus, string>> = {
     awaiting_payment: "border-gold/30 bg-gold/10",
@@ -334,11 +366,11 @@ export default function TrackOrderDetailPage() {
         <div
           className={`rounded-3xl border p-6 text-center shadow-sm sm:p-8 ${cardStyle}`}
         >
-          <div className={`text-4xl ${statusConfig.color}`}>{statusConfig.icon}</div>
-          <h2 className={`mt-3 text-xl font-semibold ${statusConfig.color}`}>
-            {statusConfig.title}
+          <div className={`text-4xl ${displayStatus.color}`}>{displayStatus.icon}</div>
+          <h2 className={`mt-3 text-xl font-semibold ${displayStatus.color}`}>
+            {displayStatus.title}
           </h2>
-          <p className="mt-2 text-sm text-muted">{statusConfig.message}</p>
+          <p className="mt-2 text-sm text-muted">{displayStatus.message}</p>
         </div>
 
         {WAYBILL_RELEVANT_STATUSES.includes(customerStatus) && order.waybill_id && (
@@ -396,7 +428,7 @@ export default function TrackOrderDetailPage() {
           <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-semibold text-foreground">Status Pesanan</h3>
             <div className="space-y-0">
-              {TIMELINE_STEPS.map((step, idx) => {
+              {timelineSteps.map((step, idx) => {
                 const isCompleted = idx < currentTimelineIndex;
                 const isCurrent = idx === currentTimelineIndex;
 
@@ -412,7 +444,7 @@ export default function TrackOrderDetailPage() {
                       >
                         {isCompleted ? "✓" : idx + 1}
                       </div>
-                      {idx < TIMELINE_STEPS.length - 1 && (
+                      {idx < timelineSteps.length - 1 && (
                         <div
                           className={`w-0.5 flex-1 ${
                             isCompleted ? "bg-teal-deep" : "bg-ink/20"
@@ -429,7 +461,7 @@ export default function TrackOrderDetailPage() {
                         {step.label}
                       </p>
                       {isCurrent && (
-                        <p className="mt-0.5 text-xs text-muted">{statusConfig.message}</p>
+                        <p className="mt-0.5 text-xs text-muted">{displayStatus.message}</p>
                       )}
                     </div>
                   </div>

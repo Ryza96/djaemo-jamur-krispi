@@ -84,6 +84,7 @@ export interface InsertOrderParams {
   notes: string | null;
   payment_status: PaymentStatus;
   fulfillment_status: FulfillmentStatus;
+  payment_method?: string | null;
   destination_area_id?: string | null;
   voucher_code?: string | null;
   voucher_discount_percent?: number | null;
@@ -104,6 +105,7 @@ export interface PaginatedOrdersParams {
   search?: string;
   payment_status?: string;
   fulfillment_status?: string;
+  payment_method?: "cod" | "online";
   date_from?: string;
   date_to?: string;
   sort: "newest" | "oldest";
@@ -123,6 +125,7 @@ export interface PaginatedOrderItem {
   payment_status: string | null;
   fulfillment_status: string | null;
   payment_method: string | null;
+  courier_company: string | null;
   waybill_id: string | null;
   created_at: string;
 }
@@ -170,7 +173,7 @@ export const OrderRepository = {
   },
 
   async getPaginated(params: PaginatedOrdersParams): Promise<PaginatedOrdersResult> {
-    const { search, payment_status, fulfillment_status, date_from, date_to, sort, page, limit } = params;
+    const { search, payment_status, fulfillment_status, payment_method, date_from, date_to, sort, page, limit } = params;
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -178,7 +181,7 @@ export const OrderRepository = {
     let countQuery = supabase.from("orders").select("id", { count: "exact", head: true });
     let dataQuery = supabase
       .from("orders")
-      .select("id, order_id, customer_id, customer_name, customer_email, total_amount, subtotal, shipping_fee, payment_status, fulfillment_status, payment_method, waybill_id, created_at");
+      .select("id, order_id, customer_id, customer_name, customer_email, total_amount, subtotal, shipping_fee, payment_status, fulfillment_status, payment_method, courier_company, waybill_id, created_at");
 
     if (search) {
       const searchFilter = `%${search}%`;
@@ -201,14 +204,27 @@ export const OrderRepository = {
       dataQuery = dataQuery.eq("fulfillment_status", fulfillment_status);
     }
 
+    if (payment_method === "cod") {
+      countQuery = countQuery.eq("payment_method", "cod");
+      dataQuery = dataQuery.eq("payment_method", "cod");
+    } else if (payment_method === "online") {
+      // Order online dibuat dengan payment_method NULL dan baru terisi saat
+      // callback Midtrans (mis. "qris", "bank_transfer", "gopay"). Filter
+      // "online" berarti semua yang BUKAN COD.
+      countQuery = countQuery.neq("payment_method", "cod");
+      dataQuery = dataQuery.neq("payment_method", "cod");
+    }
+
     if (date_from) {
-      countQuery = countQuery.gte("created_at", date_from);
-      dataQuery = dataQuery.gte("created_at", date_from);
+      const fromISO = `${date_from}T00:00:00+07:00`;
+      countQuery = countQuery.gte("created_at", fromISO);
+      dataQuery = dataQuery.gte("created_at", fromISO);
     }
 
     if (date_to) {
-      countQuery = countQuery.lte("created_at", date_to);
-      dataQuery = dataQuery.lte("created_at", date_to);
+      const toISO = `${date_to}T23:59:59.999999+07:00`;
+      countQuery = countQuery.lte("created_at", toISO);
+      dataQuery = dataQuery.lte("created_at", toISO);
     }
 
     const { count: total, error: countError } = await countQuery;
@@ -232,6 +248,7 @@ export const OrderRepository = {
       payment_status: item.payment_status as string | null,
       fulfillment_status: item.fulfillment_status as string | null,
       payment_method: item.payment_method as string | null,
+      courier_company: item.courier_company as string | null,
       waybill_id: item.waybill_id as string | null,
       created_at: item.created_at as string,
     }));
@@ -334,6 +351,7 @@ export const OrderRepository = {
         postal_code: params.postal_code,
         notes: params.notes,
         payment_status: params.payment_status,
+        payment_method: params.payment_method ?? null,
         fulfillment_status: params.fulfillment_status,
         destination_area_id: params.destination_area_id ?? null,
         voucher_code: params.voucher_code ?? null,

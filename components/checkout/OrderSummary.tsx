@@ -11,7 +11,8 @@ export function OrderSummary() {
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const voucherDiscount = state.voucher?.discount ?? 0;
-  const total = subtotal + shippingFee - voucherDiscount;
+  const codFee = state.paymentMethod === "cod" ? state.codFee : 0;
+  const total = subtotal + shippingFee - voucherDiscount + codFee;
 
   return (
     <div className="space-y-3">
@@ -72,6 +73,12 @@ export function OrderSummary() {
               <div className="flex items-center justify-between text-teal-mid">
                 <span>Diskon Voucher ({state.voucher?.code})</span>
                 <span>-{formatPrice(voucherDiscount)}</span>
+              </div>
+            )}
+            {codFee > 0 && (
+              <div className="flex items-center justify-between text-emerald-700">
+                <span>Biaya COD ({state.shippingCourier})</span>
+                <span>{formatPrice(codFee)}</span>
               </div>
             )}
             <div className="border-t border-ink/10 pt-2 text-lg font-semibold text-ink flex items-center justify-between">

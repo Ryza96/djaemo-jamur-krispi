@@ -12,6 +12,8 @@ export function paymentStatusLabel(status: string | null): string {
       return "Belum Dibayar";
     case "expired":
       return "Kedaluwarsa";
+    case "cod_awaiting_confirmation":
+      return "COD Menunggu Konfirmasi";
     default:
       return status ?? "-";
   }
@@ -72,6 +74,7 @@ export function paymentBadgeVariant(
     case "paid":
       return "success";
     case "pending":
+    case "cod_awaiting_confirmation":
       return "warning";
     case "failed":
       return "danger";

@@ -143,7 +143,10 @@ export const OrderService = {
 
     const fullAddress = combineAddress(params.shippingAddress);
     const discountAmount = voucherInfo?.discountAmount ?? 0;
-    const totalAmount = params.subtotal + params.shippingFee - discountAmount;
+    const paymentMethod = params.paymentMethod === "cod" ? "cod" : "online";
+    const codFee = paymentMethod === "cod" ? (params.codFee ?? 0) : 0;
+    const totalAmount =
+      params.subtotal + params.shippingFee + codFee - discountAmount;
 
     const customer = await CustomerRepository.upsert({
       email: params.customerInfo.email,
@@ -170,6 +173,8 @@ export const OrderService = {
       postal_code: params.shippingAddress.postalCode,
       notes: params.customerInfo.notes || null,
       payment_status: PAYMENT_STATUS.UNPAID,
+      payment_method:
+        paymentMethod === "cod" ? paymentMethod : null,
       fulfillment_status: initialFulfillmentStatus,
       destination_area_id: params.shippingAddress.areaId ?? null,
       voucher_code: voucherInfo?.voucherCode ?? null,
@@ -258,13 +263,213 @@ export const OrderService = {
     });
   },
 
+  /**
+   * Mark a COD order as awaiting manual confirmation once the courier
+   * reports the parcel as delivered. Never touches an order that is not
+   * COD; a no-op success is returned for non-COD orders so the caller can
+   * treat it as a normal delivered event.
+   */
+  async markCodDeliveredAwaitingConfirmation(
+    orderId: string,
+    waybillId?: string | null,
+  ): Promise<{ success: boolean; message: string }> {
+    const order = await OrderRepository.findByOrderId(orderId);
+    if (!order) {
+      return { success: false, message: "ORDER_NOT_FOUND" };
+    }
+
+    if ((order.payment_method ?? "").toLowerCase() !== "cod") {
+      return { success: true, message: "NOT_COD_ORDER" };
+    }
+
+    const currentStatus = (order.payment_status ?? "").toLowerCase();
+
+    if (currentStatus === PAYMENT_STATUS.PAID) {
+      return { success: true, message: "ORDER_ALREADY_PAID" };
+    }
+
+    if (
+      currentStatus !== PAYMENT_STATUS.UNPAID &&
+      currentStatus !== PAYMENT_STATUS.PENDING
+    ) {
+      return {
+        success: true,
+        message: `ALREADY_COD_AWAITING (current: ${currentStatus})`,
+      };
+    }
+
+    const updatedRows = await OrderRepository.updatePaymentByOrderIdIf(
+      orderId,
+      { payment_status: PAYMENT_STATUS.CODAWAITING_CONFIRMATION },
+      [PAYMENT_STATUS.UNPAID, PAYMENT_STATUS.PENDING],
+    );
+
+    if (updatedRows === 0) {
+      return { success: false, message: "ORDER_CONCURRENT_MODIFICATION" };
+    }
+
+    await AuditLogService.logPaymentEvent({
+      orderId,
+      event: AuditLogService.events.SHIPPING_DELIVERED_COD_PENDING,
+      fromStatus: currentStatus,
+      toStatus: PAYMENT_STATUS.CODAWAITING_CONFIRMATION,
+      metadata: {
+        waybill_id: waybillId ?? null,
+        note: "Paket diterima kurir; menunggu konfirmasi admin untuk pelunasan COD.",
+      },
+    });
+
+    return {
+      success: true,
+      message: `Order ${orderId} menunggu konfirmasi pelunasan COD.`,
+    };
+  },
+
+  /**
+   * Admin confirms that a COD order has been paid in person (lunas saat
+   * pengantaran). Used by the admin order-action route. Only valid for
+   * orders with payment_method = cod whose courier has already reported
+   * delivery (`cod_awaiting_confirmation`); an order that is still
+   * UNPAID/not yet delivered must NOT be markable as paid, and never for
+   * Midtrans-paid orders.
+   */
+  async confirmCodPayment(orderId: string): Promise<{
+    success: boolean;
+    previousStatus: PaymentStatus | null;
+    newStatus: PaymentStatus;
+    message: string;
+  }> {
+    const order = await OrderRepository.findByOrderId(orderId);
+    if (!order) {
+      return {
+        success: false,
+        previousStatus: null,
+        newStatus: PAYMENT_STATUS.PAID,
+        message: "ORDER_NOT_FOUND",
+      };
+    }
+
+    const currentStatus = (order.payment_status ?? "").toLowerCase() as PaymentStatus;
+
+    if ((order.payment_method ?? "").toLowerCase() !== "cod") {
+      return {
+        success: false,
+        previousStatus: currentStatus,
+        newStatus: PAYMENT_STATUS.PAID,
+        message: "NOT_COD_ORDER",
+      };
+    }
+
+    if (currentStatus === PAYMENT_STATUS.PAID) {
+      return {
+        success: false,
+        previousStatus: currentStatus,
+        newStatus: PAYMENT_STATUS.PAID,
+        message: "ORDER_ALREADY_PAID",
+      };
+    }
+
+    if (currentStatus !== PAYMENT_STATUS.CODAWAITING_CONFIRMATION) {
+      return {
+        success: false,
+        previousStatus: currentStatus,
+        newStatus: PAYMENT_STATUS.PAID,
+        message:
+          currentStatus === PAYMENT_STATUS.UNPAID
+            ? "Order belum dikirim/diterima kurir. Konfirmasi COD hanya bisa dilakukan setelah paket berstatus terkirim."
+            : `ORDER_NOT_CONFIRMABLE (current: ${currentStatus})`,
+      };
+    }
+
+    const updatedRows = await OrderRepository.updatePaymentByOrderIdIf(
+      orderId,
+      { payment_status: PAYMENT_STATUS.PAID },
+      [PAYMENT_STATUS.CODAWAITING_CONFIRMATION],
+    );
+
+    if (updatedRows === 0) {
+      const latest = await OrderRepository.findByOrderId(orderId);
+      const latestStatus = (
+        latest?.payment_status ?? ""
+      ).toLowerCase() as PaymentStatus;
+      if (latestStatus === PAYMENT_STATUS.PAID) {
+        return {
+          success: true,
+          previousStatus: currentStatus,
+          newStatus: PAYMENT_STATUS.PAID,
+          message: "ORDER_ALREADY_PAID",
+        };
+      }
+      return {
+        success: false,
+        previousStatus: currentStatus,
+        newStatus: PAYMENT_STATUS.PAID,
+        message: `ORDER_CONCURRENT_MODIFICATION (current: ${latestStatus})`,
+      };
+    }
+
+    await AuditLogService.logPaymentEvent({
+      orderId,
+      event: AuditLogService.events.PAYMENT_MANUAL_CONFIRM,
+      fromStatus: currentStatus,
+      toStatus: PAYMENT_STATUS.PAID,
+      metadata: {
+        method: "cod",
+        amount: order.total_amount,
+        confirmed_by: "admin",
+      },
+    });
+
+    return {
+      success: true,
+      previousStatus: currentStatus,
+      newStatus: PAYMENT_STATUS.PAID,
+      message: `Order ${orderId} ditandai lunas (COD).`,
+    };
+  },
+
   async expireUnpaidOrder(
     orderId: string,
     reason: string = "payment_expired",
+    options?: { autoExpire?: boolean },
   ): Promise<{ success: boolean; message: string }> {
     let order = await OrderRepository.findByOrderId(orderId);
     if (!order) {
       return { success: false, message: "ORDER_NOT_FOUND" };
+    }
+
+    // Order COD tidak pernah tunduk pada auto-expire berbasis waktu (umur
+    // 8 jam token Midtrans Snap). Pembayaran COD secara sah menunggu
+    // pengantaran + konfirmasi admin, jadi status "unpaid" bisa bertahan
+    // berhari-hari tanpa ini berarti order ditinggalkan.
+    const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+    if (isCod && options?.autoExpire) {
+      return {
+        success: false,
+        message: "COD_ORDER_NOT_SUBJECT_TO_AUTO_EXPIRY",
+      };
+    }
+
+    // Defense-in-depth tambahan: COD yang fulfillment-nya sudah melewati
+    // tahap persiapan (resi dibuat ke atas) TIDAK boleh di-expire lewat
+    // jalur apapun. Pembatalan dari status itu invalid di
+    // FulfillmentService (transisi waybill_created/picked_up/shipped ->
+    // cancelled tidak ada), sehingga mencoba expire hanya menghasilkan
+    // state rusak: payment_status jadi "failed" tapi fulfillment masih
+    // jalan/delivered. Pembatalan manual COD hanya sah dari status
+    // new/confirmed/packing/waiting_for_restock (sesuai UI success page).
+    if (isCod) {
+      const codFulfillment = (order.fulfillment_status ?? "").toLowerCase();
+      if (
+        ["waybill_created", "picked_up", "shipped", "delivered"].includes(
+          codFulfillment,
+        )
+      ) {
+        return {
+          success: false,
+          message: "COD_ORDER_NOT_EXPIRABLE_AFTER_SHIPMENT",
+        };
+      }
     }
 
     const readStatus = (

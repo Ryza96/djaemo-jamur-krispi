@@ -1,5 +1,6 @@
 import { OrderRepository } from "@/lib/repositories";
 import { FulfillmentService } from "@/lib/services/fulfillment.service";
+import { OrderService } from "@/lib/services/order.service";
 import { PAYMENT_STATUS } from "@/lib/services/payment/types";
 import { createShipment as biteshipCreateShipment } from "./biteship";
 import { getTracking as biteshipGetTracking } from "./biteship";
@@ -56,7 +57,8 @@ export const ShipmentService = {
       }
 
       const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
-      if (paymentStatus !== PAYMENT_STATUS.PAID) {
+      const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+      if (!isCod && paymentStatus !== PAYMENT_STATUS.PAID) {
         return {
           success: false,
           shipmentId: null,
@@ -132,6 +134,21 @@ export const ShipmentService = {
         const r = await fulfillmentCall(order.order_id);
         if (!r.success) {
           console.error(`Fulfillment transition failed for ${order.order_id}: ${r.message}`);
+        }
+      }
+
+      // Order COD yang terkirim → pindah ke "cod_awaiting_confirmation"
+      // (menunggu admin konfirmasi pelunasan di tempat). Idempotent:
+      // no-op untuk non-COD atau yang sudah lunas.
+      if (targetStatus === "delivered") {
+        const result = await OrderService.markCodDeliveredAwaitingConfirmation(
+          order.order_id,
+          payload.waybill_id,
+        );
+        if (!result.success) {
+          console.error(
+            `COD awaiting-confirmation update failed for ${order.order_id}: ${result.message}`,
+          );
         }
       }
     } catch (err) {

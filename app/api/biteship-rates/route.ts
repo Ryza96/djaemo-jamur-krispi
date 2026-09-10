@@ -11,6 +11,8 @@ interface RateSandbox {
   service: string | null;
   price: number | null;
   etd: string | null;
+  codAvailable: boolean;
+  codFee: number;
 }
 
 interface IncomingItem {
@@ -31,6 +33,8 @@ interface BiteshipPricingItem {
   shipping_fee?: unknown;
   duration?: unknown;
   shipment_duration_range?: unknown;
+  available_for_cash_on_delivery?: unknown;
+  cash_on_delivery_fee?: unknown;
 }
 
 function buildFallback(province: unknown, city: unknown, weightGrams = 0) {
@@ -40,7 +44,14 @@ function buildFallback(province: unknown, city: unknown, weightGrams = 0) {
     weightGrams,
   );
   const rates: RateSandbox[] = [
-    { courier: fee.courier, service: fee.service, price: fee.price, etd: null },
+    {
+      courier: fee.courier,
+      service: fee.service,
+      price: fee.price,
+      etd: null,
+      codAvailable: false,
+      codFee: 0,
+    },
   ];
   return NextResponse.json({ success: true, rates, isFallback: true });
 }
@@ -221,6 +232,8 @@ export const POST = async (request: Request) => {
           ? item.price
           : Number(item.price ?? item.shipping_fee ?? 0),
       etd: (item.duration ?? item.shipment_duration_range) as string | null,
+      codAvailable: item.available_for_cash_on_delivery === true,
+      codFee: Number(item.cash_on_delivery_fee ?? 0),
     }));
 
     return NextResponse.json({ success: true, rates: cleanedRates });

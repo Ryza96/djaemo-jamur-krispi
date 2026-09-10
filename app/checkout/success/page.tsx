@@ -149,6 +149,7 @@ export default function CheckoutSuccessPage() {
             totalAmount: data.total_amount,
             createdAt: data.created_at,
             status: data.payment_status,
+            paymentMethod: data.payment_method,
           }));
 
           setActiveToken(token);
@@ -328,6 +329,47 @@ export default function CheckoutSuccessPage() {
       ? serverPaymentStatus
       : paymentStatus;
 
+  const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+  const fulfillmentStatus = (order.fulfillment_status ?? "").toLowerCase();
+  const codShipped = ["waybill_created", "picked_up", "shipped"].includes(
+    fulfillmentStatus,
+  );
+  const codDelivered = fulfillmentStatus === "delivered";
+  const codCancellable =
+    !codShipped && !codDelivered && fulfillmentStatus !== "cancelled";
+
+  const codHeader = {
+    title: "Pesanan Berhasil Dibuat",
+    description:
+      "Pesanan Anda telah kami terima. Pembayaran dilakukan secara tunai saat kurir mengantar paket.",
+  };
+
+  const codStatusCard = isCod
+    ? codDelivered
+      ? {
+          icon: "📦",
+          title: "Pesanan Selesai",
+          description:
+            "Paket telah diterima. Terima kasih atas pembelian Anda di D'Jaemo Jamur Krispi.",
+          color: "text-teal-deep",
+        }
+      : codShipped
+        ? {
+            icon: "🚚",
+            title: "Pesanan Dalam Pengiriman",
+            description:
+              "Paket sedang dalam perjalanan. Pembayaran dilakukan tunai saat kurir sampai di tempat Anda.",
+            color: "text-gold",
+          }
+        : {
+            icon: "✓",
+            title: "Pesanan Dikonfirmasi",
+            description:
+              "Pesanan Anda telah kami terima dan sedang diproses. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.",
+            color: "text-teal-deep",
+          }
+    : null;
+
   const statusConfig: Record<PaymentStatus, { icon: string; title: string; description: string; color: string }> = {
     success: {
       icon: "✓",
@@ -389,22 +431,34 @@ export default function CheckoutSuccessPage() {
   return (
     <Section>
       <PageHeader
-        title={headerConfig[effectiveStatus].title}
-        description={headerConfig[effectiveStatus].description}
+        title={isCod ? codHeader.title : headerConfig[effectiveStatus].title}
+        description={
+          isCod
+            ? codHeader.description
+            : headerConfig[effectiveStatus].description
+        }
       />
 
       <div className="grid gap-10 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           <div className={`rounded-2xl border p-6 text-center shadow-sm ${
-            effectiveStatus === "success"
+            isCod
               ? "border-teal-deep/20 bg-teal-deep/5"
-               : effectiveStatus === "pending"
-                 ? "border-gold/30 bg-gold/10"
-                 : "border-red/20 bg-red/10"
+              : effectiveStatus === "success"
+                ? "border-teal-deep/20 bg-teal-deep/5"
+                : effectiveStatus === "pending"
+                  ? "border-gold/30 bg-gold/10"
+                  : "border-red/20 bg-red/10"
           }`}>
-            <div className={`text-4xl font-bold ${status.color}`}>{status.icon}</div>
-            <h2 className={`mt-3 text-xl font-semibold ${status.color}`}>{status.title}</h2>
-            <p className="mt-1 text-sm text-muted">{status.description}</p>
+            <div className={`text-4xl font-bold ${isCod ? codStatusCard?.color : status.color}`}>
+              {isCod ? codStatusCard?.icon : status.icon}
+            </div>
+            <h2 className={`mt-3 text-xl font-semibold ${isCod ? codStatusCard?.color : status.color}`}>
+              {isCod ? codStatusCard?.title : status.title}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {isCod ? codStatusCard?.description : status.description}
+            </p>
           </div>
 
           <div className="space-y-4 rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
@@ -503,7 +557,24 @@ export default function CheckoutSuccessPage() {
             </div>
           </div>
 
-          {effectiveStatus === "success" && (
+          {isCod && (
+            <div className="rounded-3xl bg-teal-deep p-5 text-sm text-cream">
+              <p className="font-semibold text-gold">Bayar di Tempat (COD)</p>
+              <ul className="mt-3 space-y-2">
+                <li>1. Pesanan Anda sedang diproses oleh toko.</li>
+                <li>
+                  2. Siapkan uang tunai sejumlah{" "}
+                  <span className="font-semibold text-white">
+                    {formatPrice(order.total_amount)}
+                  </span>{" "}
+                  saat kurir tiba.
+                </li>
+                <li>3. Cek status pengiriman di halaman Lacak Pesanan.</li>
+              </ul>
+            </div>
+          )}
+
+          {!isCod && effectiveStatus === "success" && (
             <div className="rounded-3xl bg-teal-deep p-5 text-sm text-cream">
               <p className="font-semibold text-gold">Langkah Selanjutnya</p>
               <ul className="mt-3 space-y-2">
@@ -514,7 +585,7 @@ export default function CheckoutSuccessPage() {
             </div>
           )}
 
-          {effectiveStatus === "pending" && (
+          {!isCod && effectiveStatus === "pending" && (
             <div className="rounded-3xl bg-teal-deep p-5 text-sm text-cream">
               <p className="font-semibold text-gold">Menunggu Pembayaran</p>
               <ul className="mt-3 space-y-2">
@@ -525,7 +596,7 @@ export default function CheckoutSuccessPage() {
             </div>
           )}
 
-          {(effectiveStatus === "failed" || effectiveStatus === "expired") && (
+          {!isCod && (effectiveStatus === "failed" || effectiveStatus === "expired") && (
             <div className="rounded-3xl bg-red p-5 text-sm text-cream">
               <p className="font-semibold text-gold">Pembayaran Gagal</p>
               <ul className="mt-3 space-y-2">
@@ -537,55 +608,90 @@ export default function CheckoutSuccessPage() {
           )}
 
           <div className="flex flex-col gap-3">
-            {effectiveStatus === "pending" && (
-              <div className="space-y-2">
-                <Button
-                  className="w-full"
-                  onClick={handleResumePayment}
-                  disabled={resuming || cancelling}
-                >
-                  {resuming ? "Memproses..." : "Lanjutkan Pembayaran"}
-                </Button>
-                {resumeError && (
-                  <p className="text-center text-xs text-red">{resumeError}</p>
+            {isCod ? (
+              <>
+                {orderIdFromUrl && (
+                  <Button
+                    className="w-full"
+                    href={`/track-order/${encodeURIComponent(orderIdFromUrl)}?token=${encodeURIComponent(activeToken ?? tokenFromUrl ?? "")}`}
+                  >
+                    Lacak Pesanan
+                  </Button>
+                )}
+                {codCancellable && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-red/30 text-red hover:border-red hover:bg-red hover:text-white focus-visible:ring-red"
+                    onClick={() => {
+                      setCancelError(null);
+                      setShowCancelConfirm(true);
+                    }}
+                    disabled={cancelling}
+                  >
+                    Batalkan Pesanan
+                  </Button>
                 )}
                 <Button
-                  variant="outline"
-                  className="w-full border-red/30 text-red hover:border-red hover:bg-red hover:text-white focus-visible:ring-red"
-                  onClick={() => {
-                    setCancelError(null);
-                    setShowCancelConfirm(true);
-                  }}
-                  disabled={cancelling}
+                  variant={orderIdFromUrl ? "outline" : "primary"}
+                  className="w-full"
+                  onClick={() => router.push("/")}
                 >
-                  Batalkan & Buat Pesanan Baru
+                  Kembali ke Beranda
                 </Button>
-              </div>
-            )}
-            {effectiveStatus === "success" && orderIdFromUrl && (
-              <Button
-                className="w-full"
-                href={`/track-order/${encodeURIComponent(orderIdFromUrl)}?token=${encodeURIComponent(activeToken ?? tokenFromUrl ?? "")}`}
-              >
-                Lacak Pesanan
-              </Button>
-            )}
-            <Button
-              variant={
-                effectiveStatus === "pending" ||
-                (effectiveStatus === "success" && orderIdFromUrl)
-                  ? "outline"
-                  : "primary"
-              }
-              className="w-full"
-              onClick={() => router.push("/")}
-            >
-              Kembali ke Beranda
-            </Button>
-            {(effectiveStatus === "failed" || effectiveStatus === "expired") && (
-              <Button variant="outline" className="w-full" onClick={() => router.push("/cart")}>
-                Checkout Ulang
-              </Button>
+              </>
+            ) : (
+              <>
+                {effectiveStatus === "pending" && (
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full"
+                      onClick={handleResumePayment}
+                      disabled={resuming || cancelling}
+                    >
+                      {resuming ? "Memproses..." : "Lanjutkan Pembayaran"}
+                    </Button>
+                    {resumeError && (
+                      <p className="text-center text-xs text-red">{resumeError}</p>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="w-full border-red/30 text-red hover:border-red hover:bg-red hover:text-white focus-visible:ring-red"
+                      onClick={() => {
+                        setCancelError(null);
+                        setShowCancelConfirm(true);
+                      }}
+                      disabled={cancelling}
+                    >
+                      Batalkan & Buat Pesanan Baru
+                    </Button>
+                  </div>
+                )}
+                {effectiveStatus === "success" && orderIdFromUrl && (
+                  <Button
+                    className="w-full"
+                    href={`/track-order/${encodeURIComponent(orderIdFromUrl)}?token=${encodeURIComponent(activeToken ?? tokenFromUrl ?? "")}`}
+                  >
+                    Lacak Pesanan
+                  </Button>
+                )}
+                <Button
+                  variant={
+                    effectiveStatus === "pending" ||
+                    (effectiveStatus === "success" && orderIdFromUrl)
+                      ? "outline"
+                      : "primary"
+                  }
+                  className="w-full"
+                  onClick={() => router.push("/")}
+                >
+                  Kembali ke Beranda
+                </Button>
+                {(effectiveStatus === "failed" || effectiveStatus === "expired") && (
+                  <Button variant="outline" className="w-full" onClick={() => router.push("/cart")}>
+                    Checkout Ulang
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </aside>
@@ -606,8 +712,10 @@ export default function CheckoutSuccessPage() {
             <p className="mt-3 text-sm text-muted">
               Yakin ingin membatalkan pesanan ini? Pesanan{" "}
               <span className="font-semibold text-foreground">{order.order_id}</span> akan
-              dibatalkan, lalu Anda dapat membuat pesanan baru dengan metode pembayaran yang
-              berbeda.
+              dibatalkan
+              {isCod
+                ? "."
+                : ", lalu Anda dapat membuat pesanan baru dengan metode pembayaran yang berbeda."}
             </p>
             {cancelError && (
               <p className="mt-3 rounded-2xl border border-red/20 bg-red/10 p-3 text-xs text-red">

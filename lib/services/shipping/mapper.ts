@@ -16,6 +16,8 @@ export interface RawRate {
   service: string | null;
   price: number | null;
   etd: string | null;
+  codAvailable?: boolean;
+  codFee?: number;
 }
 
 export function mapBiteshipRates(raw: RawRate[]): ShippingRate[] {
@@ -27,6 +29,8 @@ export function mapBiteshipRates(raw: RawRate[]): ShippingRate[] {
       service: r.service!,
       price: r.price!,
       etd: r.etd,
+      codAvailable: r.codAvailable ?? false,
+      codFee: r.codFee ?? 0,
     }));
 }
 

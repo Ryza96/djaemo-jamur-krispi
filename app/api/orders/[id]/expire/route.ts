@@ -34,7 +34,21 @@ export async function POST(
       return NextResponse.json({ error: "Token tidak valid." }, { status: 403 });
     }
 
-    const result = await OrderService.expireUnpaidOrder(orderId);
+    // Pembeda manual vs otomatis: ganti "Batalkan Pesanan" (manual) tidak
+    // mengirimkan body, sedangkan auto-expire dari resume/restore order
+    // mengirimkan { auto_expire: true }. Guard server di
+    // OrderService.expireUnpaidOrder menolak auto-expire untuk order COD.
+    let autoExpire = false;
+    try {
+      const body = await request.json();
+      autoExpire = body?.auto_expire === true;
+    } catch {
+      // no body / not JSON -> dianggap pembatalan manual
+    }
+
+    const result = await OrderService.expireUnpaidOrder(orderId, "payment_expired", {
+      autoExpire,
+    });
 
     if (!result.success) {
       return NextResponse.json(

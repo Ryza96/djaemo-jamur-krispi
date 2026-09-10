@@ -69,6 +69,13 @@ export const DashboardRepository = {
   async getDashboardStats(): Promise<DashboardStats> {
     const now = new Date();
 
+    // "Pesanan Baru" & "Menunggu Restok" adalah pekerjaan admin pada status
+    // fulfillment tertentu: order online yang sudah lunas, ATAU order COD yang
+    // belum batal (COD dibayar saat paket tiba, jadi payment_status masih
+    // unpaid/cod_awaiting_confirmation hingga admin konfirmasi).
+    const fulfillmentActionableFilter =
+      "or(payment_status.eq.paid,and(payment_method.eq.cod,payment_status.not.in.(expired,failed,cancelled)))";
+
     // Compute "7 days ago" in WIB, then convert boundary back to UTC for the query.
     // This ensures we cover the full WIB day (00:00-23:59) for each of the 7 days.
     const wibTodayKey = getWIBDateKey(now);
@@ -81,14 +88,15 @@ export const DashboardRepository = {
 
     const [revenueResult, pendingResult, customerResult, lowStockCountResult, lowStockItemsResult, weeklySalesResult, waitingRestockResult] =
       await Promise.all([
-        // Revenue card: sums subtotal (product revenue only, excludes shipping fee).
-        // Consistent with the weekly sales chart which also uses subtotal,
-        // and both measure the same event (payment received via paid_at).
+        // Revenue card: sums product revenue = subtotal minus voucher discount
+        // (discount_amount), excludes shipping fee and COD fee. Consistent with
+        // the weekly sales chart which uses the same measure, and both gauge the
+        // same event (payment received via paid_at).
         // Orders cancelled after payment are NOT revenue, regardless of whether
         // the refund has been confirmed yet — a cancelled sale is void.
         supabase
           .from("orders")
-          .select("subtotal", { count: "exact" })
+          .select("subtotal, discount_amount")
           .eq("payment_status", "paid")
           .neq("fulfillment_status", "cancelled")
           .gte("paid_at", wibMonthStartUTC),
@@ -96,8 +104,8 @@ export const DashboardRepository = {
         supabase
           .from("orders")
           .select("id", { count: "exact", head: true })
-          .eq("payment_status", "paid")
-          .eq("fulfillment_status", "new"),
+          .eq("fulfillment_status", "new")
+          .or(fulfillmentActionableFilter),
 
         supabase
           .from("customers")
@@ -115,13 +123,14 @@ export const DashboardRepository = {
           .order("stock", { ascending: true })
           .limit(LOW_STOCK_LIMIT),
 
-        // Weekly sales: subtotal (product revenue, excludes shipping fee),
+        // Weekly sales: product revenue (subtotal minus voucher discount),
         // grouped by the day the payment was received (paid_at). This keeps the
-        // chart consistent with the "Total Penjualan" card (both use paid_at)
-        // and reflects actual sales (money received), not order creation.
+        // chart consistent with the "Total Penjualan" card (both use paid_at,
+        // both net of discount) and reflects actual sales (money received),
+        // not order creation.
         supabase
           .from("orders")
-          .select("subtotal, paid_at")
+          .select("subtotal, discount_amount, paid_at")
           .eq("payment_status", "paid")
           .neq("fulfillment_status", "cancelled")
           .gte("paid_at", weekAgoISO),
@@ -129,8 +138,8 @@ export const DashboardRepository = {
         supabase
           .from("orders")
           .select("id", { count: "exact", head: true })
-          .eq("payment_status", "paid")
-          .eq("fulfillment_status", "waiting_for_restock"),
+          .eq("fulfillment_status", "waiting_for_restock")
+          .or(fulfillmentActionableFilter),
       ]);
 
     if (revenueResult.error) throw revenueResult.error;
@@ -142,7 +151,8 @@ export const DashboardRepository = {
     if (waitingRestockResult.error) throw waitingRestockResult.error;
 
     const revenue = (revenueResult.data ?? []).reduce(
-      (sum, row) => sum + (row.subtotal ?? 0),
+      (sum, row) =>
+        sum + (row.subtotal ?? 0) - (row.discount_amount ?? 0),
       0,
     );
 
@@ -159,9 +169,14 @@ export const DashboardRepository = {
       // parse it as UTC before converting to the WIB date key for grouping.
       const key = getWIBDateKey(parseUTC(row.paid_at));
       if (dailyRevenue.has(key)) {
-        // Use subtotal (product revenue, excludes shipping) for consistency
-        // with the "Total Penjualan" card above which also sums subtotal.
-        dailyRevenue.set(key, (dailyRevenue.get(key) ?? 0) + (row.subtotal ?? 0));
+        // Use product revenue (subtotal minus discount) for consistency
+        // with the "Total Penjualan" card above which also nets out discount.
+        dailyRevenue.set(
+          key,
+          (dailyRevenue.get(key) ?? 0) +
+            (row.subtotal ?? 0) -
+            (row.discount_amount ?? 0),
+        );
       }
     }
 

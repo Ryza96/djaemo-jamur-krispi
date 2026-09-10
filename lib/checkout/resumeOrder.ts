@@ -6,6 +6,7 @@ export interface StoredResumeIdentity {
   orderId: string;
   accessToken: string;
   status?: string | null;
+  paymentMethod?: string | null;
 }
 
 export type ResumeDecision =
@@ -30,6 +31,7 @@ export function getStoredResumeIdentity(): StoredResumeIdentity | null {
       orderId: parsed.orderId,
       accessToken: parsed.accessToken,
       status: parsed.status ?? null,
+      paymentMethod: parsed.paymentMethod ?? parsed.payment_method ?? null,
     };
   } catch {
     return null;
@@ -57,6 +59,7 @@ export const SNAP_TOKEN_MAX_AGE_MS = 8 * 60 * 60 * 1000;
 interface ResumeOrderSnapshot {
   order_id?: string | null;
   payment_status?: string | null;
+  payment_method?: string | null;
   transaction_id?: string | null;
   created_at?: string | null;
 }
@@ -75,7 +78,9 @@ export function isStalePendingOrder(
   order: ResumeOrderSnapshot,
   now: number = Date.now(),
 ): boolean {
-  if (!isResumableOrder(order.payment_status)) return false;
+  // Order COD tidak pernah dianggap stale berdasarkan waktu — pembayaran
+  // COD menunggu pengantaran, bukan tenggat token (berlaku untuk online).
+  if (!isResumableOrder(order.payment_status, order.payment_method)) return false;
   if (!order.created_at) return false;
 
   const createdAt = parseUtcTimestamp(order.created_at);
@@ -99,7 +104,14 @@ export async function expireStaleOrder(
   try {
     await fetch(
       `/api/orders/${encodeURIComponent(orderId)}/expire`,
-      { method: "POST", headers: { "X-Order-Token": accessToken } },
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Order-Token": accessToken,
+        },
+        body: JSON.stringify({ auto_expire: true }),
+      },
     );
   } catch {
     // best effort; order tetap diabaikan untuk resume
@@ -110,6 +122,13 @@ export async function expireStaleOrder(
 export async function decideResume(): Promise<ResumeDecision> {
   const identity = getStoredResumeIdentity();
   if (!identity) return { kind: "none" };
+
+  // Order COD tidak ada jalur "lanjutkan pembayaran Midtrans" dan tidak
+  // tunduk pada expire berbasis waktu. Hentikan di sini sebelum fetch /
+  // stale-check agar djaemo-last-order COD tidak pernah di-expire otomatis.
+  if ((identity.paymentMethod ?? "").toLowerCase() === "cod") {
+    return { kind: "none" };
+  }
 
   if (!isResumableStorageStatus(identity.status)) return { kind: "none" };
 
@@ -130,13 +149,16 @@ export async function decideResume(): Promise<ResumeDecision> {
     | {
         order_id?: string;
         payment_status?: string | null;
+        payment_method?: string | null;
         transaction_id?: string | null;
         created_at?: string | null;
       }
     | undefined;
 
   if (!order) return { kind: "none" };
-  if (!isResumableOrder(order.payment_status)) return { kind: "none" };
+  if (!isResumableOrder(order.payment_status, order.payment_method)) {
+    return { kind: "none" };
+  }
 
   if (isStalePendingOrder(order)) {
     await expireStaleOrder(identity.orderId, identity.accessToken);

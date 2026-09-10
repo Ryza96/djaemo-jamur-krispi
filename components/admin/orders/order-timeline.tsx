@@ -101,6 +101,10 @@ const EVENT_STYLES: Record<string, EventStyle> = {
     cls: "border-orange-300 bg-orange-100 text-orange-600",
     dotCls: "bg-orange-500",
   },
+  "shipping.delivered_cod_pending": {
+    cls: "border-violet-300 bg-violet-100 text-violet-600",
+    dotCls: "bg-violet-500",
+  },
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -126,6 +130,7 @@ const EVENT_LABELS: Record<string, string> = {
   "shipment.delivered": "Delivered",
   "shipment.cancelled": "Cancelled",
   "shipment.retry": "Retry",
+  "shipping.delivered_cod_pending": "COD Delivery Pending",
 };
 
 function getEventStyle(event: string): EventStyle {
@@ -193,6 +198,8 @@ function getEventDescription(entry: TimelineEntry): string {
       return "Pengiriman dibatalkan.";
     case "shipment.retry":
       return "Pengiriman dijadwalkan ulang.";
+    case "shipping.delivered_cod_pending":
+      return "Paket COD telah diterima pembeli. Tunggu konfirmasi admin untuk pelunasan.";
     default:
       return `Event: ${event}`;
   }
@@ -271,6 +278,12 @@ function TimelineIcon({ event }: { event: string }) {
       return (
         <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+      );
+    case "shipping.delivered_cod_pending":
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
         </svg>
       );
     case "shipment.cancelled":
