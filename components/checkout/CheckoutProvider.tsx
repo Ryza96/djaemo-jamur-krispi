@@ -38,6 +38,8 @@ const initialState: CheckoutState = {
   shippingCourier: "",
   shippingService: "",
   shippingFee: 0,
+  paymentMethod: "online",
+  codFee: 0,
   voucher: null,
   resume: null,
   isSubmitting: false,
@@ -65,6 +67,10 @@ function checkoutReducer(
       return { ...state, shippingFee: action.payload };
     case "SET_SHIPPING_COURIER":
       return { ...state, shippingCourier: action.payload };
+    case "SET_PAYMENT_METHOD":
+      return { ...state, paymentMethod: action.payload };
+    case "SET_COD_FEE":
+      return { ...state, codFee: action.payload };
     case "SET_VOUCHER":
       return { ...state, voucher: action.payload };
     case "SET_RESUME":
@@ -114,7 +120,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
         if (!json.success || !json.data) return;
 
         const order = json.data;
-        if (!isResumableOrder(order.payment_status)) return;
+        if (!isResumableOrder(order.payment_status, order.payment_method)) return;
 
         if (isStalePendingOrder(order)) {
           await expireStaleOrder(order.order_id, accessToken);

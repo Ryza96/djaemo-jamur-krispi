@@ -14,6 +14,11 @@ import {
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
 import { computeFlatRateFallback } from "@/lib/services/shipping/flatRateFallback";
 import { VoucherRepository } from "@/lib/repositories";
+import {
+  calculateCodEligibleAmount,
+  COD_MAX_TOTAL,
+  isCodAllowedProvince,
+} from "./cod.constants";
 import type { CreatePaymentRequest } from "./types";
 
 interface ValidatedCheckoutItem {
@@ -31,6 +36,7 @@ export interface ValidatedCheckout {
   items: ValidatedCheckoutItem[];
   subtotal: number;
   shippingFee: number;
+  codFee: number;
   totalAmount: number;
   stock: ValidateOrderStockResult;
   voucher?: {
@@ -59,6 +65,8 @@ interface RawBiteshipRate {
   service?: unknown;
   price?: unknown;
   shipping_fee?: unknown;
+  available_for_cash_on_delivery?: unknown;
+  cash_on_delivery_fee?: unknown;
 }
 
 interface BiteshipRatesResponse {
@@ -78,6 +86,7 @@ function assertClientTotalsMatch(
   params: CreatePaymentRequest,
   calculatedSubtotal: number,
   calculatedShippingFee: number,
+  calculatedCodFee: number,
 ): void {
   if (params.subtotal !== calculatedSubtotal) {
     throw new CheckoutValidationError("Subtotal pesanan tidak valid.");
@@ -85,6 +94,10 @@ function assertClientTotalsMatch(
 
   if (params.shippingFee !== calculatedShippingFee) {
     throw new CheckoutValidationError("Ongkos kirim tidak valid.");
+  }
+
+  if (params.paymentMethod === "cod" && params.codFee !== calculatedCodFee) {
+    throw new CheckoutValidationError("Biaya COD tidak valid.");
   }
 }
 
@@ -104,6 +117,8 @@ function flatRatePricing(
       courier_code: fee.courier,
       courier_service_code: fee.service,
       price: fee.price,
+      available_for_cash_on_delivery: false,
+      cash_on_delivery_fee: 0,
     },
   ];
 }
@@ -207,7 +222,7 @@ async function fetchBiteshipRates(params: {
 async function validateShippingFee(params: {
   request: CreatePaymentRequest;
   items: ValidatedCheckoutItem[];
-}): Promise<number> {
+}): Promise<{ price: number; codAvailable: boolean; codFee: number }> {
   const { request, items } = params;
   // Berat total harus dikalkulasi dari source yang sama dengan yang
   // ditampilkan client (berat product di item keranjang), supaya fee
@@ -235,7 +250,7 @@ async function validateShippingFee(params: {
     if (selectedCourier !== fee.courier || selectedService !== fee.service) {
       throw new CheckoutValidationError("Metode pengiriman tidak valid.");
     }
-    return fee.price;
+    return { price: fee.price, codAvailable: false, codFee: 0 };
   }
 
   const matchingRate = rates.find((rate) => {
@@ -261,7 +276,11 @@ async function validateShippingFee(params: {
     throw new CheckoutValidationError("Ongkos kirim tidak valid.");
   }
 
-  return Math.round(price);
+  return {
+    price: Math.round(price),
+    codAvailable: matchingRate.available_for_cash_on_delivery === true,
+    codFee: Math.round(Number(matchingRate.cash_on_delivery_fee ?? 0)),
+  };
 }
 
 export async function validateCheckoutRequest(
@@ -306,14 +325,30 @@ export async function validateCheckoutRequest(
     })),
   );
 
-  const shippingFee = await validateShippingFee({ request: params, items });
+  const shippingResult = await validateShippingFee({ request: params, items });
+  const shippingFee = shippingResult.price;
 
-  assertClientTotalsMatch(params, subtotal, shippingFee);
+  const paymentMethod = params.paymentMethod === "cod" ? "cod" : "online";
+  if (paymentMethod === "cod") {
+    if (!shippingResult.codAvailable) {
+      throw new CheckoutValidationError(
+        "Metode pembayaran COD tidak tersedia untuk kurir/layanan pengiriman ini.",
+      );
+    }
+    if (!isCodAllowedProvince(params.shippingAddress.province)) {
+      throw new CheckoutValidationError(
+        "COD hanya tersedia untuk pengiriman di Pulau Jawa.",
+      );
+    }
+  }
+  const codFee = paymentMethod === "cod" ? shippingResult.codFee : 0;
 
   // Voucher pre-validation (non-destructive). The authoritative check +
   // usage reservation happens atomically in the create route via
   // apply_voucher, but validating here gives an early, clear rejection
-  // before any order row is written.
+  // before any order row is written. Dihitung di titik ini (sebelum cap COD)
+  // karena diskon voucher ikut mengurangi total tagihan yang dibandingkan
+  // terhadap COD_MAX_TOTAL.
   let voucher: ValidatedCheckout["voucher"] = null;
   if (params.voucherCode && params.voucherCode.trim()) {
     const normalizedCode = params.voucherCode.trim().toUpperCase();
@@ -334,17 +369,41 @@ export async function validateCheckoutRequest(
 
   const discountAmount = voucher?.discount_amount ?? 0;
 
+  if (paymentMethod === "cod") {
+    // Cap kelayakan COD dihitung dari nominal yang BENAR-BENAR ditagih saat
+    // COD: subtotal − diskon + ongkir + biaya COD. Formula identik dengan
+    // client (components/checkout/PaymentMethodSection.tsx) via
+    // calculateCodEligibleAmount — jangan ubah di salah satu sisi saja.
+    if (
+      calculateCodEligibleAmount({
+        subtotal,
+        discountAmount,
+        shippingFee,
+        codFee,
+      }) > COD_MAX_TOTAL
+    ) {
+      throw new CheckoutValidationError(
+        "COD hanya tersedia untuk total tagihan maksimal Rp300.000 (setelah diskon voucher). Silakan gunakan pembayaran online.",
+      );
+    }
+  }
+
+  assertClientTotalsMatch(params, subtotal, shippingFee, codFee);
+
   return {
     request: {
       ...params,
       items,
       subtotal,
       shippingFee,
+      paymentMethod,
+      codFee,
     },
     items,
     subtotal,
     shippingFee,
-    totalAmount: subtotal + shippingFee - discountAmount,
+    codFee,
+    totalAmount: subtotal + shippingFee + codFee - discountAmount,
     stock: stockResult,
     voucher,
   };

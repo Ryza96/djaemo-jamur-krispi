@@ -82,6 +82,7 @@ function ShippingSelectorInner() {
       dispatch({ type: "SET_SHIPPING_COURIER", payload: rate.courier });
       dispatch({ type: "SET_SHIPPING_SERVICE", payload: rate.service });
       dispatch({ type: "SET_SHIPPING_FEE", payload: rate.price });
+      dispatch({ type: "SET_COD_FEE", payload: rate.codFee ?? 0 });
     }
   }
 
@@ -119,6 +120,8 @@ function ShippingSelectorInner() {
     </div>
   );
 }
+
+export { ShippingSelectorInner };
 
 export function ShippingSelector() {
   return (

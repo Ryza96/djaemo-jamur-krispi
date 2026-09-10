@@ -4,6 +4,9 @@ export const PAYMENT_STATUS = {
   PAID: "paid",
   FAILED: "failed",
   EXPIRED: "expired",
+  // Order COD yang sudah diterima/delivered kurir, menunggu admin
+  // mengonfirmasi uang lunas di tempat. Bukan status lunas.
+  CODAWAITING_CONFIRMATION: "cod_awaiting_confirmation",
 } as const;
 
 export type PaymentStatus =
@@ -40,10 +43,15 @@ export const PAYMENT_STATUS_TRANSITIONS: Record<
   [PAYMENT_STATUS.PAID]: [],
   [PAYMENT_STATUS.FAILED]: [],
   [PAYMENT_STATUS.EXPIRED]: [],
+  [PAYMENT_STATUS.CODAWAITING_CONFIRMATION]: [PAYMENT_STATUS.PAID],
 };
+
+export type PaymentMethod = "online" | "cod";
 
 export interface CreatePaymentRequest {
   orderId: string;
+  paymentMethod?: PaymentMethod;
+  codFee?: number;
   customerInfo: {
     name: string;
     whatsapp: string;

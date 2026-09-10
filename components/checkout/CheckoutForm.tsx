@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useCheckout } from "@/components/checkout/CheckoutProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { CustomerInfo } from "@/components/checkout/CustomerInfo";
 import { ShippingAddress } from "@/components/checkout/ShippingAddress";
-import { ShippingSelector } from "@/components/checkout/shipping/ShippingSelector";
+import { ShippingSelectorInner } from "@/components/checkout/shipping/ShippingSelector";
+import { ShippingProvider } from "@/components/checkout/shipping/ShippingProvider";
+import { PaymentMethodSection } from "@/components/checkout/PaymentMethodSection";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { VoucherSection } from "@/components/checkout/VoucherSection";
 import { CheckoutActions } from "@/components/checkout/CheckoutActions";
@@ -19,11 +21,18 @@ import { decideResume } from "@/lib/checkout/resumeOrder";
 
 export function CheckoutForm() {
   const { state, dispatch } = useCheckout();
-  const { items, subtotal } = useCart();
+  const { items, subtotal, clearCart } = useCart();
 
   const ORDER_STORAGE_KEY = "djaemo-last-order";
 
   const [orderId, setOrderId] = useState(() => buildOrderId());
+
+  // Refs adalah source of truth untuk mencegah double-submit. State
+  // `isSubmitting` baru mematikan tombol setelah React re-render, sehingga
+  // dua submit yang tiba sangat cepat (double-click / Enter ganda) bisa lolos
+  // sebelum render selesai. Ref berubah sinkron di dalam event handler yang
+  // sama, jadi guard ini efektif tanpa menunggu siklus render React.
+  const isSubmittingRef = useRef(false);
 
   const createOrderAndPay = useCallback(
     async (currentOrderId: string): Promise<boolean> => {
@@ -47,6 +56,8 @@ export function CheckoutForm() {
           })),
           subtotal,
           voucherCode: state.voucher?.code,
+          paymentMethod: state.paymentMethod,
+          codFee: state.codFee,
         }),
       });
 
@@ -59,6 +70,32 @@ export function CheckoutForm() {
         throw new Error(data.error || "Gagal membuat transaksi");
       }
 
+      // COD: tidak ada redirect Snap. Redirect ke halaman sukses yang
+      // menampilkan status pesanan + instruksi bayar tunai saat kurir tiba.
+      if (data.paymentMethod === "cod") {
+        try {
+          window.localStorage.setItem(
+            ORDER_STORAGE_KEY,
+            JSON.stringify({
+              orderId: data.orderId,
+              accessToken: data.accessToken,
+              totalAmount: data.totalAmount,
+              createdAt: new Date().toISOString(),
+              status: "pending_payment",
+              paymentMethod: "cod",
+            }),
+          );
+        } catch {
+          // localStorage not available
+        }
+
+        clearCart();
+        window.location.href = `/checkout/success?order_id=${encodeURIComponent(
+          data.orderId,
+        )}&token=${encodeURIComponent(data.accessToken)}`;
+        return true;
+      }
+
       if (data.redirectUrl) {
         try {
           window.localStorage.setItem(
@@ -69,6 +106,7 @@ export function CheckoutForm() {
               totalAmount: data.totalAmount,
               createdAt: new Date().toISOString(),
               status: "pending_payment",
+              paymentMethod: "online",
             }),
           );
         } catch {
@@ -87,14 +125,19 @@ export function CheckoutForm() {
       state.shippingService,
       state.shippingCourier,
       state.voucher,
+      state.paymentMethod,
+      state.codFee,
       items,
       subtotal,
+      clearCart,
     ],
   );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
       dispatch({ type: "SET_ERROR", payload: null });
 
       const resume = await decideResume();
@@ -152,6 +195,7 @@ export function CheckoutForm() {
           err instanceof Error ? err.message : "Terjadi kesalahan saat checkout";
         dispatch({ type: "SET_ERROR", payload: message });
       } finally {
+        isSubmittingRef.current = false;
         dispatch({ type: "SET_SUBMITTING", payload: false });
       }
     },
@@ -183,9 +227,10 @@ export function CheckoutForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="grid gap-8 xl:grid-cols-[2fr_1fr]">
-        <div className="space-y-8">
+    <ShippingProvider>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="grid gap-8 xl:grid-cols-[2fr_1fr]">
+          <div className="space-y-8">
           {state.resume && (
             <section className="rounded-3xl border border-gold/30 bg-gold/10 p-6 shadow-sm">
               <h2 className="mb-1 text-lg font-semibold text-ink">
@@ -237,7 +282,17 @@ export function CheckoutForm() {
             <p className="mb-4 text-sm text-muted">
               Pilih kurir dan layanan pengiriman
             </p>
-            <ShippingSelector />
+            <ShippingSelectorInner />
+          </section>
+
+          <section className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+            <h2 className="mb-1 text-lg font-semibold text-ink">
+              Metode Pembayaran
+            </h2>
+            <p className="mb-4 text-sm text-muted">
+              Pilih cara pembayaran pesanan Anda
+            </p>
+            <PaymentMethodSection />
           </section>
         </div>
 
@@ -268,6 +323,7 @@ export function CheckoutForm() {
           <CheckoutActions />
         </aside>
       </div>
-    </form>
+      </form>
+    </ShippingProvider>
   );
 }

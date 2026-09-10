@@ -31,6 +31,8 @@ export interface ShippingRate {
   price: number;
   etd: string | null;
   isFallback?: boolean;
+  codAvailable?: boolean;
+  codFee?: number;
 }
 
 export interface CheckoutResume {
@@ -46,6 +48,8 @@ export interface CheckoutState {
   shippingCourier: string;
   shippingService: string;
   shippingFee: number;
+  paymentMethod: "online" | "cod";
+  codFee: number;
   voucher: Voucher | null;
   resume: CheckoutResume | null;
   isSubmitting: boolean;
@@ -58,6 +62,8 @@ export type CheckoutAction =
   | { type: "SET_SHIPPING_SERVICE"; payload: string }
   | { type: "SET_SHIPPING_FEE"; payload: number }
   | { type: "SET_SHIPPING_COURIER"; payload: string }
+  | { type: "SET_PAYMENT_METHOD"; payload: "online" | "cod" }
+  | { type: "SET_COD_FEE"; payload: number }
   | { type: "SET_VOUCHER"; payload: Voucher | null }
   | { type: "SET_RESUME"; payload: CheckoutResume | null }
   | { type: "SET_SUBMITTING"; payload: boolean }

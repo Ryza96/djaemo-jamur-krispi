@@ -80,7 +80,8 @@ export const FulfillmentService = {
     }
 
     const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
-    if (paymentStatus !== PAYMENT_STATUS.PAID) {
+    const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+    if (!isCod && paymentStatus !== PAYMENT_STATUS.PAID) {
       return {
         success: false,
         orderId,
@@ -202,7 +203,10 @@ async function executeTransition(
 
   if (targetStatus !== FULFILLMENT_STATUS.CANCELLED) {
     const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
-    if (paymentStatus !== PAYMENT_STATUS.PAID) {
+    // Order COD boleh jalan sampai terkirim tanpa status paid — uang lunas
+    // baru benar-benar diterima saat pengantaran/konfirmasi admin.
+    const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+    if (!isCod && paymentStatus !== PAYMENT_STATUS.PAID) {
       return {
         success: false,
         orderId,
@@ -276,6 +280,51 @@ async function executeTransition(
     }
   }
 
+  // FALLBACK MANUAL (admin): bila webhook Biteship "delivered" tidak pernah
+  // diterima (hilang/gagal), admin yang menandai fulfillment delivered secara
+  // manual memicu transisi payment yang sama dengan jalur webhook, agar order
+  // COD tidak stuck di delivered+unpaid: payment_status di-set ke
+  // cod_awaiting_confirmation sebagai bagian dari transisi yang sama. Jalur
+  // webhook normal sudah memanggil
+  // OrderService.markCodDeliveredAwaitingConfirmation lebih dulu sehingga
+  // status ini umumnya sudah terisi — blok ini hanya mengisi celah webhook
+  // yang tidak jalan. Hanya untuk order COD dengan payment belum final
+  // (bukan paid/failed/expired) dan memang belum berstatus
+  // cod_awaiting_confirmation.
+  const currentPaymentStatus = (
+    order.payment_status ?? order.status ?? ""
+  ).toLowerCase();
+  const isCodOrder = (order.payment_method ?? "").toLowerCase() === "cod";
+  if (
+    targetStatus === FULFILLMENT_STATUS.DELIVERED &&
+    isCodOrder &&
+    currentPaymentStatus !== PAYMENT_STATUS.PAID &&
+    currentPaymentStatus !== PAYMENT_STATUS.FAILED &&
+    currentPaymentStatus !== PAYMENT_STATUS.EXPIRED &&
+    currentPaymentStatus !== PAYMENT_STATUS.CODAWAITING_CONFIRMATION
+  ) {
+    const updatedRows = await OrderRepository.updatePaymentByOrderIdIf(
+      orderId,
+      { payment_status: PAYMENT_STATUS.CODAWAITING_CONFIRMATION },
+      [PAYMENT_STATUS.UNPAID, PAYMENT_STATUS.PENDING],
+    );
+
+    if (updatedRows > 0) {
+      await AuditLogService.logPaymentEvent({
+        orderId,
+        event: AuditLogService.events.SHIPPING_DELIVERED_COD_PENDING,
+        fromStatus: currentPaymentStatus,
+        toStatus: PAYMENT_STATUS.CODAWAITING_CONFIRMATION,
+        metadata: {
+          method: "cod",
+          actor: "admin",
+          source: "manual_admin_override",
+          note: "Webhook delivered tidak diterima; payment di-set cod_awaiting_confirmation oleh aksi manual admin agar order tidak stuck dan bisa dikonfirmasi lunas.",
+        },
+      });
+    }
+  }
+
   await OrderRepository.updateFulfillmentStatus(
     order.id,
     targetStatus,
@@ -290,7 +339,11 @@ async function executeTransition(
   let auditMetadata = extra ?? undefined;
   if (targetStatus === FULFILLMENT_STATUS.CANCELLED) {
     const paymentStatus = (order.payment_status ?? order.status ?? "").toLowerCase();
-    if (paymentStatus === PAYMENT_STATUS.PAID) {
+    const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+    // Kewajiban refund manual hanya berlaku untuk bayar online via
+    // Midtrans. COD tidak memiliki refund Midtrans — admin langsung
+    // memegang uangnya, jadi tidak perlu banner "wajib refund".
+    if (paymentStatus === PAYMENT_STATUS.PAID && !isCod) {
       auditMetadata = {
         ...(auditMetadata ?? {}),
         refund_required: true,

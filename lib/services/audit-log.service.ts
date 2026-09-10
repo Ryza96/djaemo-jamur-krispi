@@ -34,6 +34,7 @@ const AUDIT_EVENTS = {
   SHIPMENT_DELIVERED: "shipment.delivered",
   SHIPMENT_CANCELLED: "shipment.cancelled",
   SHIPMENT_RETRY: "shipment.retry",
+  SHIPPING_DELIVERED_COD_PENDING: "shipping.delivered_cod_pending",
 } as const;
 
 export type AuditEvent = (typeof AUDIT_EVENTS)[keyof typeof AUDIT_EVENTS];

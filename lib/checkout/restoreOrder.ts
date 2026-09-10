@@ -31,8 +31,14 @@ export interface RestoredOrderData {
 
 export function isResumableOrder(
   paymentStatus: string | null | undefined,
+  paymentMethod?: string | null | undefined,
 ): boolean {
-  return !!paymentStatus && RESUMABLE_STATUSES.has(paymentStatus);
+  if (!paymentStatus) return false;
+  // Order COD tidak pernah masuk kategori "order Midtrans yang bisa
+  // dilanjutkan/dikadaluarsakan": pembayaran menunggu pengantaran, bukan
+  // token Snap yang kedaluwarsa 8 jam.
+  if ((paymentMethod ?? "").toLowerCase() === "cod") return false;
+  return RESUMABLE_STATUSES.has(paymentStatus);
 }
 
 export function parseStoredAddress(
