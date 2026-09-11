@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Section } from "@/components/sections/Section";
 import { Button } from "@/components/ui/Button";
-import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
+import { ProductPriceDisplay } from "@/components/produk/ProductPriceDisplay";
 import type { Product } from "@/types";
 
 interface BestSellerSectionProps {
@@ -47,7 +47,7 @@ function BestSellerCard({ product }: { product: Product }) {
         )}
 
         <div className="[&_.font-mono]:text-lg [&_.font-mono]:font-semibold [&_.font-mono]:text-teal-deep [&_.font-mono]:tracking-tight">
-          <PartnerPriceDisplay product={product} variant="inline" />
+          <ProductPriceDisplay product={product} variant="inline" />
         </div>
 
         <span className="mt-auto inline-flex w-full items-center justify-center rounded-lg bg-gold px-4 py-3 text-sm font-semibold text-teal-deep transition-colors duration-200 group-hover:bg-gold-bright focus-visible:outline-none">

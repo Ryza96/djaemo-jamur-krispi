@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Loader2 } from "lucide-react";
 import type { Product } from "@/types";
-import { PartnerPriceDisplay } from "@/components/partner/PartnerPriceDisplay";
+import { ProductPriceDisplay } from "@/components/produk/ProductPriceDisplay";
 import { useCart } from "@/components/cart/CartProvider";
 import { useToast } from "@/components/ui/Toast";
 
@@ -77,7 +77,7 @@ export function ProductCard({ product }: ProductCardProps) {
               Harga
             </span>
             <div className="[&_.font-mono]:text-lg [&_.font-mono]:font-medium [&_.font-mono]:text-teal-deep">
-              <PartnerPriceDisplay product={product} variant="inline" />
+              <ProductPriceDisplay product={product} variant="inline" />
             </div>
           </div>
 
