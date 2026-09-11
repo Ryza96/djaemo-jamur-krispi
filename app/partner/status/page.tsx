@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { SITE } from "@/lib/constants";
+import { SITE, PARTNER_COMING_SOON } from "@/lib/constants";
+import { ComingSoonGate } from "@/components/partner/ComingSoonGate";
 import { PartnerStatusView } from "./PartnerStatusView";
 
 export const metadata: Metadata = {
@@ -8,5 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default function PartnerStatusPage() {
+  if (PARTNER_COMING_SOON) {
+    return (
+      <ComingSoonGate
+        description="Halaman Status Partner sedang kami siapkan. Nantikan info selanjutnya!"
+        backHref="/partner"
+        backLabel="Kembali ke Program Kemitraan"
+      />
+    );
+  }
+
   return <PartnerStatusView />;
 }

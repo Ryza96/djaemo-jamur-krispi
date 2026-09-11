@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { SITE } from "@/lib/constants";
+import { SITE, PARTNER_COMING_SOON } from "@/lib/constants";
+import { ComingSoonGate } from "@/components/partner/ComingSoonGate";
 import { RegistrationForm } from "./RegistrationForm";
 
 export const metadata: Metadata = {
@@ -8,5 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default function PartnerRegisterPage() {
+  if (PARTNER_COMING_SOON) {
+    return (
+      <ComingSoonGate
+        description="Registrasi Program Kemitraan sedang kami siapkan. Nantikan info selanjutnya!"
+        backHref="/partner"
+        backLabel="Kembali ke Program Kemitraan"
+      />
+    );
+  }
+
   return <RegistrationForm />;
 }

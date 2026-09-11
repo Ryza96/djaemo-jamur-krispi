@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE } from "@/lib/constants";
+import { SITE, PARTNER_COMING_SOON } from "@/lib/constants";
+import { ComingSoonGate } from "@/components/partner/ComingSoonGate";
 import { PageHeader, Section } from "@/components/sections/Section";
 
 export const metadata: Metadata = {
@@ -9,6 +10,16 @@ export const metadata: Metadata = {
 };
 
 export default function ResellerRegisterSuccessPage() {
+  if (PARTNER_COMING_SOON) {
+    return (
+      <ComingSoonGate
+        description="Program Reseller sedang kami siapkan. Nantikan info selanjutnya!"
+        backHref="/partner/reseller"
+        backLabel="Kembali ke Program Reseller"
+      />
+    );
+  }
+
   return (
     <Section>
       <PageHeader
