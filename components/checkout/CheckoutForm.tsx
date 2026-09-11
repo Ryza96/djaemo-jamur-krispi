@@ -188,7 +188,14 @@ export function CheckoutForm() {
           // Order ID sudah ada di server (409): regenerate & retry maksimal 1x
           const newOrderId = buildOrderId();
           setOrderId(newOrderId);
-          await createOrderAndPay(newOrderId);
+          const retryDone = await createOrderAndPay(newOrderId);
+          if (!retryDone) {
+            dispatch({
+              type: "SET_ERROR",
+              payload:
+                "Terjadi konflik saat membuat pesanan. Silakan coba lagi.",
+            });
+          }
         }
       } catch (err) {
         const message =
