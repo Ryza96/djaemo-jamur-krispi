@@ -95,7 +95,7 @@ export default function NewPromoPage() {
         : "create";
 
   useEffect(() => {
-    fetch("/api/products")
+    fetch("/api/admin/products")
       .then((r) => r.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : [];

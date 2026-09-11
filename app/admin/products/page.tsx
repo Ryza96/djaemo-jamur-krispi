@@ -49,7 +49,7 @@ export default function AdminProductsPage() {
   const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   useEffect(() => {
-    fetch('/api/products')
+    fetch('/api/admin/products')
       .then((r) => r.json())
       .then((data) => setProducts(data))
       .catch(() => setProducts([]));
@@ -166,6 +166,7 @@ export default function AdminProductsPage() {
     await delay(30);
 
     const productId = editingProduct ? editingProduct.id : `produk-${Date.now()}`;
+    let savedProductId: string | null = null;
     const imageUrls: string[] = [];
     const uploadedFileRecords: Array<{ path: string; url: string }> = [];
     const items = pickerRef.current?.getItems() || [];
@@ -312,9 +313,9 @@ export default function AdminProductsPage() {
           const errBody = await res.json().catch(() => null);
           throw new Error(errBody?.error || `HTTP ${res.status}`);
         }
+        savedProductId = editingProduct.id;
       } else {
         const payload = {
-          id: productId,
           name: formData.name || "",
           description: formData.description || "",
           price: sanitizedPrice || 0,
@@ -327,9 +328,17 @@ export default function AdminProductsPage() {
           const errBody = await res.json().catch(() => null);
           throw new Error(errBody?.error || `HTTP ${res.status}`);
         }
+        const saved = (await res.json()) as Partial<Product>;
+        if (typeof saved.id !== "string" || saved.id.length === 0) {
+          throw new Error("Respons server tidak mengembalikan ID produk yang tersimpan.");
+        }
+        savedProductId = saved.id;
       }
 
-      const lookupId = editingProduct ? editingProduct.id : productId;
+      const lookupId = savedProductId;
+      if (!lookupId) {
+        throw new Error("ID produk tidak tersedia setelah disimpan.");
+      }
       const { data: verifyProduct, error: verifyErr } = await supabaseClient
         .from('products')
         .select('id')
@@ -355,7 +364,10 @@ export default function AdminProductsPage() {
 
     try {
       if (imageUrls.length > 0) {
-        const lookupId = editingProduct ? editingProduct.id : productId;
+        const lookupId = savedProductId;
+        if (!lookupId) {
+          throw new Error("ID produk tidak tersedia setelah disimpan.");
+        }
         const { data: verifyImages, error: verifyImgErr } = await supabaseClient
           .from('product_images')
           .select('id')
@@ -381,9 +393,12 @@ export default function AdminProductsPage() {
     await delay(30);
 
     try {
-      const res = await fetch('/api/products');
+      const lookupId = savedProductId;
+      if (!lookupId) {
+        throw new Error("ID produk tidak tersedia setelah disimpan.");
+      }
+      const res = await fetch('/api/admin/products');
       const data = await res.json();
-      const lookupId = editingProduct ? editingProduct.id : productId;
       const found = Array.isArray(data) && (data as Array<{ id: string }>).some((p) => p.id === lookupId);
       if (!found) throw new Error(`Produk ${lookupId} tidak muncul di daftar produk setelah disimpan.`);
       setProducts(data);
@@ -417,7 +432,7 @@ export default function AdminProductsPage() {
   const handleDeleteProduct = (id: string) => {
     if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
       fetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-        .then(() => fetch('/api/products'))
+        .then(() => fetch('/api/admin/products'))
         .then((r) => r.json())
         .then((data) => setProducts(data))
         .catch(() => {});
@@ -472,7 +487,7 @@ export default function AdminProductsPage() {
         prev ? { ...prev, stock: data.newStock } : prev,
       );
 
-      const listRes = await fetch('/api/products');
+      const listRes = await fetch('/api/admin/products');
       const listData = await listRes.json();
       if (Array.isArray(listData)) setProducts(listData);
     } catch (err) {
