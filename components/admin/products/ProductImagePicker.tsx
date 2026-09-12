@@ -41,6 +41,10 @@ const ProductImagePicker = forwardRef<ProductImagePickerHandle, Props>(
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const idCounter = useRef(0);
+    const [imagePickerNotice, setImagePickerNotice] = useState<{
+      type: "error" | "info";
+      text: string;
+    } | null>(null);
 
     // Cleanup blob URLs on unmount
     useEffect(() => {
@@ -62,6 +66,7 @@ const ProductImagePicker = forwardRef<ProductImagePickerHandle, Props>(
             URL.revokeObjectURL(it.src);
           }
         }
+        setImagePickerNotice(null);
         setItems(
           existingImages
             ? existingImages.map((url, i) => ({
@@ -78,26 +83,72 @@ const ProductImagePicker = forwardRef<ProductImagePickerHandle, Props>(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files) return;
-        setItems((prev) => {
-          const remaining = Math.max(0, MAX_IMAGES - prev.length);
-          if (remaining <= 0) return prev;
-          const arr = Array.from(files).slice(0, remaining);
-          const ctr = idCounter.current;
-          const newItems = arr.map((f, i) => ({
-            id: `new-${Date.now()}-${ctr + i}`,
-            type: "new" as const,
-            src: URL.createObjectURL(f),
-            file: f,
-          }));
-          idCounter.current = ctr + arr.length;
-          return [...prev, ...newItems];
-        });
+        const incoming = Array.from(files);
+        if (incoming.length === 0) return;
+
+        setImagePickerNotice(null);
+
+        const prev = itemsRef.current;
+        const remaining = Math.max(0, MAX_IMAGES - prev.length);
+        if (remaining <= 0) {
+          setImagePickerNotice({
+            type: "error",
+            text: `Slot foto sudah penuh (maksimal ${MAX_IMAGES}). Hapus salah satu foto terlebih dahulu.`,
+          });
+          return;
+        }
+
+        const duplicateKeys = new Set(
+          prev
+            .filter(
+              (it): it is ImagePickerItem & { file: File } =>
+                it.type === "new" && !!it.file,
+            )
+            .map((it) => `${it.file.name}\u0000${it.file.size}`),
+        );
+        const deduped = incoming.filter(
+          (f) => !duplicateKeys.has(`${f.name}\u0000${f.size}`),
+        );
+        const duplicateCount = incoming.length - deduped.length;
+
+        if (deduped.length === 0) {
+          setImagePickerNotice({
+            type: "error",
+            text: "File yang dipilih sudah ada di daftar foto. File duplikat tidak ditambahkan.",
+          });
+          return;
+        }
+
+        const arr = deduped.slice(0, remaining);
+        const droppedCount = deduped.length - arr.length;
+        if (droppedCount > 0) {
+          setImagePickerNotice({
+            type: "error",
+            text: `Hanya tersisa ${remaining} slot foto. ${droppedCount} file tidak ditambahkan.`,
+          });
+        } else if (duplicateCount > 0) {
+          setImagePickerNotice({
+            type: "info",
+            text: `${duplicateCount} file tidak ditambahkan karena sudah ada di daftar foto.`,
+          });
+        }
+
+        const ctr = idCounter.current;
+        const newItems = arr.map((f, i) => ({
+          id: `new-${Date.now()}-${ctr + i}`,
+          type: "new" as const,
+          src: URL.createObjectURL(f),
+          file: f,
+        }));
+        idCounter.current = ctr + arr.length;
+        setItems([...prev, ...newItems]);
         if (fileInputRef.current) fileInputRef.current.value = "";
       },
       []
     );
 
     const handleRemovePreview = useCallback((index: number) => {
+      setImagePickerNotice(null);
       setItems((prev) => {
         const item = prev[index];
         if (!item) return prev;
@@ -109,11 +160,20 @@ const ProductImagePicker = forwardRef<ProductImagePickerHandle, Props>(
     }, []);
 
     const makePrimary = useCallback((index: number) => {
-      setItems((prev) => {
-        const next = [...prev];
+      const prev = itemsRef.current;
+      if (index < 0 || index >= prev.length) return;
+      if (prev.length > MAX_IMAGES) {
+        setImagePickerNotice({
+          type: "error",
+          text: `Maksimal ${MAX_IMAGES} foto. Foto di luar batas tidak disimpan.`,
+        });
+        return;
+      }
+      setItems((cur) => {
+        const next = [...cur];
         const [item] = next.splice(index, 1);
         next.unshift(item);
-        return next.slice(0, MAX_IMAGES);
+        return next;
       });
     }, []);
 
@@ -132,6 +192,13 @@ const ProductImagePicker = forwardRef<ProductImagePickerHandle, Props>(
       e.preventDefault();
       const from = Number(e.dataTransfer.getData("text/plain"));
       if (isNaN(from)) return;
+      if (itemsRef.current.length > MAX_IMAGES) {
+        setImagePickerNotice({
+          type: "error",
+          text: `Maksimal ${MAX_IMAGES} foto. Foto di luar batas tidak disimpan.`,
+        });
+        return;
+      }
       setItems((prev) => {
         const next = [...prev];
         const [moved] = next.splice(from, 1);
@@ -226,6 +293,17 @@ const ProductImagePicker = forwardRef<ProductImagePickerHandle, Props>(
             onChange={handleFileChange}
             className="hidden"
           />
+          {imagePickerNotice && (
+            <p
+              className={`mt-2 text-sm ${
+                imagePickerNotice.type === "error"
+                  ? "text-rose-600"
+                  : "text-slate-500"
+              }`}
+            >
+              {imagePickerNotice.text}
+            </p>
+          )}
         </div>
       </div>
     );
