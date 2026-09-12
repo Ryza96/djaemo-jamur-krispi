@@ -106,17 +106,20 @@ export function PaymentMethodSection() {
             </span>
           </span>
         </button>
+      ) : selected ? (
+        <p className="rounded-2xl border border-ink/10 bg-cream-2 p-4 text-xs text-muted">
+          COD tidak tersedia untuk pesanan ini.
+          {!provinceAllowed
+            ? " COD hanya berlaku untuk pengiriman di Pulau Jawa."
+            : !spendCapOk
+              ? ` COD hanya berlaku untuk total maksimal ${formatPrice(COD_MAX_TOTAL)}.`
+              : " Layanan pengiriman ini tidak mendukung COD — silakan pilih kurir lain atau bayar online."}
+        </p>
       ) : (
-        selected && (
-          <p className="rounded-2xl border border-ink/10 bg-cream-2 p-4 text-xs text-muted">
-            COD tidak tersedia untuk pesanan ini.
-            {!provinceAllowed
-              ? " COD hanya berlaku untuk pengiriman di Pulau Jawa."
-              : !spendCapOk
-                ? ` COD hanya berlaku untuk total maksimal ${formatPrice(COD_MAX_TOTAL)}.`
-                : " Layanan pengiriman ini tidak mendukung COD — silakan pilih kurir lain atau bayar online."}
-          </p>
-        )
+        <p className="rounded-2xl border border-ink/10 bg-cream-2 p-4 text-xs text-muted">
+          Pilih kurir pengiriman terlebih dahulu untuk melihat ketersediaan
+          pembayaran COD.
+        </p>
       )}
     </div>
   );
