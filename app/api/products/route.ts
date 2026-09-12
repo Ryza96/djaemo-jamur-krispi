@@ -234,13 +234,17 @@ export const PUT = async (request: Request) => {
       }
     }
 
-    // Best-effort cleanup of the storage files for the OLD images that were just
-    // unlinked. The DB is already consistent with the new images (new rows
-    // inserted, old rows removed), so a storage failure here must NOT fail the
-    // whole request — an orphaned file is preferable to a failed update.
-    if (oldImageUrls.length > 0) {
+    // Best-effort cleanup of the storage files for the OLD images that are NOT
+    // part of the updated image list. Reused URLs (images the admin kept) are
+    // still referenced by the rows inserted above, so their storage files must
+    // remain untouched — deleting them would instantly 404 the storefront for
+    // products the admin only changed the price/stock on. A storage failure
+    // here must NOT fail the whole request — an orphaned file is preferable to
+    // a failed update.
+    const removedImageUrls = oldImageUrls.filter((url) => !images.includes(url));
+    if (removedImageUrls.length > 0) {
       try {
-        await deleteStorageFiles(oldImageUrls);
+        await deleteStorageFiles(removedImageUrls);
       } catch (err) {
         console.warn(
           `[products] PUT ${productId}: gagal membersihkan storage gambar lama`,
