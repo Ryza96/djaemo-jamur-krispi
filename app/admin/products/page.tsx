@@ -17,6 +17,8 @@ export default function AdminProductsPage() {
   const [formData, setFormData] = useState<Partial<Product>>({});
   const pickerRef = useRef<ProductImagePickerHandle | null>(null);
   const [uploadingMap, setUploadingMap] = useState<Record<string, boolean>>({});
+  const isSavingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([]);
   const [showPipeline, setShowPipeline] = useState(false);
   const [pipelineError, setPipelineError] = useState<string | null>(null);
@@ -54,6 +56,13 @@ export default function AdminProductsPage() {
       .then((data) => setProducts(data))
       .catch(() => setProducts([]));
   }, []);
+
+  useEffect(() => {
+    if (!showPipeline && isSavingRef.current) {
+      isSavingRef.current = false;
+      setIsSaving(false);
+    }
+  }, [showPipeline]);
 
   const handleAddProduct = () => {
     setEditingProduct(null);
@@ -134,7 +143,24 @@ export default function AdminProductsPage() {
     return errors;
   };
 
+  const cleanupOrphanUploads = async (paths: string[]): Promise<void> => {
+    if (paths.length === 0) return;
+    try {
+      await fetch("/api/admin/products/uploads", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paths }),
+      });
+    } catch {
+      // Best-effort: bila pembersihan gagal, jangan halangi laporan error utama.
+    }
+  };
+
   const handleSaveProduct = async () => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+    setIsSaving(true);
+
     const sanitizedPrice = sanitizePriceToInt(formData.price);
 
     setShowPipeline(true);
@@ -268,6 +294,9 @@ export default function AdminProductsPage() {
     } catch (err) {
       const classified = classifyUploadError(err);
       const msg = classified.userMessage;
+      // Hapus file yang berhasil ter-upload pada percobaan ini — produk belum
+      // tersimpan sehingga file tersebut yatim di storage.
+      await cleanupOrphanUploads(uploadedFileRecords.map((r) => r.path));
       steps = pipelineFailed(steps, 2, msg);
       setPipelineSteps(steps);
       setPipelineError(`Upload Gambar: ${msg}`);
@@ -305,12 +334,15 @@ export default function AdminProductsPage() {
     setPipelineSteps(steps);
     await delay(30);
 
+    let cleanupUploadsOnFailure = false;
+
     try {
       if (editingProduct) {
         const payload = { id: editingProduct.id, ...formData, price: sanitizedPrice, images: imageUrls };
         const res = await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if (!res.ok) {
           const errBody = await res.json().catch(() => null);
+          cleanupUploadsOnFailure = true;
           throw new Error(errBody?.error || `HTTP ${res.status}`);
         }
         savedProductId = editingProduct.id;
@@ -326,11 +358,12 @@ export default function AdminProductsPage() {
         const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if (!res.ok) {
           const errBody = await res.json().catch(() => null);
+          cleanupUploadsOnFailure = true;
           throw new Error(errBody?.error || `HTTP ${res.status}`);
         }
         const saved = (await res.json()) as Partial<Product>;
         if (typeof saved.id !== "string" || saved.id.length === 0) {
-          throw new Error("Respons server tidak mengembalikan ID produk yang tersimpan.");
+          throw new Error("Respons server tidak mengembalikan ID produk. Periksa daftar produk sebelum mencoba lagi.");
         }
         savedProductId = saved.id;
       }
@@ -346,9 +379,21 @@ export default function AdminProductsPage() {
         .maybeSingle();
 
       if (verifyErr) throw new Error(`Gagal verifikasi produk: ${verifyErr.message}`);
-      if (!verifyProduct) throw new Error(`Produk dengan ID ${lookupId} tidak ditemukan setelah disimpan.`);
+      if (!verifyProduct) {
+        throw new Error(
+          editingProduct
+            ? "Produk terhapus atau tidak tersedia di database. Cek daftar produk sebelum mencoba lagi."
+            : "Produk mungkin sudah tersimpan. Jangan klik Simpan lagi — cek daftar produk terlebih dahulu."
+        );
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      // Hanya bersihkan file yang yakin belum direferensikan produk (POST/PUT
+      // ditolak server). Jika verifikasi yang gagal, produk bisa saja sudah
+      // tersimpan dan file tersebut terpakai — jangan dihapus.
+      if (cleanupUploadsOnFailure) {
+        await cleanupOrphanUploads(uploadedFileRecords.map((r) => r.path));
+      }
       steps = pipelineFailed(steps, 4, msg);
       setPipelineSteps(steps);
       setPipelineError(`Simpan Data Produk: ${msg}`);
@@ -672,10 +717,10 @@ export default function AdminProductsPage() {
               </button>
               <button
                 onClick={handleSaveProduct}
-                disabled={Object.values(uploadingMap).some(Boolean)}
-                className={`flex-1 rounded-2xl bg-linear-to-r from-emerald-600 via-emerald-500 to-emerald-600 px-4 py-3 text-sm font-semibold text-white transition ${Object.values(uploadingMap).some(Boolean) ? 'opacity-60 cursor-not-allowed' : 'hover:from-emerald-500 hover:to-emerald-500'}`}
+                disabled={isSaving || Object.values(uploadingMap).some(Boolean)}
+                className={`flex-1 rounded-2xl bg-linear-to-r from-emerald-600 via-emerald-500 to-emerald-600 px-4 py-3 text-sm font-semibold text-white transition ${isSaving || Object.values(uploadingMap).some(Boolean) ? 'opacity-60 cursor-not-allowed' : 'hover:from-emerald-500 hover:to-emerald-500'}`}
               >
-                {Object.values(uploadingMap).some(Boolean) ? 'Mengunggah...' : (editingProduct ? 'Simpan Perubahan' : 'Tambah Produk')}
+                {isSaving ? 'Menyimpan...' : (Object.values(uploadingMap).some(Boolean) ? 'Mengunggah...' : (editingProduct ? 'Simpan Perubahan' : 'Tambah Produk'))}
               </button>
             </div>
           </div>
