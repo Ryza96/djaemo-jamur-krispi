@@ -31,19 +31,74 @@ const extractImageUrls = (body: Record<string, unknown>): string[] => {
     .filter((u) => u.length > 0);
 };
 
+const DB_TIMEOUT_MS = 12_000;
+const STORAGE_TIMEOUT_MS = 10_000;
+
+class DatabaseTimeoutError extends Error {}
+
+async function runQuery<T>(
+  build: (signal: AbortSignal) => PromiseLike<T>,
+  label: string,
+): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DB_TIMEOUT_MS);
+  try {
+    const result = await build(controller.signal);
+    if (controller.signal.aborted) {
+      // Abort terjadi karena timeout kami, bukan error dari Supabase.
+      throw new DatabaseTimeoutError(
+        `Koneksi ke database timeout${label ? ` saat ${label}` : ""}. Coba lagi.`,
+      );
+    }
+    return result;
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new DatabaseTimeoutError(
+        `Koneksi ke database timeout${label ? ` saat ${label}` : ""}. Coba lagi.`,
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Storage timeout saat ${label}.`)), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 const deleteStorageFiles = async (urls: string[]) => {
+  const targets: Array<{ url: string; path: string }> = [];
   for (const url of urls) {
     try {
       const parsed = new URL(url);
       const prefix = `/storage/v1/object/public/${UPLOAD.STORAGE_BUCKET}/`;
       if (parsed.pathname.startsWith(prefix)) {
-        const path = parsed.pathname.slice(prefix.length);
-        await supabase.storage.from(UPLOAD.STORAGE_BUCKET).remove([path]);
+        targets.push({ url, path: parsed.pathname.slice(prefix.length) });
       }
     } catch {
       // non-fatal — skip invalid url
     }
   }
+  await Promise.allSettled(
+    targets.map(({ url, path }) =>
+      withTimeout(
+        supabase.storage.from(UPLOAD.STORAGE_BUCKET).remove([path]),
+        STORAGE_TIMEOUT_MS,
+        `hapus file ${path}`,
+      ).catch((err) => {
+        console.warn(`[products] skip hapus storage "${url}":`, err);
+      }),
+    ),
+  );
 };
 
 type ProductPayload = {
@@ -146,11 +201,16 @@ export const POST = async (request: Request) => {
 
     const { images, ...productPayload } = result.payload;
 
-    const { data: product, error } = await supabase
-      .from("products")
-      .insert([{ id: crypto.randomUUID(), ...productPayload }])
-      .select()
-      .single();
+    const { data: product, error } = await runQuery(
+      (signal) =>
+        supabase
+          .from("products")
+          .insert([{ id: crypto.randomUUID(), ...productPayload }])
+          .select()
+          .abortSignal(signal)
+          .single(),
+      "menyimpan produk",
+    );
     if (error) {
       console.error("POST /api/products insert error:", error);
       return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi." }, { status: 500 });
@@ -158,7 +218,10 @@ export const POST = async (request: Request) => {
 
     if (images.length > 0) {
       const rows = images.map((image_url) => ({ product_id: product.id, image_url }));
-      const { error: imgErr } = await supabase.from("product_images").insert(rows);
+      const { error: imgErr } = await runQuery(
+        (signal) => supabase.from("product_images").insert(rows).abortSignal(signal),
+        "menyimpan foto produk",
+      );
       if (imgErr) {
         console.error("POST /api/products image insert error:", imgErr);
         return NextResponse.json({ error: "Terjadi kesalahan server. Silakan coba lagi." }, { status: 500 });
@@ -191,12 +254,17 @@ export const PUT = async (request: Request) => {
 
     const { images, ...productPayload } = result.payload;
 
-    const { data: updatedProduct, error: updateErr } = await supabase
-      .from("products")
-      .update(productPayload)
-      .eq("id", productId)
-      .select()
-      .single();
+    const { data: updatedProduct, error: updateErr } = await runQuery(
+      (signal) =>
+        supabase
+          .from("products")
+          .update(productPayload)
+          .eq("id", productId)
+          .select()
+          .abortSignal(signal)
+          .single(),
+      "memperbarui produk",
+    );
 
     if (updateErr) {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
@@ -205,10 +273,15 @@ export const PUT = async (request: Request) => {
     // Snapshot existing image rows (id + storage url) BEFORE touching them, so
     // we can (a) delete only the OLD rows after the new insert succeeds, and
     // (b) clean up their storage files afterwards.
-    const { data: oldRows } = await supabase
-      .from("product_images")
-      .select("id, image_url")
-      .eq("product_id", productId);
+    const { data: oldRows } = await runQuery(
+      (signal) =>
+        supabase
+          .from("product_images")
+          .select("id, image_url")
+          .eq("product_id", productId)
+          .abortSignal(signal),
+      "membaca gambar lama",
+    );
 
     const oldImageUrls = (oldRows ?? []).map((r) => r.image_url);
 
@@ -216,7 +289,10 @@ export const PUT = async (request: Request) => {
     // if this insert fails, the product keeps its existing (old) images intact
     // and nothing is torn down.
     const newRows = images.map((image_url) => ({ product_id: productId, image_url }));
-    const { error: insertImgErr } = await supabase.from("product_images").insert(newRows);
+    const { error: insertImgErr } = await runQuery(
+      (signal) => supabase.from("product_images").insert(newRows).abortSignal(signal),
+      "menyimpan gambar baru",
+    );
     if (insertImgErr) {
       return NextResponse.json({ error: insertImgErr.message }, { status: 500 });
     }
@@ -225,10 +301,11 @@ export const PUT = async (request: Request) => {
     // the rows we just inserted above are never touched.
     const oldIds = (oldRows ?? []).map((r) => r.id);
     if (oldIds.length > 0) {
-      const { error: deleteOldErr } = await supabase
-        .from("product_images")
-        .delete()
-        .in("id", oldIds);
+      const { error: deleteOldErr } = await runQuery(
+        (signal) =>
+          supabase.from("product_images").delete().in("id", oldIds).abortSignal(signal),
+        "menghapus gambar lama",
+      );
       if (deleteOldErr) {
         return NextResponse.json({ error: deleteOldErr.message }, { status: 500 });
       }
@@ -255,7 +332,10 @@ export const PUT = async (request: Request) => {
 
     revalidatePath("/");
     return NextResponse.json({ ...updatedProduct, images });
-  } catch {
+  } catch (err) {
+    if (err instanceof DatabaseTimeoutError) {
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
 };
@@ -269,27 +349,35 @@ export const DELETE = async (request: Request) => {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-    const { data: existingImages } = await supabase
-      .from("product_images")
-      .select("image_url")
-      .eq("product_id", id);
+    const { data: existingImages } = await runQuery(
+      (signal) =>
+        supabase.from("product_images").select("image_url").eq("product_id", id).abortSignal(signal),
+      "membaca gambar produk",
+    );
 
     const urls = (existingImages as Array<{ image_url: string }> | null)?.map((r) => r.image_url) ?? [];
     await deleteStorageFiles(urls);
 
-    const { error: deleteImgsErr } = await supabase
-      .from("product_images")
-      .delete()
-      .eq("product_id", id);
+    const { error: deleteImgsErr } = await runQuery(
+      (signal) =>
+        supabase.from("product_images").delete().eq("product_id", id).abortSignal(signal),
+      "menghapus gambar produk",
+    );
     if (deleteImgsErr) {
       return NextResponse.json({ error: deleteImgsErr.message }, { status: 500 });
     }
 
-    const { error } = await supabase.from("products").delete().eq("id", id);
+    const { error } = await runQuery(
+      (signal) => supabase.from("products").delete().eq("id", id).abortSignal(signal),
+      "menghapus produk",
+    );
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     revalidatePath("/");
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    if (err instanceof DatabaseTimeoutError) {
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
   }
 };
