@@ -57,18 +57,16 @@ export default async function ProdukPage() {
             </div>
           </div>
 
-          <div className="relative hidden items-center justify-center sm:flex">
-            <div className="relative aspect-square w-full max-w-[420px]">
-              <div className="absolute inset-0 rounded-[28%] border border-gold/20 bg-gradient-to-br from-[#f7e9c8] via-[#eac678] to-[#d9b25f] shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5),inset_0_0_0_1px_rgba(255,255,255,0.2)]" />
-              <Image
-                src="/images/produk/favorit-3-varian.png"
-                alt="Tiga varian favorit D'Jaemo"
-                fill
-                priority
-                className="relative z-10 object-contain p-6 drop-shadow-[0_24px_60px_rgba(0,0,0,0.4)]"
-                sizes="(max-width: 1024px) 50vw, 420px"
-              />
-            </div>
+          <div className="relative flex items-center justify-center">
+            <Image
+              src="/images/produk/produk.png"
+              alt="Produk D'Jaemo Jamur Krispi"
+              width={1254}
+              height={1254}
+              priority
+              className="h-auto w-full max-w-[480px] drop-shadow-[0_30px_26px_rgba(0,0,0,0.45)]"
+              sizes="(max-width: 1024px) 50vw, 480px"
+            />
           </div>
         </div>
       </section>
