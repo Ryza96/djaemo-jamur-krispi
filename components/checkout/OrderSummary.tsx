@@ -29,7 +29,7 @@ export function OrderSummary() {
                 className="flex flex-col gap-2 rounded-3xl border border-ink/10 bg-cream-2 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-ink">
+                  <p className="line-clamp-2 font-semibold text-ink">
                     {item.product.name}
                   </p>
                   <p className="text-xs text-muted">

@@ -439,7 +439,7 @@ export default function CheckoutSuccessPage() {
         }
       />
 
-      <div className="grid gap-10 xl:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           <div className={`rounded-2xl border p-6 text-center shadow-sm ${
             isCod
@@ -487,7 +487,7 @@ export default function CheckoutSuccessPage() {
 
           <div className="space-y-4 rounded-3xl border border-ink/10 bg-cream-2 p-6">
             <h3 className="text-base font-semibold text-ink">Informasi Pembeli</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-muted">Nama</p>
                 <p className="font-semibold text-foreground">{order.customers.name}</p>

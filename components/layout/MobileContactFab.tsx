@@ -17,7 +17,7 @@ export function MobileContactFab() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Hubungi kami via WhatsApp"
-      className="fixed bottom-[86px] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gold text-teal-deep shadow-lg shadow-gold/30 transition-all duration-200 hover:scale-105 hover:bg-gold-bright active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 md:hidden"
+      className="fixed bottom-[calc(86px+env(safe-area-inset-bottom,0px))] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gold text-teal-deep shadow-lg shadow-gold/30 transition-all duration-200 hover:scale-105 hover:bg-gold-bright active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 md:hidden"
     >
       <WhatsAppIcon />
     </a>

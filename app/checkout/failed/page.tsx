@@ -97,7 +97,7 @@ export default function CheckoutFailedPage() {
         description="Silakan coba lagi. Jika dana sudah terpotong, silakan menunggu konfirmasi dari bank/issuer."
       />
 
-      <div className="grid gap-10 xl:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6 rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-ink">Status Transaksi</h2>

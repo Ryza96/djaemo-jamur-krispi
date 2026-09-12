@@ -236,7 +236,7 @@ export function CheckoutForm() {
   return (
     <ShippingProvider>
       <form onSubmit={handleSubmit} noValidate>
-        <div className="grid gap-8 xl:grid-cols-[2fr_1fr]">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[2fr_1fr]">
           <div className="space-y-8">
           {state.resume && (
             <section className="rounded-3xl border border-gold/30 bg-gold/10 p-6 shadow-sm">
