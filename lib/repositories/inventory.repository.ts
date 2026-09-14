@@ -52,6 +52,7 @@ export const InventoryRepository: IInventoryRepository = {
       .from("products")
       .select("stock")
       .eq("id", productId)
+      .is("deleted_at", null)
       .maybeSingle();
 
     if (error || !data) throw new Error("PRODUCT_NOT_FOUND");
@@ -73,6 +74,7 @@ export const InventoryRepository: IInventoryRepository = {
       .from("products")
       .select("stock")
       .eq("id", productId)
+      .is("deleted_at", null)
       .maybeSingle();
 
     if (error || !data) throw new Error("PRODUCT_NOT_FOUND");
@@ -132,7 +134,8 @@ export const InventoryRepository: IInventoryRepository = {
     const { data, error } = await supabase
       .from("products")
       .select("id, stock")
-      .in("id", ids);
+      .in("id", ids)
+      .is("deleted_at", null);
 
     if (error) throw error;
 

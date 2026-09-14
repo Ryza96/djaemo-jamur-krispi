@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { getCatalogProducts } from "@/lib/services/product.service";
+import { softDeleteProduct } from "@/lib/repositories/product.repository";
 import { UPLOAD } from "@/lib/constants/upload";
 import { requireAdmin } from "@/lib/services/admin-auth.service";
 
@@ -349,29 +350,15 @@ export const DELETE = async (request: Request) => {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-    const { data: existingImages } = await runQuery(
-      (signal) =>
-        supabase.from("product_images").select("image_url").eq("product_id", id).abortSignal(signal),
-      "membaca gambar produk",
-    );
-
-    const urls = (existingImages as Array<{ image_url: string }> | null)?.map((r) => r.image_url) ?? [];
-    await deleteStorageFiles(urls);
-
-    const { error: deleteImgsErr } = await runQuery(
-      (signal) =>
-        supabase.from("product_images").delete().eq("product_id", id).abortSignal(signal),
-      "menghapus gambar produk",
-    );
-    if (deleteImgsErr) {
-      return NextResponse.json({ error: deleteImgsErr.message }, { status: 500 });
+    // Soft-delete only: produk + product_images + file storage dibiarkan utuh
+    // supaya produk bisa direstore/diaudit nanti. Query publik & admin selalu
+    // menyaring deleted_at IS NULL.
+    try {
+      await softDeleteProduct(id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Gagal menghapus produk.";
+      return NextResponse.json({ error: message }, { status: 500 });
     }
-
-    const { error } = await runQuery(
-      (signal) => supabase.from("products").delete().eq("id", id).abortSignal(signal),
-      "menghapus produk",
-    );
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     revalidatePath("/");
     return NextResponse.json({ success: true });
   } catch (err) {

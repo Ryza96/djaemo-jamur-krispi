@@ -137,7 +137,8 @@ export const PromoRepository = {
     const { data, error } = await supabase
       .from("products")
       .select("id, name, price")
-      .in("id", ids);
+      .in("id", ids)
+      .is("deleted_at", null);
 
     if (error) throw error;
     return data || [];

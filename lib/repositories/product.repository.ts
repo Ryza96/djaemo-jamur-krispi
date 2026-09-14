@@ -5,6 +5,7 @@ export async function findCatalog(): Promise<ProductRow[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*, product_images(image_url)")
+    .is("deleted_at", null)
     .gt("stock", 0)
     .order("created_at", { ascending: false });
 
@@ -16,6 +17,7 @@ export async function findAllForAdmin(): Promise<ProductRow[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*, product_images(image_url)")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -27,6 +29,7 @@ export async function findById(id: string): Promise<ProductRow | null> {
     .from("products")
     .select("*, product_images(image_url)")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) throw error;
@@ -58,4 +61,13 @@ export async function findSoldQuantities(): Promise<SoldQuantityRow[]> {
     product_id,
     total_quantity,
   }));
+}
+
+export async function softDeleteProduct(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("products")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw error;
 }

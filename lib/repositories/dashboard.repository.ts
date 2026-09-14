@@ -114,11 +114,13 @@ export const DashboardRepository = {
         supabase
           .from("products")
           .select("id", { count: "exact", head: true })
+          .is("deleted_at", null)
           .lte("stock", LOW_STOCK_THRESHOLD),
 
         supabase
           .from("products")
           .select("name, stock")
+          .is("deleted_at", null)
           .lte("stock", LOW_STOCK_THRESHOLD)
           .order("stock", { ascending: true })
           .limit(LOW_STOCK_LIMIT),

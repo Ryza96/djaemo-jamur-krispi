@@ -14,11 +14,11 @@ function baseUrl(): string {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = baseUrl();
 
-  // Query all products (there is no is_active/status column in the products
-  // table, so every product is included).
+  // Query all active products (soft-deleted products are excluded via deleted_at filter).
   const { data: products, error } = await supabase
     .from("products")
-    .select("id");
+    .select("id")
+    .is("deleted_at", null);
 
   if (error) {
     console.error("sitemap: failed to load products:", error);

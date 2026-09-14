@@ -376,6 +376,7 @@ export default function AdminProductsPage() {
         .from('products')
         .select('id')
         .eq('id', lookupId)
+        .is('deleted_at', null)
         .maybeSingle();
 
       if (verifyErr) throw new Error(`Gagal verifikasi produk: ${verifyErr.message}`);
@@ -474,13 +475,22 @@ export default function AdminProductsPage() {
     setTimeout(() => setShowPipeline(false), 1500);
   };
 
-  const handleDeleteProduct = (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
-      fetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-        .then(() => fetch('/api/admin/products'))
-        .then((r) => r.json())
-        .then((data) => setProducts(data))
-        .catch(() => {});
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;
+
+    try {
+      const res = await fetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        alert(body?.error || `Gagal menghapus produk (HTTP ${res.status}).`);
+        return;
+      }
+
+      const listRes = await fetch('/api/admin/products');
+      const data = await listRes.json();
+      if (Array.isArray(data)) setProducts(data);
+    } catch {
+      alert("Gagal menghapus produk. Periksa koneksi lalu coba lagi.");
     }
   };
 
