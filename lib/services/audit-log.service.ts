@@ -22,6 +22,7 @@ const AUDIT_EVENTS = {
   ORDER_WAITING_FOR_RESTOCK: "order.waiting_for_restock",
   PAYMENT_MANUAL_CONFIRM: "payment.manual_confirm",
   PAYMENT_PAID: "payment.paid",
+  PAYMENT_CHARGEBACK: "payment.chargeback",
   REFUND_CONFIRMED: "payment.refund_confirmed",
   NOTES_UPDATED: "order.notes_updated",
   VOUCHER_USAGE_RELEASED_ON_RECOVERY: "voucher.usage_released_on_recovery",

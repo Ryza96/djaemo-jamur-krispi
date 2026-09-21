@@ -8,7 +8,7 @@ import { extractWeightGrams } from "./shipping/constants";
 import { verifyMidtransSignature } from "./payment/verifySignature";
 import { isTransactionSettledAtMidtrans } from "./payment/midtrans-verify";
 import { AuditLogService } from "./audit-log.service";
-import { FulfillmentService } from "./fulfillment.service";
+import { FulfillmentService, normalizeFulfillmentStatus, STOCK_DEDUCTED_STATUSES } from "./fulfillment.service";
 import { after } from "next/server";
 import { PAYMENT_STATUS, FULFILLMENT_STATUS } from "./payment/types";
 
@@ -19,6 +19,7 @@ import type {
   CreatePaymentRequest,
   RefundInfo,
 } from "./payment/types";
+import type { OrderRow } from "@/lib/repositories/order.repository";
 
 export interface CreateOrderResult {
   id: string;
@@ -129,6 +130,19 @@ async function maybeNotifyAdminOfNewPayment(
     console.error("[notify] admin notif unexpected error (swallowed)", { orderId, error: err instanceof Error ? err.message : String(err) });
   }
 }
+
+const CHARGEBACK_AUTO_CANCEL_STATUSES = new Set<FulfillmentStatus>([
+  FULFILLMENT_STATUS.NEW,
+  FULFILLMENT_STATUS.CONFIRMED,
+  FULFILLMENT_STATUS.PACKING,
+  FULFILLMENT_STATUS.WAITING_FOR_RESTOCK,
+]);
+const CHARGEBACK_ADMIN_ACTION_STATUSES = new Set<FulfillmentStatus>([
+  FULFILLMENT_STATUS.WAYBILL_CREATED,
+  FULFILLMENT_STATUS.PICKED_UP,
+  FULFILLMENT_STATUS.SHIPPED,
+  FULFILLMENT_STATUS.DELIVERED,
+]);
 
 export const OrderService = {
   async createDraft(
@@ -730,6 +744,16 @@ export const OrderService = {
       };
     }
 
+    // INTERCEPT chargeback/partial_chargeback SEBELUM cek gross_amount dan tabel transisi inline.
+    // partial_chargeback diperlakukan SAMA dengan chargeback penuh. Selisih gross_amount vs
+    // total_amount tidak menolak notifikasi; dicatat di metadata audit oleh handleChargeback.
+    if (
+      notification.transaction_status === "chargeback" ||
+      notification.transaction_status === "partial_chargeback"
+    ) {
+      return OrderService.handleChargeback(order, notification);
+    }
+
     const currentStatus = (order.payment_status ?? order.status) as PaymentStatus;
 
     const expectedGrossAmount = order.total_amount;
@@ -992,6 +1016,143 @@ export const OrderService = {
       paymentStatus: newStatus,
       message: `Order status updated to ${newStatus}`,
     };
+  },
+
+  /**
+   * Menangani notifikasi chargeback/partial_chargeback (keputusan final: keduanya → FAILED).
+   * Batasan yang disadari: signature Midtrans = SHA512(order_id + status_code + gross_amount +
+   * serverKey), jadi transaction_status TIDAK ikut ditandatangani. Sengaja TIDAK menambah
+   * verifikasi GET status ke Midtrans (berbeda dari jalur recovery di processCallback).
+   * Pelindung: (a) hanya berlaku untuk payment_status PAID; (b) transisi PAID→FAILED hanya sekali
+   * lewat updatePaymentByOrderIdIf (winner-takes-all); (c) auto-cancel hanya setelah update menang
+   * 1 baris, lewat SATU jalur (FulfillmentService.cancel) agar stok tidak ter-restore dua kali.
+   * Catatan: FulfillmentService.cancel tidak mengekspos PARTIAL_RESTORE_FAILURE; kegagalan restore
+   * parsial hanya terlihat pada audit ROLLBACK yang ditulis executeTransition.
+   */
+  async handleChargeback(
+    order: OrderRow,
+    notification: MidtransNotification,
+  ): Promise<ProcessCallbackResult> {
+    const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
+    const currentStatus = (order.payment_status ?? order.status) as PaymentStatus;
+
+    if (isCod) {
+      await AuditLogService.logPaymentEvent({
+        orderId: order.order_id,
+        event: AuditLogService.events.PAYMENT_CHARGEBACK,
+        fromStatus: currentStatus,
+        toStatus: currentStatus,
+        metadata: {
+          transaction_status: notification.transaction_status,
+          reason: "cod_noop",
+          note: "Order COD; tidak diubah oleh chargeback.",
+        },
+      });
+      return { success: true, orderId: order.order_id, paymentStatus: currentStatus, message: "COD order unchanged" };
+    }
+
+    if (currentStatus !== PAYMENT_STATUS.PAID) {
+      // Mencakup chargeback ulang saat sudah FAILED dan order online yang belum paid.
+      await AuditLogService.logPaymentEvent({
+        orderId: order.order_id,
+        event: AuditLogService.events.CALLBACK_SKIPPED,
+        fromStatus: currentStatus,
+        toStatus: currentStatus,
+        metadata: { reason: "chargeback_non_paid", transaction_status: notification.transaction_status },
+      });
+      return { success: true, orderId: order.order_id, paymentStatus: currentStatus, message: "Non-paid order unchanged" };
+    }
+
+    // Anti-race + anti-restore-ganda: hanya pemenang yang mendapat 1 baris.
+    const updatedRows = await OrderRepository.updatePaymentByOrderIdIf(
+      order.order_id,
+      { payment_status: PAYMENT_STATUS.FAILED },
+      [PAYMENT_STATUS.PAID],
+    );
+
+    if (updatedRows === 0) {
+      await AuditLogService.logPaymentEvent({
+        orderId: order.order_id,
+        event: AuditLogService.events.CALLBACK_SKIPPED,
+        fromStatus: PAYMENT_STATUS.PAID,
+        toStatus: PAYMENT_STATUS.FAILED,
+        metadata: { reason: "chargeback_race_lost" },
+      });
+      return { success: true, orderId: order.order_id, paymentStatus: PAYMENT_STATUS.FAILED, message: "Chargeback skipped (concurrent change)" };
+    }
+
+    const fulfillmentStatus = normalizeFulfillmentStatus(order.fulfillment_status);
+    const rawGross = Number(notification.gross_amount);
+    const grossNumber = Number.isFinite(rawGross) ? Math.round(rawGross) : order.total_amount;
+    const grossDiff = grossNumber - order.total_amount;
+
+    let stockRestoreAttempted = false;
+    let requiresAdminAction = false;
+    let autoCancelFailed = false;
+    let autoCancelError: string | undefined;
+    let adminActionReason: string | null = null;
+    let adminActionNote: string | null = null;
+
+    if (fulfillmentStatus && CHARGEBACK_AUTO_CANCEL_STATUSES.has(fulfillmentStatus)) {
+      // Belum ada resi: satu jalur saja (cancel) agar restore terjadi maksimal sekali dan
+      // cancel ulang oleh admin mustahil (cancelled → cancelled invalid).
+      try {
+        const cancelResult = await FulfillmentService.cancel(order.order_id, "otomatis_chargeback");
+        if (cancelResult.success) {
+          stockRestoreAttempted = STOCK_DEDUCTED_STATUSES.has(fulfillmentStatus);
+        } else {
+          autoCancelFailed = true;
+          autoCancelError = cancelResult.message;
+          requiresAdminAction = true;
+          adminActionReason = "auto_cancel_failed";
+        }
+      } catch (err) {
+        autoCancelFailed = true;
+        autoCancelError = err instanceof Error ? err.message : "CHARGEBACK_CANCEL_FAILED";
+        requiresAdminAction = true;
+        adminActionReason = "auto_cancel_failed";
+      }
+    } else if (fulfillmentStatus && CHARGEBACK_ADMIN_ACTION_STATUSES.has(fulfillmentStatus)) {
+      // waybill_created atau lebih lanjut: tanpa restore, fulfillment tidak diubah; pemilik menindaklanjuti manual.
+      requiresAdminAction = true;
+      adminActionReason = "fulfillment_past_waybill";
+    } else if (fulfillmentStatus === FULFILLMENT_STATUS.CANCELLED) {
+      // getRefundInfo diturunkan dari audit log (ORDER_CANCELLED refund_required + REFUND_CONFIRMED),
+      // BUKAN dari payment_status, sehingga kewajiban refund lama tetap terbuka walau payment kini FAILED.
+      requiresAdminAction = true;
+      adminActionReason = "already_cancelled";
+      adminActionNote =
+        "Order sudah cancelled sebelum chargeback. Bank sudah menarik dana; JANGAN lakukan refund manual lagi jika ada kewajiban refund yang masih terbuka.";
+    } else {
+      requiresAdminAction = true;
+      adminActionReason = "unknown_fulfillment_status";
+    }
+
+    // Audit SELALU ditulis, apa pun hasil auto-cancel.
+    await AuditLogService.logPaymentEvent({
+      orderId: order.order_id,
+      event: AuditLogService.events.PAYMENT_CHARGEBACK,
+      fromStatus: PAYMENT_STATUS.PAID,
+      toStatus: PAYMENT_STATUS.FAILED,
+      metadata: {
+        transaction_status: notification.transaction_status,
+        gross_amount: notification.gross_amount,
+        total_amount: order.total_amount,
+        gross_diff: grossDiff,
+        refund_amount: notification.refund_amount ?? null,
+        refunds: notification.refunds ?? null,
+        fulfillment_status: order.fulfillment_status,
+        stock_restore_attempted: stockRestoreAttempted,
+        requiresAdminAction,
+        admin_action_reason: adminActionReason,
+        admin_action_note: adminActionNote,
+        auto_cancel_failed: autoCancelFailed,
+        auto_cancel_error: autoCancelError ?? null,
+        note: "Selisih gross_amount vs total_amount dicatat; tidak menolak notifikasi.",
+      },
+    });
+
+    return { success: true, orderId: order.order_id, paymentStatus: PAYMENT_STATUS.FAILED, message: "Order marked FAILED after chargeback" };
   },
 
   /**

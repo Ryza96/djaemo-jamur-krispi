@@ -34,7 +34,7 @@ const CUSTOMER_NOTIFIABLE: Partial<Record<FulfillmentStatus, NotificationEvent>>
   [FULFILLMENT_STATUS.CONFIRMED]: AuditLogService.events.ORDER_CONFIRMED,
 };
 
-const STOCK_DEDUCTED_STATUSES = new Set<FulfillmentStatus>([
+export const STOCK_DEDUCTED_STATUSES = new Set<FulfillmentStatus>([
   FULFILLMENT_STATUS.CONFIRMED,
   FULFILLMENT_STATUS.PACKING,
   FULFILLMENT_STATUS.WAYBILL_CREATED,
@@ -54,7 +54,7 @@ const LEGACY_FULFILLMENT_MAP: Record<string, FulfillmentStatus> = {
   completed: FULFILLMENT_STATUS.DELIVERED,
 };
 
-function normalizeFulfillmentStatus(raw: string | null | undefined): FulfillmentStatus | null {
+export function normalizeFulfillmentStatus(raw: string | null | undefined): FulfillmentStatus | null {
   if (!raw) return null;
   const normalized = raw.toLowerCase();
   const validValues = Object.values(FULFILLMENT_STATUS) as string[];

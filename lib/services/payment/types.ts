@@ -40,7 +40,12 @@ export const PAYMENT_STATUS_TRANSITIONS: Record<
     PAYMENT_STATUS.FAILED,
     PAYMENT_STATUS.EXPIRED,
   ],
-  [PAYMENT_STATUS.PAID]: [],
+  // DOKUMENTATIF: konstanta PAYMENT_STATUS_TRANSITIONS tidak direferensikan di runtime
+  // (grep seluruh .ts/.tsx = 0 hasil). Tabel yang berlaku di runtime adalah
+  // validTransitions inline di OrderService.processCallback, yang di-intercept lebih
+  // dulu oleh handleChargeback untuk chargeback/partial_chargeback. Entri ini hanya
+  // dokumentasi.
+  [PAYMENT_STATUS.PAID]: [PAYMENT_STATUS.FAILED],
   [PAYMENT_STATUS.FAILED]: [],
   [PAYMENT_STATUS.EXPIRED]: [],
   [PAYMENT_STATUS.CODAWAITING_CONFIRMATION]: [PAYMENT_STATUS.PAID],
@@ -98,6 +103,10 @@ export interface MidtransNotification {
   order_id: string;
   status_code: string;
   gross_amount: string;
+  // Opsional, untuk metadata audit. Muncul pada payload refund/partial_refund di
+  // dokumentasi Midtrans; BELUM TERBUKTI untuk chargeback.
+  refund_amount?: string;
+  refunds?: unknown;
   signature_key: string;
   transaction_id: string;
   payment_type: string;
