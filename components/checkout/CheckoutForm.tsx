@@ -24,6 +24,8 @@ export function CheckoutForm() {
   const { items, subtotal, clearCart } = useCart();
 
   const ORDER_STORAGE_KEY = "djaemo-last-order";
+  const [isDiscardingResume, setIsDiscardingResume] = useState(false);
+  const [discardError, setDiscardError] = useState<string | null>(null);
 
   const [orderId, setOrderId] = useState(() => buildOrderId());
 
@@ -223,14 +225,42 @@ export function CheckoutForm() {
     window.location.href = state.resume.redirectUrl;
   }
 
-  function handleDiscardResume() {
+  async function handleDiscardResume() {
+    if (!state.resume || isDiscardingResume) return;
+    setIsDiscardingResume(true);
+    setDiscardError(null);
     try {
-      window.localStorage.removeItem(ORDER_STORAGE_KEY);
+      const res = await fetch(
+        `/api/orders/${encodeURIComponent(state.resume.orderId)}/expire`,
+        {
+          method: "POST",
+          headers: { "X-Order-Token": state.resume.accessToken },
+        },
+      );
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.success) {
+        setDiscardError(
+          json?.error ??
+            "Tidak dapat membatalkan pesanan lama. Silakan coba lagi.",
+        );
+        return;
+      }
+
+      try {
+        window.localStorage.removeItem(ORDER_STORAGE_KEY);
+      } catch {
+        // localStorage not available
+      }
+      dispatch({ type: "RESET" });
+      setOrderId(buildOrderId());
     } catch {
-      // localStorage not available
+      setDiscardError(
+        "Tidak dapat membatalkan pesanan lama. Periksa koneksi Anda dan coba lagi.",
+      );
+    } finally {
+      setIsDiscardingResume(false);
     }
-    dispatch({ type: "RESET" });
-    setOrderId(buildOrderId());
   }
 
   return (
@@ -252,13 +282,20 @@ export function CheckoutForm() {
                 untuk membuat pesanan baru.
               </p>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <Button onClick={handleContinuePayment}>
+                <Button onClick={handleContinuePayment} disabled={isDiscardingResume}>
                   Lanjutkan Pembayaran
                 </Button>
-                <Button variant="outline" onClick={handleDiscardResume}>
-                  Batalkan &amp; Buat Pesanan Baru
+                <Button
+                  variant="outline"
+                  onClick={handleDiscardResume}
+                  disabled={isDiscardingResume}
+                >
+                  {isDiscardingResume ? "Membatalkan..." : "Batalkan & Buat Pesanan Baru"}
                 </Button>
               </div>
+              {discardError && (
+                <p className="mt-2 text-sm text-red-600">{discardError}</p>
+              )}
             </section>
           )}
 
