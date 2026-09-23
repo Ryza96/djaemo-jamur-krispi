@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { computeFlatRateFallback } from "@/lib/services/shipping/flatRateFallback";
+import { isBiteshipShippingEnabled } from "@/lib/services/shipping/shipping-mode";
 
 const BITESHIP_RATES_URL = "https://api.biteship.com/v1/rates/couriers";
 const API_TIMEOUT_MS = 10000;
@@ -119,6 +120,11 @@ export const POST = async (request: Request) => {
     // Tujuan tidak ter-resolve (tidak ada area id maupun koordinat) →
     // jaring pengaman flat rate supaya checkout tidak mentok.
     if (!hasDestArea && !hasDestCoords) {
+      return buildFallback(province, city, sumItemWeightsGrams(items));
+    }
+
+    // TEST/development isolation: never call Biteship outside production.
+    if (!isBiteshipShippingEnabled()) {
       return buildFallback(province, city, sumItemWeightsGrams(items));
     }
 

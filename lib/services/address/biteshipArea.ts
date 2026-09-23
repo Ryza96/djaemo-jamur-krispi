@@ -2,6 +2,7 @@ import {
   BITESHIP_API_BASE_URL,
   getBiteshipApiKey,
 } from "@/lib/services/shipping/constants";
+import { isBiteshipShippingEnabled } from "@/lib/services/shipping/shipping-mode";
 
 const API_TIMEOUT_MS = 8000;
 
@@ -95,6 +96,11 @@ async function searchAreas(
   input: string,
   signal?: AbortSignal,
 ): Promise<RawArea[]> {
+  // TEST/development isolation: never call Biteship outside production.
+  if (!isBiteshipShippingEnabled()) {
+    return [];
+  }
+
   const url = `${BITESHIP_API_BASE_URL}/maps/areas?countries=ID&input=${encodeURIComponent(input)}`;
   const res = await fetch(url, {
     headers: {

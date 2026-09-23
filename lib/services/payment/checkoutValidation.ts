@@ -12,6 +12,7 @@ import {
   getBiteshipApiKey,
 } from "@/lib/services/shipping/constants";
 import { getDestinationCoords } from "@/lib/services/shipping/getRates";
+import { isBiteshipShippingEnabled } from "@/lib/services/shipping/shipping-mode";
 import { computeFlatRateFallback } from "@/lib/services/shipping/flatRateFallback";
 import { VoucherRepository } from "@/lib/repositories";
 import {
@@ -148,6 +149,11 @@ async function fetchBiteshipRates(params: {
     pricing: flatRatePricing(address.province, address.city, totalWeightGrams),
     isFallback: true,
   });
+
+  // TEST/development isolation: never call Biteship outside production.
+  if (!isBiteshipShippingEnabled()) {
+    return fallback();
+  }
 
   if (!clientCoords && !areaId && !cityCoords) {
     return fallback();
@@ -386,6 +392,22 @@ export async function validateCheckoutRequest(
         "COD hanya tersedia untuk total tagihan maksimal Rp300.000 (setelah diskon voucher). Silakan gunakan pembayaran online.",
       );
     }
+  }
+
+  if (
+    paymentMethod === "online" &&
+    shippingResult.codAvailable &&
+    isCodAllowedProvince(params.shippingAddress.province) &&
+    calculateCodEligibleAmount({
+      subtotal,
+      discountAmount,
+      shippingFee,
+      codFee: shippingResult.codFee,
+    }) <= COD_MAX_TOTAL
+  ) {
+    throw new CheckoutValidationError(
+      "Layanan pengiriman terpilih hanya mendukung pembayaran COD.",
+    );
   }
 
   assertClientTotalsMatch(params, subtotal, shippingFee, codFee);

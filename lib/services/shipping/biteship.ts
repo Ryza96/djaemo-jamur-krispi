@@ -2,6 +2,7 @@ import {
   BITESHIP_API_BASE_URL,
   getBiteshipApiKey,
 } from "./constants";
+import { isBiteshipShippingEnabled } from "./shipping-mode";
 import type {
   CreateShipmentParams,
   BiteshipOrderResponse,
@@ -14,6 +15,10 @@ async function fetchBiteship<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  if (!isBiteshipShippingEnabled()) {
+    throw new Error("Biteship shipping is disabled outside production");
+  }
+
   const apiKey = getBiteshipApiKey();
   const url = `${BITESHIP_API_BASE_URL}${path}`;
 

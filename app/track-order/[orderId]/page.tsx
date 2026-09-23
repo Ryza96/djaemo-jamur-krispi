@@ -35,6 +35,7 @@ type CustomerStatus =
   | "payment_expired"
   | "cancelled"
   | "paid"
+  | "awaiting_confirmation"
   | "confirmed"
   | "preparing"
   | "shipped"
@@ -66,8 +67,10 @@ function resolveCustomerView(
   const isCod = (paymentMethod ?? "").toLowerCase() === "cod";
 
   // COD orders: payment is always pending/unpaid, so derive the view from
-  // fulfillment progress only (matches checkout/success: codDelivered,
-  // codShipped, else = confirmed).
+  // fulfillment progress only. The fulfillment timeline for COD is:
+  // Menunggu Konfirmasi (new/waiting_for_restock) -> Dikonfirmasi (confirmed)
+  // -> Disiapkan (packing) -> Dikirim (waybill_created/picked_up/shipped)
+  // -> Diterima (delivered).
   if (isCod) {
     if (fulfillment === "cancelled") return "cancelled";
     if (fulfillment === "delivered") return "delivered";
@@ -78,7 +81,11 @@ function resolveCustomerView(
     ) {
       return "shipped";
     }
-    return "confirmed";
+    if (fulfillment === "confirmed") return "confirmed";
+    if (fulfillment === "packing") return "preparing";
+    // "new", "waiting_for_restock", or unknown fulfillment: the order has not
+    // been confirmed by the admin yet.
+    return "awaiting_confirmation";
   }
 
   switch (payment) {
@@ -146,6 +153,12 @@ const STATUS_CONFIG: Record<
     icon: "💰",
     color: "text-teal-deep",
   },
+  awaiting_confirmation: {
+    title: "Menunggu Konfirmasi",
+    message: "Pesanan Anda telah kami terima dan sedang menunggu konfirmasi dari kami.",
+    icon: "🕒",
+    color: "text-gold",
+  },
   confirmed: {
     title: "Pesanan Dikonfirmasi",
     message: "Pesanan Anda telah dikonfirmasi dan akan segera kami siapkan.",
@@ -177,6 +190,20 @@ const TIMELINE_STEPS: {
   label: string;
 }[] = [
   { key: "paid", label: "Pembayaran Berhasil" },
+  { key: "confirmed", label: "Pesanan Dikonfirmasi" },
+  { key: "preparing", label: "Pesanan Sedang Disiapkan" },
+  { key: "shipped", label: "Pesanan Telah Dikirim" },
+  { key: "delivered", label: "Pesanan Telah Diterima" },
+];
+
+// COD orders never "pay online", so their timeline reflects fulfillment
+// progress only: Menunggu Konfirmasi -> Dikonfirmasi -> Disiapkan -> Dikirim
+// -> Diterima.
+const COD_TIMELINE_STEPS: {
+  key: CustomerStatus;
+  label: string;
+}[] = [
+  { key: "awaiting_confirmation", label: "Menunggu Konfirmasi" },
   { key: "confirmed", label: "Pesanan Dikonfirmasi" },
   { key: "preparing", label: "Pesanan Sedang Disiapkan" },
   { key: "shipped", label: "Pesanan Telah Dikirim" },
@@ -319,18 +346,21 @@ export default function TrackOrderDetailPage() {
       ? { icon: "📦", title: "Pesanan Selesai", message: "Paket telah diterima. Terima kasih atas pembelian Anda di D'Jaemo Jamur Krispi.", color: "text-teal-deep" }
       : customerStatus === "shipped"
         ? { icon: "🚚", title: "Pesanan Dalam Pengiriman", message: "Paket sedang dalam perjalanan. Pembayaran dilakukan tunai saat kurir sampai di tempat Anda.", color: "text-gold" }
-        : { icon: "✅", title: "Pesanan Dikonfirmasi", message: "Pesanan Anda telah kami terima dan sedang diproses. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.", color: "text-teal-deep" }
+        : customerStatus === "preparing"
+          ? { icon: "📦", title: "Pesanan Sedang Disiapkan", message: "Pesanan Anda sedang kami siapkan dan akan segera dikirim. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.", color: "text-teal-deep" }
+          : customerStatus === "confirmed"
+            ? { icon: "✅", title: "Pesanan Dikonfirmasi", message: "Pesanan Anda telah kami konfirmasi dan sedang diproses. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.", color: "text-teal-deep" }
+            : { icon: "🕒", title: "Menunggu Konfirmasi", message: "Pesanan Anda telah kami terima dan menunggu konfirmasi kami. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.", color: "text-gold" }
     : null;
 
   const displayStatus = codStatusCard ?? statusConfig;
 
   // Payment-pending / failed / expired / cancelled views are outside the
   // fulfillment timeline; indexOf returns -1 and the timeline is hidden.
-  // COD orders never "pay online", so the "Pembayaran Berhasil" step is
-  // omitted from their timeline.
-  const timelineSteps = isCod
-    ? TIMELINE_STEPS.filter((step) => step.key !== "paid")
-    : TIMELINE_STEPS;
+  // COD orders never "pay online", so their timeline is the COD fulfillment
+  // steps only (Menunggu Konfirmasi -> Dikonfirmasi -> Disiapkan -> Dikirim
+  // -> Diterima).
+  const timelineSteps = isCod ? COD_TIMELINE_STEPS : TIMELINE_STEPS;
   const currentTimelineIndex = timelineSteps.findIndex(
     (step) => step.key === customerStatus,
   );

@@ -37,7 +37,9 @@ export function PaymentMethodSection() {
     spendCapOk;
 
   useEffect(() => {
-    if (state.paymentMethod === "cod" && !codPossible) {
+    if (codPossible && state.paymentMethod !== "cod") {
+      dispatch({ type: "SET_PAYMENT_METHOD", payload: "cod" });
+    } else if (!codPossible && state.paymentMethod === "cod") {
       dispatch({ type: "SET_PAYMENT_METHOD", payload: "online" });
     }
   }, [codPossible, state.paymentMethod, dispatch]);
@@ -62,50 +64,57 @@ export function PaymentMethodSection() {
 
   return (
     <div className="space-y-3">
-      <button
-        type="button"
-        role="radio"
-        aria-checked={state.paymentMethod === "online"}
-        onClick={() => selectMethod("online")}
-        className={radioClass(state.paymentMethod === "online")}
-      >
-        <span className={dotClass(state.paymentMethod === "online")}>
-          {state.paymentMethod === "online" && (
-            <span className="h-2 w-2 rounded-full bg-teal-deep" />
-          )}
-        </span>
-        <span className="min-w-0">
-          <span className="font-semibold text-ink">Bayar Online (Midtrans)</span>
-          <span className="mt-0.5 block text-xs text-muted">
-            Transfer bank, QRIS, e-wallet, atau kartu. Pembayaran diproses aman
-            lewat Midtrans setelah pesanan dibuat.
-          </span>
-        </span>
-      </button>
-
-      {codPossible ? (
+      {!codPossible && (
         <button
           type="button"
           role="radio"
-          aria-checked={state.paymentMethod === "cod"}
-          onClick={() => selectMethod("cod")}
-          className={radioClass(state.paymentMethod === "cod")}
+          aria-checked={state.paymentMethod === "online"}
+          onClick={() => selectMethod("online")}
+          className={radioClass(state.paymentMethod === "online")}
         >
-          <span className={dotClass(state.paymentMethod === "cod")}>
-            {state.paymentMethod === "cod" && (
+          <span className={dotClass(state.paymentMethod === "online")}>
+            {state.paymentMethod === "online" && (
               <span className="h-2 w-2 rounded-full bg-teal-deep" />
             )}
           </span>
           <span className="min-w-0">
-            <span className="font-semibold text-ink">Bayar di Tempat (COD)</span>
+            <span className="font-semibold text-ink">Bayar Online (Midtrans)</span>
             <span className="mt-0.5 block text-xs text-muted">
-              Bayar tunai saat kurir mengantar paket.
-              {codFee > 0
-                ? ` Biaya COD ${formatPrice(codFee)} ditambahkan ke total pesanan.`
-                : " Tanpa biaya tambahan."}
+              Transfer bank, QRIS, e-wallet, atau kartu. Pembayaran diproses aman
+              lewat Midtrans setelah pesanan dibuat.
             </span>
           </span>
         </button>
+      )}
+
+      {codPossible ? (
+        <div className="space-y-2">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={state.paymentMethod === "cod"}
+            onClick={() => selectMethod("cod")}
+            className={radioClass(state.paymentMethod === "cod")}
+          >
+            <span className={dotClass(state.paymentMethod === "cod")}>
+              {state.paymentMethod === "cod" && (
+                <span className="h-2 w-2 rounded-full bg-teal-deep" />
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className="font-semibold text-ink">Bayar di Tempat (COD)</span>
+              <span className="mt-0.5 block text-xs text-muted">
+                Bayar tunai saat kurir mengantar paket.
+                {codFee > 0
+                  ? ` Biaya COD ${formatPrice(codFee)} ditambahkan ke total pesanan.`
+                  : " Tanpa biaya tambahan."}
+              </span>
+            </span>
+          </button>
+          <p className="rounded-2xl border border-ink/10 bg-cream-2 p-3 text-xs text-muted">
+            Layanan pengiriman terpilih hanya mendukung pembayaran COD.
+          </p>
+        </div>
       ) : selected ? (
         <p className="rounded-2xl border border-ink/10 bg-cream-2 p-4 text-xs text-muted">
           COD tidak tersedia untuk pesanan ini.

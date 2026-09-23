@@ -331,12 +331,15 @@ export default function CheckoutSuccessPage() {
 
   const isCod = (order.payment_method ?? "").toLowerCase() === "cod";
   const fulfillmentStatus = (order.fulfillment_status ?? "").toLowerCase();
+  const codCancelled = fulfillmentStatus === "cancelled";
   const codShipped = ["waybill_created", "picked_up", "shipped"].includes(
     fulfillmentStatus,
   );
   const codDelivered = fulfillmentStatus === "delivered";
+  const codPreparing = fulfillmentStatus === "packing";
+  const codConfirmed = fulfillmentStatus === "confirmed";
   const codCancellable =
-    !codShipped && !codDelivered && fulfillmentStatus !== "cancelled";
+    !codShipped && !codDelivered && !codCancelled;
 
   const codHeader = {
     title: "Pesanan Berhasil Dibuat",
@@ -345,29 +348,53 @@ export default function CheckoutSuccessPage() {
   };
 
   const codStatusCard = isCod
-    ? codDelivered
+    ? codCancelled
       ? {
-          icon: "📦",
-          title: "Pesanan Selesai",
+          icon: "❌",
+          title: "Pesanan Dibatalkan",
           description:
-            "Paket telah diterima. Terima kasih atas pembelian Anda di D'Jaemo Jamur Krispi.",
-          color: "text-teal-deep",
+            "Pesanan Anda telah dibatalkan. Hubungi kami jika ada pertanyaan.",
+          color: "text-red",
         }
-      : codShipped
+      : codDelivered
         ? {
-            icon: "🚚",
-            title: "Pesanan Dalam Pengiriman",
+            icon: "📦",
+            title: "Pesanan Selesai",
             description:
-              "Paket sedang dalam perjalanan. Pembayaran dilakukan tunai saat kurir sampai di tempat Anda.",
-            color: "text-gold",
-          }
-        : {
-            icon: "✓",
-            title: "Pesanan Dikonfirmasi",
-            description:
-              "Pesanan Anda telah kami terima dan sedang diproses. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.",
+              "Paket telah diterima. Terima kasih atas pembelian Anda di D'Jaemo Jamur Krispi.",
             color: "text-teal-deep",
           }
+        : codShipped
+          ? {
+              icon: "🚚",
+              title: "Pesanan Dalam Pengiriman",
+              description:
+                "Paket sedang dalam perjalanan. Pembayaran dilakukan tunai saat kurir sampai di tempat Anda.",
+              color: "text-gold",
+            }
+          : codPreparing
+            ? {
+                icon: "📦",
+                title: "Pesanan Sedang Disiapkan",
+                description:
+                  "Pesanan Anda sedang kami siapkan dan akan segera dikirim. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.",
+                color: "text-teal-deep",
+              }
+            : codConfirmed
+              ? {
+                  icon: "✓",
+                  title: "Pesanan Dikonfirmasi",
+                  description:
+                    "Pesanan Anda telah kami konfirmasi dan sedang diproses. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.",
+                  color: "text-teal-deep",
+                }
+              : {
+                  icon: "🕒",
+                  title: "Menunggu Konfirmasi",
+                  description:
+                    "Pesanan Anda telah kami terima dan sedang menunggu konfirmasi kami. Siapkan uang tunai untuk dibayarkan saat kurir mengantar paket.",
+                  color: "text-gold",
+                }
     : null;
 
   const statusConfig: Record<PaymentStatus, { icon: string; title: string; description: string; color: string }> = {

@@ -5,6 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { rankSearch } from "@/lib/utils/searchRanking";
+import { isBiteshipShippingEnabled } from "@/lib/services/shipping/shipping-mode";
 
 const BITESHIP_MAPS_URL = "https://api.biteship.com/v1/maps/areas";
 const API_TIMEOUT_MS = 8000;
@@ -12,6 +13,11 @@ const API_TIMEOUT_MS = 8000;
 const BITESHIP_API_KEY = process.env.BITESHIP_API_KEY;
 
 export const GET = async (request: Request) => {
+  // TEST/development isolation: never call Biteship outside production.
+  if (!isBiteshipShippingEnabled()) {
+    return NextResponse.json({ success: true, areas: [] });
+  }
+
   if (!BITESHIP_API_KEY) {
     return NextResponse.json(
       { error: "Biteship API key tidak dikonfigurasi." },
