@@ -32,6 +32,7 @@ const FULFILLMENT_EVENT_MAP = {
 
 const CUSTOMER_NOTIFIABLE: Partial<Record<FulfillmentStatus, NotificationEvent>> = {
   [FULFILLMENT_STATUS.CONFIRMED]: AuditLogService.events.ORDER_CONFIRMED,
+  [FULFILLMENT_STATUS.DELIVERED]: "order.delivered",
 };
 
 export const STOCK_DEDUCTED_STATUSES = new Set<FulfillmentStatus>([

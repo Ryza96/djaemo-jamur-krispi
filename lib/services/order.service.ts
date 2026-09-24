@@ -2,7 +2,7 @@ import { OrderRepository, CustomerRepository, NotificationLogRepository } from "
 import { AuditLogRepository } from "@/lib/repositories/audit-log.repository";
 import { normalizeWaTarget } from "@/lib/notifications/channels/whatsapp/normalize-phone";
 import { createFonnteProvider } from "@/lib/notifications/channels/whatsapp/fonnte-provider";
-import { formatAdminWaMessage } from "@/lib/notifications/channels/whatsapp/admin-formatter";
+import { formatAdminWaMessage, formatNewCodOrderWaMessage } from "@/lib/notifications/channels/whatsapp/admin-formatter";
 import { combineAddress, mapMidtransStatus } from "./payment/mapper";
 import { extractWeightGrams } from "./shipping/constants";
 import { verifyMidtransSignature } from "./payment/verifySignature";
@@ -41,39 +41,45 @@ export interface ProcessCallbackResult {
 }
 
 const ADMIN_WA_EVENT = "payment.paid";
+const ADMIN_WA_COD_EVENT = "order.cod_new";
 const ADMIN_WA_CHANNEL_ID = "whatsapp-admin";
 
 /**
- * Fire-and-forget WhatsApp notification to the admin when an order becomes
- * PAID. Runs entirely outside the payment-critical path: it never throws and
- * is always invoked without `await`, so a failure here can never fail, retry
- * or roll back the Midtrans callback / transaction.
+ * Shared fire-and-forget WhatsApp notification to the store admin. Runs
+ * entirely outside the request-critical path: it never throws and is always
+ * invoked without `await` (inside `after()`), so a failure here can never
+ * fail, retry or roll back the triggering flow.
  *
  * Notification failures are swallowed and recorded in `notification_log`
  * (status 'failed') so they are visible via the Supabase dashboard without
- * ever disturbing the payment flow.
+ * ever disturbing the flow that triggered them. Idempotency is enforced per
+ * (event, order_id, channel_id) via `isSent`.
  */
-async function maybeNotifyAdminOfNewPayment(
-  orderId: string,
-  fromStatus: PaymentStatus | string | null,
-): Promise<void> {
+async function maybeNotifyAdmin(params: {
+  orderId: string;
+  event: string;
+  channelId: string;
+  logContext?: Record<string, unknown>;
+  buildMessage: typeof formatAdminWaMessage;
+}): Promise<void> {
+  const { orderId, event, channelId, logContext, buildMessage } = params;
   try {
     const rawNumber = process.env.ADMIN_WHATSAPP_NUMBER;
     if (!rawNumber) {
-      console.warn("[notify] ADMIN_WHATSAPP_NUMBER kosong; skip notif admin", { orderId, fromStatus });
+      console.warn("[notify] ADMIN_WHATSAPP_NUMBER kosong; skip notif admin", { orderId, ...logContext });
       return;
     }
 
     const adminTarget = normalizeWaTarget(rawNumber);
     if (!adminTarget) {
-      console.warn("[notify] ADMIN_WHATSAPP_NUMBER format invalid; skip notif admin", { orderId, fromStatus });
+      console.warn("[notify] ADMIN_WHATSAPP_NUMBER format invalid; skip notif admin", { orderId, ...logContext });
       return;
     }
 
     const alreadySent = await NotificationLogRepository.isSent(
-      ADMIN_WA_EVENT,
+      event,
       orderId,
-      ADMIN_WA_CHANNEL_ID,
+      channelId,
     );
     if (alreadySent) {
       return;
@@ -81,7 +87,7 @@ async function maybeNotifyAdminOfNewPayment(
 
     const order = await OrderRepository.findDetailByOrderId(orderId);
     if (!order) {
-      console.warn("[notify] order tidak ditemukan; skip notif admin", { orderId, fromStatus });
+      console.warn("[notify] order tidak ditemukan; skip notif admin", { orderId, ...logContext });
       return;
     }
 
@@ -97,12 +103,12 @@ async function maybeNotifyAdminOfNewPayment(
     let logId: string | null = null;
     try {
       logId = await NotificationLogRepository.insertPending(
-        ADMIN_WA_EVENT,
+        event,
         orderId,
-        ADMIN_WA_CHANNEL_ID,
+        channelId,
       );
 
-      const message = formatAdminWaMessage(
+      const message = buildMessage(
         order,
         adminTarget,
         dashboardUrl ? dashboardUrl.replace(/\/+$/, "") : null,
@@ -131,6 +137,44 @@ async function maybeNotifyAdminOfNewPayment(
   }
 }
 
+/**
+ * Fire-and-forget WhatsApp notification to the admin when an order becomes
+ * PAID. Runs entirely outside the payment-critical path: it never throws and
+ * is always invoked without `await`, so a failure here can never fail, retry
+ * or roll back the Midtrans callback / transaction.
+ *
+ * Notification failures are swallowed and recorded in `notification_log`
+ * (status 'failed') so they are visible via the Supabase dashboard without
+ * ever disturbing the payment flow.
+ */
+async function maybeNotifyAdminOfNewPayment(
+  orderId: string,
+  fromStatus: PaymentStatus | string | null,
+): Promise<void> {
+  await maybeNotifyAdmin({
+    orderId,
+    event: ADMIN_WA_EVENT,
+    channelId: ADMIN_WA_CHANNEL_ID,
+    logContext: { fromStatus },
+    buildMessage: formatAdminWaMessage,
+  });
+}
+
+/**
+ * Fire-and-forget WhatsApp notification to the admin when a new COD order is
+ * created. Same safety contract as maybeNotifyAdminOfNewPayment: never
+ * throws, never blocks the checkout response; idempotent per
+ * (order.cod_new, order_id, whatsapp-admin).
+ */
+async function maybeNotifyAdminOfNewCodOrder(orderId: string): Promise<void> {
+  await maybeNotifyAdmin({
+    orderId,
+    event: ADMIN_WA_COD_EVENT,
+    channelId: ADMIN_WA_CHANNEL_ID,
+    buildMessage: formatNewCodOrderWaMessage,
+  });
+}
+
 const CHARGEBACK_AUTO_CANCEL_STATUSES = new Set<FulfillmentStatus>([
   FULFILLMENT_STATUS.NEW,
   FULFILLMENT_STATUS.CONFIRMED,
@@ -145,6 +189,10 @@ const CHARGEBACK_ADMIN_ACTION_STATUSES = new Set<FulfillmentStatus>([
 ]);
 
 export const OrderService = {
+  // Admin WA untuk order COD baru — dipanggil fire-and-forget dari
+  // app/api/payment/create/route.ts lewat after().
+  notifyNewCodOrder: maybeNotifyAdminOfNewCodOrder,
+
   async createDraft(
     params: CreatePaymentRequest,
     initialFulfillmentStatus: FulfillmentStatus = FULFILLMENT_STATUS.NEW,

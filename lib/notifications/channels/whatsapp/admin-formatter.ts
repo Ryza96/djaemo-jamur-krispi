@@ -46,3 +46,24 @@ export function formatAdminWaMessage(
 
   return { target, message: lines.join("\n") };
 }
+
+export function formatNewCodOrderWaMessage(
+  order: OrderDetailRow,
+  target: string,
+  dashboardUrl: string | null,
+): WhatsAppMessage {
+  const lines: string[] = [];
+
+  lines.push("\u{1F6F5} *PESANAN COD BARU*");
+  lines.push("");
+  lines.push(`No. Pesanan   : ${order.order_id}`);
+  lines.push(`Pelanggan     : ${order.customer_name ?? "Pelanggan"}`);
+  lines.push(`Total Tagihan : ${formatRupiah(order.total_amount)}`);
+  lines.push("");
+
+  if (dashboardUrl) {
+    lines.push(`Cek pesanan: ${dashboardUrl}/admin/orders/${order.order_id}`);
+  }
+
+  return { target, message: lines.join("\n") };
+}

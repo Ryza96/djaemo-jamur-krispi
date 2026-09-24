@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { OrderService } from "@/lib/services/order.service";
 import { createSnapTransaction } from "@/lib/services/payment/createSnap";
@@ -230,6 +230,10 @@ export async function POST(request: Request) {
     // payment_method=cod & status unpaid; pelunasan terjadi saat kurir
     // antar, dan admin mengonfirmasi lewat aksi "confirm_cod".
     if (paymentMethod === "cod") {
+      // Fire-and-forget: WA admin bahwa order COD baru masuk. `after()`
+      // menjaga instance tetap hidup sampai promise settle; kegagalan kirim
+      // tidak pernah memengaruhi response pembuatan order.
+      after(() => OrderService.notifyNewCodOrder(orderId).catch(() => {}));
       return NextResponse.json({
         success: true,
         orderId,

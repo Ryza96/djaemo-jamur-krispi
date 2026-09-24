@@ -9,6 +9,7 @@ function detectCategory(payload: NotificationPayload): string {
   if (e === AuditLogService.events.ORDER_WAYBILL_CREATED) return "waybill";
   if (e === AuditLogService.events.ORDER_SHIPPED) return "shipped";
   if (e === AuditLogService.events.ORDER_COMPLETED) return "completed";
+  if (e === "order.delivered") return "completed";
   if (e === AuditLogService.events.ORDER_CANCELLED) return "cancelled";
 
   if (e === AuditLogService.events.STATUS_CHANGED) {

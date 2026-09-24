@@ -1,6 +1,6 @@
 import type { AuditEvent } from "@/lib/services/audit-log.service";
 
-export type NotificationEvent = AuditEvent;
+export type NotificationEvent = AuditEvent | "order.delivered";
 
 export interface RecipientInfo {
   name: string;
