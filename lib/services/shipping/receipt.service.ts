@@ -44,7 +44,10 @@ export const ReceiptService = {
         return { success: false, error: "ORDER_NOT_FOUND" };
       }
 
-      const pdf = await buildPdf(order, PAPER_SIZES[paperSize]);
+      // Bedakan resi COD vs online/Midtrans (mockup yang disetujui).
+      const isCod = (order.payment_method ?? "").toLowerCase().trim() === "cod";
+
+      const pdf = await buildPdf(order, PAPER_SIZES[paperSize], isCod);
       return {
         success: true,
         pdf,
@@ -68,12 +71,16 @@ const C = {
   ink: "#10201e",          // --ink
   inkSoft: "#4c5c58",      // --ink-soft
   border: "#d1cdc4",       // neutral border
+  codBoxBg: "#fdf0d2",     // amber muda — kotak info COD
+  onlineBoxBg: "#dcefeb",  // teal muda — kotak info online-paid
+  codWatermark: "#e8912f", // oranye — watermark diagonal "COD"
   white: "#ffffff",
 } as const;
 
 async function buildPdf(
   order: OrderDetailRow,
   paper: { width: number; height: number; margin: number },
+  isCod: boolean,
 ): Promise<Buffer> {
   const doc = new PDFDocument({
     size: [paper.width, paper.height],
@@ -86,6 +93,12 @@ async function buildPdf(
   const shipper = getShipperConfig();
   const items = order.order_items ?? [];
   const waybill = order.waybill_id ?? order.order_id;
+
+  // Kotak info pembayaran ditampilkan untuk (a) semua resi COD, atau
+  // (b) order online/Midtrans yang sudah lunas. Resi online belum bayar
+  // (kasus langka) → tanpa kotak sama sekali.
+  const paymentStatus = (order.payment_status ?? "").toLowerCase().trim();
+  const showPaymentBox = isCod || paymentStatus === "paid";
 
   const PW = paper.width - 2 * paper.margin;
   const LH = paper.height - paper.margin;
@@ -175,6 +188,73 @@ async function buildPdf(
       month: "short",
       year: "numeric",
     });
+  }
+
+  /* ── Kotak info pembayaran (COD vs online/Midtrans) — HANYA layout A6 ──
+     Satu baris sejajar (space-between): label di kiri, nilai di kanan.
+     • COD         → amber muda, "DIBAYAR DI TEMPAT" + formatRp(total_amount).
+     • Online lunas→ teal muda, "STATUS PEMBAYARAN" + "LUNAS".
+     • Online belum bayar (langka) → kotak tidak digambar sama sekali. */
+  function buildPaymentBox() {
+    if (!showPaymentBox) return;
+
+    const indent = 8;
+    const textW = PW - indent * 2;
+    const boxH = 30;                              // ringkas: 28-32pt (A6)
+    const labelSize = 9;                          // label kecil ~9-10pt
+    const valueSize = 15;                         // nilai ~15pt (bukan headline)
+    const padTop = 6;
+
+    checkPageBreak(boxH + 6);
+    drawRoundedRect(paper.margin, cursorY, PW, boxH, 4, isCod ? C.codBoxBg : C.onlineBoxBg);
+    drawBoxBorder(paper.margin, cursorY, PW, boxH);
+
+    const rowY = cursorY + padTop;                // label & nilai satu baris yang sama
+
+    setFont(labelSize, "Helvetica-Bold");
+    doc.fillColor(C.inkSoft);
+    doc.text(
+      isCod ? "DIBAYAR DI TEMPAT" : "STATUS PEMBAYARAN",
+      paper.margin + indent,
+      rowY,
+      { width: textW, align: "left" },
+    );
+
+    setFont(valueSize, "Helvetica-Bold");
+    doc.fillColor(isCod ? C.ink : C.primary);
+    doc.text(
+      isCod ? formatRp(order.total_amount) : "LUNAS",
+      paper.margin + indent,
+      rowY,
+      { width: textW, align: "right" },
+    );
+
+    doc.fillColor(C.ink);
+    moveCursor(boxH + 4);
+  }
+
+  /* ── Watermark diagonal "COD" — HANYA untuk resi A6 & COD ─────────────
+     Dipanggil hanya dari pipeline A6; guard isCod ada di dalam fungsi.
+     Digambar lebih awal (sebelum elemen lain) supaya posisinya di BELAKANG
+     teks; opacity 14% agar teks yang digambar di atasnya tetap terbaca.
+     Rotasi -27° (rentang -25..-30) berpusat di tengah halaman. */
+  function drawCodWatermark() {
+    if (!isCod) return;
+
+    const centerX = paper.width / 2;
+    const centerY = paper.height / 2;
+    const fontSize = Math.round(Math.min(paper.width, paper.height) * 0.3);
+
+    doc.save();
+    doc.rotate(-27, { origin: [centerX, centerY] });
+    doc.fillColor(C.codWatermark);
+    doc.opacity(0.14);
+    doc.font("Helvetica-Bold").fontSize(fontSize);
+    doc.text("COD", 0, centerY - fontSize * 0.62, {
+      width: paper.width,
+      align: "center",
+    });
+    doc.restore();
   }
 
   /* ══════════════════════════════════════════════════════════════════════
@@ -297,7 +377,7 @@ async function buildPdf(
   }
 
   function buildCompactInfoRow() {
-    // One compact row: courier · date · items · weight · total
+    // One compact row: courier · date · items · weight
     checkPageBreak(12);
     const parts: string[] = [];
     const courierParts = [order.courier_company, order.courier_type].filter(Boolean);
@@ -305,7 +385,8 @@ async function buildPdf(
     parts.push(formatDate(order.created_at));
     parts.push(`${totalQuantity} item`);
     if (totalWeightGrams > 0) parts.push(weightLabel);
-    parts.push(formatRp(order.total_amount));
+    // total_amount tidak lagi tampil di baris kurir — pindah ke kotak
+    // info pembayaran (buildPaymentBox) di bawah barcode.
 
     setFont(6, "Helvetica");
     doc.fillColor(C.inkSoft);
@@ -728,9 +809,10 @@ async function buildPdf(
   }
 
   /* ── Render pipeline ── */
-
   if (compact) {
-    buildCompactHeader();
+    drawCodWatermark();       // di belakang konten — hanya A6 & COD
+    buildCompactHeader();     // badge + No.Order + QR + barcode
+    buildPaymentBox();        // hanya A6: setelah barcode, sebelum PENERIMA
     buildCompactRecipient();
     buildCompactSender();
     buildCompactInfoRow();
@@ -738,10 +820,11 @@ async function buildPdf(
     buildCompactNotes();
     buildCompactFooter();
   } else {
+    // A4: tanpa kotak pembayaran & tanpa watermark (perilaku semula)
     buildA4Header();
     buildA4Waybill();
     buildA4Barcode();
-    buildA4Courier();
+    buildA4Courier();         // badge kurir A4 tidak memuat nominal
     buildA4SenderRecipient();
     buildA4PackageInfo();
     buildA4Notes();
