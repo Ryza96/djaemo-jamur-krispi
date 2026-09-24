@@ -4,6 +4,7 @@ import { AuditLogService } from "./audit-log.service";
 import { InventoryService } from "./inventory.service";
 import { FULFILLMENT_STATUS, PAYMENT_STATUS } from "./payment/types";
 import { getNotificationEngine } from "../notifications/engine-instance";
+import { maybeNotifyAdminOfStockShortage } from "../notifications/admin-wa";
 import type { FulfillmentStatus } from "./payment/types";
 import type { NotificationEvent } from "../notifications/types";
 
@@ -373,6 +374,12 @@ async function executeTransition(
     after(() =>
       getNotificationEngine().dispatch(notificationEvent, orderId).catch(() => {}),
     );
+  }
+
+  if (targetStatus === FULFILLMENT_STATUS.WAITING_FOR_RESTOCK) {
+    // Admin-only alert (fire-and-forget, idempotent per order via
+    // notification_log "order.stock_shortage") — never sent to the customer.
+    after(() => maybeNotifyAdminOfStockShortage(orderId).catch(() => {}));
   }
 
   return {

@@ -1,6 +1,8 @@
 import { InventoryRepository } from "@/lib/repositories/inventory.repository";
 import { OrderRepository } from "@/lib/repositories";
 import { AuditLogService } from "./audit-log.service";
+import { after } from "next/server";
+import { maybeNotifyAdminLowStock, LOW_STOCK_ALERT_THRESHOLD } from "@/lib/notifications/admin-wa";
 import { MOVEMENT_REASON } from "@/lib/inventory/types";
 import type {
   AdjustStockParams,
@@ -152,6 +154,27 @@ export const InventoryService = {
         deducted: r.deducted,
         newStock: r.newStock,
       }));
+
+      // Low-stock alert — fired only on a downward threshold crossing
+      // (previousStock > threshold && newStock <= threshold). Deductions while
+      // already at/below the threshold do not re-fire, so no per-order
+      // idempotency record is needed; the next alert requires stock to first
+      // be replenished above the threshold.
+      for (const item of items) {
+        const previousStock = item.newStock + item.deducted;
+        if (
+          previousStock > LOW_STOCK_ALERT_THRESHOLD &&
+          item.newStock <= LOW_STOCK_ALERT_THRESHOLD
+        ) {
+          after(() =>
+            maybeNotifyAdminLowStock({
+              productId: item.productId,
+              productName: item.productName,
+              newStock: item.newStock,
+            }).catch(() => {}),
+          );
+        }
+      }
 
       return { success: true, items };
     } catch (err) {

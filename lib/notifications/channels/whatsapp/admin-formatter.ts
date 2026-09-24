@@ -47,6 +47,66 @@ export function formatAdminWaMessage(
   return { target, message: lines.join("\n") };
 }
 
+/**
+ * Low-stock alert threshold. Cross-references the dashboard's
+ * `LOW_STOCK_THRESHOLD` in `lib/repositories/dashboard.repository.ts:3` —
+ * keep both at 10.
+ */
+export const LOW_STOCK_ALERT_THRESHOLD = 10;
+
+export function formatStockShortageWaMessage(
+  order: OrderDetailRow,
+  shortages: Array<{ productName: string; requested: number; available: number }>,
+  target: string,
+  dashboardUrl: string | null,
+): WhatsAppMessage {
+  const lines: string[] = [];
+
+  lines.push("\u26A0\uFE0F *PESANAN MELEBIHI STOK*");
+  lines.push("");
+  lines.push(`No. Pesanan : ${order.order_id}`);
+  lines.push(`Pelanggan   : ${order.customer_name ?? "Pelanggan"}`);
+  lines.push("");
+
+  if (shortages.length > 0) {
+    lines.push("Produk yang kurang:");
+    for (const s of shortages) {
+      lines.push(
+        `- ${s.productName} \u2014 minta ${s.requested}, tersedia ${s.available} (kurang ${s.requested - s.available})`,
+      );
+    }
+  } else {
+    lines.push("Stok terlihat sudah mencukupi saat pesan dibuat \u2014 cek status order.");
+  }
+  lines.push("");
+
+  if (dashboardUrl) {
+    lines.push(`Cek pesanan: ${dashboardUrl}/admin/orders/${order.order_id}`);
+  }
+
+  return { target, message: lines.join("\n") };
+}
+
+export function formatLowStockWaMessage(
+  params: { productId: string; productName: string; newStock: number },
+  target: string,
+  dashboardUrl: string | null,
+): WhatsAppMessage {
+  const lines: string[] = [];
+
+  lines.push("\u{1F4C9} *STOK MENIPIS*");
+  lines.push("");
+  lines.push(`Produk    : ${params.productName}`);
+  lines.push(`Sisa stok : ${params.newStock} (ambang: ${LOW_STOCK_ALERT_THRESHOLD})`);
+  lines.push("");
+
+  if (dashboardUrl) {
+    lines.push(`Cek stok: ${dashboardUrl}/admin/products`);
+  }
+
+  return { target, message: lines.join("\n") };
+}
+
 export function formatNewCodOrderWaMessage(
   order: OrderDetailRow,
   target: string,
