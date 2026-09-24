@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, PackageX, Printer } from "lucide-react";
+import { AlertCircle, AlertTriangle, PackageX, Printer } from "lucide-react";
 import { useOrderDetail } from "@/hooks/use-order-detail";
 import { useOrderActions } from "@/hooks/use-order-actions";
 import { useOrderRefund } from "@/hooks/use-order-refund";
@@ -191,6 +191,29 @@ export function OrderDetailClient({ id }: DetailClientProps) {
           }
           className="mb-6"
         />
+
+        {/* COD delivered-but-unconfirmed reminder (murni tampilan; tidak
+            mengubah logic payment/fulfillment — lihat cod-confirm.tsx). */}
+        {order.fulfillment_status === "delivered" &&
+          (order.payment_method ?? "").toLowerCase() === "cod" &&
+          order.payment_status === "cod_awaiting_confirmation" && (
+            <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-amber-900">
+                    Paket sudah selesai, tapi COD belum dikonfirmasi lunas
+                  </h3>
+                  <p className="mt-1 text-[13px] text-amber-700">
+                    Pastikan Anda sudah menerima uang dari kurir sebelum
+                    melanjutkan. Klik konfirmasi lunas di panel pembayaran.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
         {showRefundBanner && (
           <RefundBanner

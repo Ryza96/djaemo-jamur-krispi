@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { AlertCircle, Inbox } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertCircle, AlertTriangle, Inbox } from "lucide-react";
 import { OrderToolbar } from "@/components/admin/orders/toolbar";
 import { OrderTable } from "@/components/admin/orders/table";
 import { OrderCard } from "@/components/admin/orders/card";
@@ -11,6 +11,7 @@ import { OrderSkeleton } from "@/components/admin/orders/skeleton";
 import { AdminPageHeader } from "@/components/admin/patterns/AdminPageHeader";
 import { AdminEmptyLayout } from "@/components/admin/patterns/AdminEmptyLayout";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
+import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { useOrders } from "@/hooks/use-orders";
 import { PAYMENT_STATUS_OPTIONS, FULFILLMENT_STATUS_OPTIONS } from "@/components/admin/orders/types";
 
@@ -26,6 +27,39 @@ export default function AdminOrdersPage() {
     setFilters,
     refresh,
   } = useOrders();
+
+  // Jumlah order COD yang sudah delivered tapi belum dikonfirmasi lunas.
+  // Kendala: list ini server-side pagination (limit 20 via useOrders) sehingga
+  // .filter() pada `orders` tidak mewakili total → hitung via endpoint list
+  // yang sudah ada (limit=1, baca `total`) — tanpa query/route baru.
+  const [codAwaitingCount, setCodAwaitingCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const params = new URLSearchParams({
+          page: "1",
+          limit: "1",
+          sort: "newest",
+          payment_status: "cod_awaiting_confirmation",
+          fulfillment_status: "delivered",
+          payment_method: "cod",
+        });
+        const res = await fetch(`/api/admin/orders?${params.toString()}`);
+        if (!res.ok) return;
+        const json = (await res.json()) as { success?: boolean; total?: number };
+        if (!cancelled && json.success && typeof json.total === "number") {
+          setCodAwaitingCount(json.total);
+        }
+      } catch {
+        if (!cancelled) setCodAwaitingCount(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Deep-link support for dashboard alerts:
   // /admin/orders?fulfillment_status=waiting_for_restock (restock alert)
@@ -78,6 +112,26 @@ export default function AdminOrdersPage() {
         <div className="mb-4">
           <OrderToolbar filters={filters} onFilterChange={setFilters} />
         </div>
+
+        {/* Penanda jumlah: COD delivered tapi belum konfirmasi lunas (tampilan saja). */}
+        {codAwaitingCount !== null && codAwaitingCount > 0 && (
+          <div className="mb-4 flex items-center gap-3 rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-amber-900">
+                COD menunggu pelunasan
+              </p>
+              <p className="text-[13px] text-amber-700">
+                Paket sudah sampai, uang belum dikonfirmasi
+              </p>
+            </div>
+            <AdminBadge variant="warning" size="lg" dot={false} uppercase={false}>
+              {codAwaitingCount}
+            </AdminBadge>
+          </div>
+        )}
 
         {loading ? (
           <OrderSkeleton />
