@@ -2,13 +2,22 @@ import { OrderRepository, NotificationLogRepository, InventoryRepository } from 
 import { normalizeWaTarget } from "./channels/whatsapp/normalize-phone";
 import { createFonnteProvider } from "./channels/whatsapp/fonnte-provider";
 import { LOW_STOCK_ALERT_THRESHOLD } from "./channels/whatsapp/admin-formatter";
-import { formatStockShortageWaMessage, formatLowStockWaMessage } from "./channels/whatsapp/admin-formatter";
+import {
+  formatStockShortageWaMessage,
+  formatLowStockWaMessage,
+  formatPartnerRegisteredWaMessage,
+} from "./channels/whatsapp/admin-formatter";
 import type { WhatsAppMessage, WhatsAppSendResult } from "./channels/whatsapp/types";
+import type { NotificationEvent } from "./types";
 import type { OrderDetailRow } from "@/lib/repositories/order.repository";
+import type { PartnerRow } from "@/lib/repositories/partner.repository";
 
 export { LOW_STOCK_ALERT_THRESHOLD };
 
 export const ADMIN_WA_CHANNEL_ID = "whatsapp-admin";
+
+const ADMIN_WA_PARTNER_REGISTERED_EVENT: NotificationEvent =
+  "order.partner_registered";
 
 function resolveAdminTarget(logContext?: Record<string, unknown>): string | null {
   const rawNumber = process.env.ADMIN_WHATSAPP_NUMBER;
@@ -202,6 +211,52 @@ export async function maybeNotifyAdminLowStock(params: {
   } catch (err) {
     console.error("[notify] low-stock alert error (swallowed)", {
       productId: params.productId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * Fire-and-forget WhatsApp alert to the admin when a new partner
+ * registration is persisted. No `notification_log` row is used because the
+ * schema's existing sent key is order-based and a partner has no order_id.
+ *
+ * Never sent to the applicant — admin target only.
+ */
+export async function maybeNotifyAdminOfNewPartner(
+  partner: PartnerRow,
+): Promise<void> {
+  try {
+    const adminTarget = resolveAdminTarget({
+      event: ADMIN_WA_PARTNER_REGISTERED_EVENT,
+      partnerId: partner.id,
+    });
+    if (!adminTarget) return;
+
+    const dashboardUrl = buildDashboardUrl();
+    const message = formatPartnerRegisteredWaMessage(
+      partner,
+      adminTarget,
+      dashboardUrl ? dashboardUrl.replace(/\/+$/, "") : null,
+    );
+
+    const result = await sendAdminWa(message);
+    if (result.success) {
+      console.info("[notify] new partner alert sent", {
+        event: ADMIN_WA_PARTNER_REGISTERED_EVENT,
+        partnerId: partner.id,
+      });
+    } else {
+      console.error("[notify] WA new partner send failed", {
+        event: ADMIN_WA_PARTNER_REGISTERED_EVENT,
+        partnerId: partner.id,
+        error: result.error,
+      });
+    }
+  } catch (err) {
+    console.error("[notify] new partner alert error (swallowed)", {
+      event: ADMIN_WA_PARTNER_REGISTERED_EVENT,
+      partnerId: partner.id,
       error: err instanceof Error ? err.message : String(err),
     });
   }

@@ -1,5 +1,6 @@
 import type { WhatsAppMessage } from "./types";
 import type { OrderDetailRow } from "@/lib/repositories/order.repository";
+import type { PartnerRow } from "@/lib/repositories/partner.repository";
 
 function formatRupiah(amount: number): string {
   return `Rp ${amount.toLocaleString("id-ID")}`;
@@ -123,6 +124,32 @@ export function formatNewCodOrderWaMessage(
 
   if (dashboardUrl) {
     lines.push(`Cek pesanan: ${dashboardUrl}/admin/orders/${order.order_id}`);
+  }
+
+  return { target, message: lines.join("\n") };
+}
+
+export function formatPartnerRegisteredWaMessage(
+  partner: PartnerRow,
+  target: string,
+  dashboardUrl: string | null,
+): WhatsAppMessage {
+  const lines: string[] = [];
+  const partnerType =
+    partner.partner_type === "reseller" ? "Reseller" : "Dropshipper";
+
+  lines.push("\u{1F91D} *PENDAFTAR PARTNER BARU*");
+  lines.push("");
+  lines.push(`Nama Lengkap : ${partner.full_name}`);
+  lines.push(`Tipe Partner : ${partnerType}`);
+  lines.push(`Username     : ${partner.username}`);
+  lines.push(`WhatsApp     : ${partner.phone}`);
+  lines.push("");
+
+  if (dashboardUrl) {
+    lines.push(`Cek dan review: ${dashboardUrl}/admin/partners`);
+  } else {
+    lines.push("Cek dan review di halaman admin Partner.");
   }
 
   return { target, message: lines.join("\n") };

@@ -1,10 +1,12 @@
 import bcrypt from "bcryptjs";
+import { after } from "next/server";
 import {
   PartnerRepository,
   type CreatePartnerParams,
   type PartnerRow,
   type PartnerType,
 } from "@/lib/repositories/partner.repository";
+import { maybeNotifyAdminOfNewPartner } from "@/lib/notifications/admin-wa";
 import type { PartnerStatus } from "@/components/partner/PartnerAuthProvider";
 
 export type { PartnerRow, PartnerType };
@@ -99,6 +101,7 @@ export const PartnerService = {
 
     try {
       const data = await PartnerRepository.create(params);
+      after(() => maybeNotifyAdminOfNewPartner(data).catch(() => {}));
       return { success: true, data };
     } catch (error) {
       if (isUsernameTakenError(error)) {
