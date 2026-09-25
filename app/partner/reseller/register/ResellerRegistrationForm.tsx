@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { SITE } from "@/lib/constants";
 import { RegistrationProgress } from "@/components/partner/RegistrationProgress";
 
@@ -14,6 +15,8 @@ interface ResellerFormData {
   fullName: string;
   whatsapp: string;
   email: string;
+  username: string;
+  password: string;
   salesChannels: string[];
   links: string;
   salesPlan: string;
@@ -25,6 +28,8 @@ const initialFormData: ResellerFormData = {
   fullName: "",
   whatsapp: "",
   email: "",
+  username: "",
+  password: "",
   salesChannels: [],
   links: "",
   salesPlan: "",
@@ -38,13 +43,84 @@ const inputClass =
 const labelClass = "block text-sm font-medium text-foreground";
 
 function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  return /^[^\s@]+@\S+\.\S+$/.test(email.trim());
+}
+
+// Validasi username yang sama dengan schema zod di
+// app/api/partner/register/route.ts (huruf/angka/underscore, 3-30) —
+// semua saran wajib lolos regex ini agar bisa dipakai apa adanya.
+const USERNAME_SUGGESTION_REGEX = /^[A-Za-z0-9_]+$/;
+
+function randomDigits(count: number): string {
+  return Math.floor(Math.random() * 10 ** count)
+    .toString()
+    .padStart(count, "0");
+}
+
+/**
+ * Generate maksimal 3 saran username dari nama lengkap:
+ *  1. Nama digabung tanpa spasi            → "budisantoso"
+ *  2. Nama depan + nama belakang           → "budi_santoso"
+ *     (nama 1 kata → nama + 2 digit acak)  → "budi42"
+ *  3. Nama gabung + 2-3 digit acak         → "budisantoso27"
+ *
+ * CATATAN: variasi 2 memakai underscore, bukan titik, karena regex
+ * validasi username hanya mengizinkan huruf/angka/underscore — saran
+ * dijamin otomatis lolos validasi (dan tetap dibersihkan + difilter
+ * panjang 3-30 di bawah sebelum ditampilkan).
+ */
+function generateUsernameSuggestions(fullName: string): string[] {
+  const cleaned = fullName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ");
+  const words = cleaned.split(" ").filter((word) => word !== "");
+  if (words.length === 0) return [];
+
+  const joined = words.join("");
+  const candidates: string[] = [joined];
+
+  if (words.length >= 2) {
+    candidates.push(`${words[0]}_${words[words.length - 1]}`);
+  } else {
+    candidates.push(`${joined}${randomDigits(2)}`);
+  }
+
+  candidates.push(`${joined}${randomDigits(Math.random() < 0.5 ? 2 : 3)}`);
+
+  const seen = new Set<string>();
+  const suggestions: string[] = [];
+  for (const candidate of candidates) {
+    if (
+      USERNAME_SUGGESTION_REGEX.test(candidate) &&
+      candidate.length >= 3 &&
+      candidate.length <= 30 &&
+      !seen.has(candidate)
+    ) {
+      seen.add(candidate);
+      suggestions.push(candidate);
+    }
+    if (suggestions.length === 3) break;
+  }
+  return suggestions;
 }
 
 export function ResellerRegistrationForm() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<ResellerFormData>(initialFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  // Cek email real-time saat klik "Selanjutnya" di step 1 (Task B):
+  // - checkingEmail: loading tombol ("Memeriksa...")
+  // - emailCheckError: email terdaftar → blokir pindah step (merah)
+  // - emailCheckWarning: cek gagal (network/dll) → tidak memblokir,
+  //   klik "Selanjutnya" lagi boleh lanjut (submit tetap validasi ulang)
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailCheckError, setEmailCheckError] = useState<string | null>(null);
+  const [emailCheckWarning, setEmailCheckWarning] = useState<string | null>(null);
 
   const handleChange = (field: keyof ResellerFormData, value: string | boolean) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -60,14 +136,68 @@ export function ResellerRegistrationForm() {
   };
 
   const canProceedStep1 =
-    data.fullName.trim() !== "" && data.whatsapp.trim() !== "" && isValidEmail(data.email);
+    data.fullName.trim() !== "" &&
+    data.whatsapp.trim() !== "" &&
+    isValidEmail(data.email) &&
+    data.username.trim().length >= 3 &&
+    data.password.length >= 8;
 
   const canProceedStep2 =
     data.salesChannels.length > 0 && data.salesPlan.trim() !== "";
 
   const canSubmit = data.confirmData && data.confirmReview;
 
-  const handleNext = () => {
+  // Saran username hanya bergantung pada nama lengkap (di-memo agar
+  // angka acaknya tidak berubah setiap ketikan/klik lain); ditampilkan
+  // hanya saat field username masih kosong (dicek saat render).
+  const usernameSuggestions = useMemo(
+    () => generateUsernameSuggestions(data.fullName),
+    [data.fullName],
+  );
+
+  const handleNext = async () => {
+    if (checkingEmail) return;
+
+    if (step === 1 && canProceedStep1) {
+      // Email sudah diketahui terdaftar → tetap blokir sampai user
+      // mengedit ulang field email (menghapus pesan error ini).
+      if (emailCheckError) return;
+
+      // Cek email hanya sekali per isi email; bila sebelumnya gagal
+      // (emailCheckWarning terisi), jangan menahan user — izinkan lanjut.
+      if (emailCheckWarning === null) {
+        setCheckingEmail(true);
+        try {
+          const res = await fetch(
+            `/api/partner/check-email?email=${encodeURIComponent(data.email.trim())}`,
+          );
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const payload = (await res.json()) as {
+            taken?: boolean;
+            partnerType?: string;
+          };
+
+          if (payload.taken) {
+            const label =
+              payload.partnerType === "reseller"
+                ? "Reseller"
+                : payload.partnerType === "dropshipper"
+                  ? "Dropshipper"
+                  : "Partner";
+            setEmailCheckError(`Email sudah terdaftar sebagai ${label}`);
+            return;
+          }
+        } catch {
+          setEmailCheckWarning(
+            "Pengecekan email gagal — klik Selanjutnya untuk melanjutkan; email tetap divalidasi ulang saat submit.",
+          );
+          return;
+        } finally {
+          setCheckingEmail(false);
+        }
+      }
+    }
+
     if (step < STEP_LABELS.length) setStep((s) => s + 1);
   };
 
@@ -75,9 +205,46 @@ export function ResellerRegistrationForm() {
     if (step > 1) setStep((s) => s - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/partner/reseller/register/success");
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const res = await fetch("/api/partner/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partnerType: "reseller",
+          username: data.username.trim(),
+          password: data.password,
+          fullName: data.fullName.trim(),
+          whatsapp: data.whatsapp.trim(),
+          email: data.email.trim(),
+          salesChannels: data.salesChannels,
+          links: data.links.trim(),
+          salesPlan: data.salesPlan.trim(),
+          confirmData: data.confirmData,
+          confirmReview: data.confirmReview,
+        }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(
+          payload?.error || "Gagal mendaftar. Coba lagi nanti.",
+        );
+      }
+
+      router.push("/partner/reseller/register/success");
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "Gagal mendaftar. Coba lagi nanti.",
+      );
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -134,10 +301,95 @@ export function ResellerRegistrationForm() {
                     className={inputClass}
                     placeholder="Masukkan email Anda"
                     value={data.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
+                    onChange={(e) => {
+                      handleChange("email", e.target.value);
+                      // Pesan cek email berlaku untuk nilai lama —
+                      // hapus otomatis begitu user mengedit email.
+                      setEmailCheckError(null);
+                      setEmailCheckWarning(null);
+                    }}
                   />
                   {data.email.trim() !== "" && !isValidEmail(data.email) && (
                     <p className="mt-1 text-xs text-red">Format email tidak valid.</p>
+                  )}
+                  {emailCheckError && (
+                    <p className="mt-1 text-xs text-red" role="alert">
+                      {emailCheckError}
+                    </p>
+                  )}
+                  {emailCheckWarning && (
+                    <p className="mt-1 text-xs text-amber-600">{emailCheckWarning}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="username" className={labelClass}>
+                    Username <span className="text-red">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    autoComplete="username"
+                    className={inputClass}
+                    placeholder="Untuk login partner (huruf, angka, underscore)"
+                    value={data.username}
+                    onChange={(e) => handleChange("username", e.target.value)}
+                  />
+                  {data.username.trim() !== "" && data.username.trim().length < 3 && (
+                    <p className="mt-1 text-xs text-red">Username minimal 3 karakter.</p>
+                  )}
+                  {data.username === "" && usernameSuggestions.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-muted">
+                        Saran username (klik untuk memakai):
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        {usernameSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => handleChange("username", suggestion)}
+                            className="cursor-pointer rounded-full border border-teal-deep/30 px-3 py-1 text-xs font-medium text-teal-deep transition-colors hover:bg-teal-deep/10 focus:outline-none focus:ring-2 focus:ring-teal-deep/20"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="password" className={labelClass}>
+                    Password <span className="text-red">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      autoComplete="new-password"
+                      className={`${inputClass} pr-10`}
+                      placeholder="Minimal 8 karakter"
+                      value={data.password}
+                      onChange={(e) => handleChange("password", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={
+                        showPassword ? "Sembunyikan password" : "Tampilkan password"
+                      }
+                      className="absolute inset-y-0 right-3 flex cursor-pointer items-center text-muted transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-teal-deep/20"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="h-4 w-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                  {data.password !== "" && data.password.length < 8 && (
+                    <p className="mt-1 text-xs text-red">Password minimal 8 karakter.</p>
                   )}
                 </div>
               </div>
@@ -215,6 +467,10 @@ export function ResellerRegistrationForm() {
                       <dd className="font-medium text-foreground">{data.fullName || "-"}</dd>
                     </div>
                     <div className="flex justify-between gap-4">
+                      <dt className="text-muted">Username</dt>
+                      <dd className="font-medium text-foreground">{data.username || "-"}</dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
                       <dt className="text-muted">WhatsApp</dt>
                       <dd className="font-medium text-foreground">{data.whatsapp || "-"}</dd>
                     </div>
@@ -252,7 +508,7 @@ export function ResellerRegistrationForm() {
                 <div className="space-y-4 rounded-2xl border border-ink/10 bg-white p-5">
                   <h3 className="text-sm font-semibold text-ink">Konfirmasi</h3>
 
-                  <label className="flex items-start gap-3">
+                  <label className="flex cursor-pointer items-start gap-3">
                     <input
                       type="checkbox"
                       checked={data.confirmData}
@@ -264,7 +520,7 @@ export function ResellerRegistrationForm() {
                     </span>
                   </label>
 
-                  <label className="flex items-start gap-3">
+                  <label className="flex cursor-pointer items-start gap-3">
                     <input
                       type="checkbox"
                       checked={data.confirmReview}
@@ -279,12 +535,21 @@ export function ResellerRegistrationForm() {
               </div>
             )}
 
+            {submitError && (
+              <div
+                role="alert"
+                className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+              >
+                {submitError}
+              </div>
+            )}
+
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
               {step > 1 ? (
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="inline-flex items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full border-2 border-gold px-6 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-teal-deep focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 >
                   Kembali
                 </button>
@@ -302,20 +567,21 @@ export function ResellerRegistrationForm() {
                   type="button"
                   onClick={handleNext}
                   disabled={
+                    checkingEmail ||
                     (step === 1 && !canProceedStep1) ||
                     (step === 2 && !canProceedStep2)
                   }
-                  className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Selanjutnya
+                  {checkingEmail ? "Memeriksa..." : "Selanjutnya"}
                 </button>
               ) : (
                 <button
                   type="submit"
-                  disabled={!canSubmit}
-                  className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!canSubmit || isSubmitting}
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Ajukan Pendaftaran Reseller
+                  {isSubmitting ? "Mengirim..." : "Ajukan Pendaftaran Reseller"}
                 </button>
               )}
             </div>

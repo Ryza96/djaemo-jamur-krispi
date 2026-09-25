@@ -13,6 +13,7 @@ const navItems: NavItem[] = [
   { label: "Produk", icon: "🍪", href: "/admin/products" },
   { label: "Promo", icon: "🏷️", href: "/admin/promos" },
   { label: "Voucher", icon: "🎟️", href: "/admin/vouchers" },
+  { label: "Partner", icon: "🤝", href: "/admin/partners" },
   { label: "Pelanggan", icon: "👥", disabled: true },
   { label: "Pengaturan", icon: "⚙️", disabled: true },
 ];

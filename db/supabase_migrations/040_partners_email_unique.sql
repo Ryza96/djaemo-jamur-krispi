@@ -1,0 +1,40 @@
+-- =============================================================
+-- Migration 040: partners.email wajib UNIK (lintas partner_type)
+-- =============================================================
+-- BUSINESS RULE: 1 email hanya boleh terdaftar SEKALI sebagai
+-- partner — berlaku untuk reseller MAUPUN dropshipper, unik di
+-- seluruh tabel partners (bukan unik per partner_type).
+--
+-- DESIGN DECISIONS:
+--   - Unique index atas EKSPRESI LOWER(email) supaya perbedaan
+--     HURUF BESAR/KECIL dianggap sama:
+--     "Budi@gmail.com" === "budi@gmail.com" === "BUDI@GMAIL.COM".
+--     Kolom email tetap disimpan apa adanya; index hanya
+--     menstandarkan case saat membandingkan.
+--   - Kolom partners.email adalah NULLABLE (lihat migration 039,
+--     "email TEXT"). Unique index biasa di PostgreSQL bersifat
+--     NULLS DISTINCT, jadi banyak baris dengan email NULL tetap
+--     diizinkan — hanya nilai NON-NULL yang wajib unik. (Tidak
+--     perlu partial index; semantik default sudah sesuai.)
+--   - SQLSTATE 23505 dari index ini ditangani ramah di
+--     lib/services/partner.service.ts (isEmailTakenError) →
+--     409 "Email sudah terdaftar sebagai partner" di
+--     /api/partner/register. PENTING: nama index di bawah harus
+--     tetap mengandung kata "email" karena deteksi error memakai
+--     kecocokan substring pada pesan unique violation.
+--   - Idempotent (IF NOT EXISTS): aman dijalankan berulang di
+--     environment mana pun.
+--   - PRE-CHECK (jalankan sebelum migration bila tabel sudah
+--     berisi data — pembuatan index GAGAL jika ada duplikat):
+--       SELECT LOWER(email) AS e, COUNT(*)
+--       FROM partners
+--       WHERE email IS NOT NULL
+--       GROUP BY 1
+--       HAVING COUNT(*) > 1;
+--     Bila hasilnya ada, bereskan dulu duplikatnya secara manual.
+--   - Migration ini BELUM dieksekusi — file review dulu, lalu
+--     dijalankan manual oleh user di Supabase SQL Editor.
+-- =============================================================
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_partners_email_lower
+  ON partners (LOWER(email));

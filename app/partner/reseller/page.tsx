@@ -210,12 +210,12 @@ export default function ResellerPage() {
             Pastikan Anda telah membaca seluruh informasi di atas sebelum melanjutkan ke proses registrasi.
           </p>
           <div className="mt-8">
-            <button
-              disabled
-              className="inline-flex items-center justify-center rounded-full bg-gold/50 px-6 py-3 text-sm font-semibold text-teal-deep/70 cursor-not-allowed"
+            <Link
+              href="/partner/reseller/register"
+              className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-teal-deep transition-colors hover:bg-gold-bright focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
             >
               Daftar sebagai Reseller
-            </button>
+            </Link>
           </div>
           <div className="mt-6">
             <Link href="/partner" className="text-sm font-medium text-ink hover:underline">
