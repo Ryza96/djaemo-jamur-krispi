@@ -63,6 +63,10 @@ export interface DashboardStats {
   weeklySales: Array<{ date: string; total: number }>;
   periodLabel: string;
   waitingRestockCount: number;
+  pendingReviewPartners: number;
+  resellerActivePartners: number;
+  dropshipperActivePartners: number;
+  rejectedPartners: number;
 }
 
 export const DashboardRepository = {
@@ -86,8 +90,19 @@ export const DashboardRepository = {
 
     const wibMonthStartUTC = getWIBMonthStartUTC(now);
 
-    const [revenueResult, pendingResult, customerResult, lowStockCountResult, lowStockItemsResult, weeklySalesResult, waitingRestockResult] =
-      await Promise.all([
+    const [
+      revenueResult,
+      pendingResult,
+      customerResult,
+      lowStockCountResult,
+      lowStockItemsResult,
+      weeklySalesResult,
+      waitingRestockResult,
+      pendingReviewPartnersResult,
+      resellerActivePartnersResult,
+      dropshipperActivePartnersResult,
+      rejectedPartnersResult,
+    ] = await Promise.all([
         // Revenue card: sums product revenue = subtotal minus voucher discount
         // (discount_amount), excludes shipping fee and COD fee. Consistent with
         // the weekly sales chart which uses the same measure, and both gauge the
@@ -142,6 +157,26 @@ export const DashboardRepository = {
           .select("id", { count: "exact", head: true })
           .eq("fulfillment_status", "waiting_for_restock")
           .or(fulfillmentActionableFilter),
+
+        supabase
+          .from("partners")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "PENDING_REVIEW"),
+
+        supabase
+          .from("partners")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "RESELLER_ACTIVE"),
+
+        supabase
+          .from("partners")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "DROPSHIPPER_ACTIVE"),
+
+        supabase
+          .from("partners")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "REJECTED"),
       ]);
 
     if (revenueResult.error) throw revenueResult.error;
@@ -151,6 +186,16 @@ export const DashboardRepository = {
     if (lowStockItemsResult.error) throw lowStockItemsResult.error;
     if (weeklySalesResult.error) throw weeklySalesResult.error;
     if (waitingRestockResult.error) throw waitingRestockResult.error;
+    if (pendingReviewPartnersResult.error) {
+      throw pendingReviewPartnersResult.error;
+    }
+    if (resellerActivePartnersResult.error) {
+      throw resellerActivePartnersResult.error;
+    }
+    if (dropshipperActivePartnersResult.error) {
+      throw dropshipperActivePartnersResult.error;
+    }
+    if (rejectedPartnersResult.error) throw rejectedPartnersResult.error;
 
     const revenue = (revenueResult.data ?? []).reduce(
       (sum, row) =>
@@ -195,6 +240,10 @@ export const DashboardRepository = {
       weeklySales,
       periodLabel: getWIBPeriodLabel(now),
       waitingRestockCount: waitingRestockResult.count ?? 0,
+      pendingReviewPartners: pendingReviewPartnersResult.count ?? 0,
+      resellerActivePartners: resellerActivePartnersResult.count ?? 0,
+      dropshipperActivePartners: dropshipperActivePartnersResult.count ?? 0,
+      rejectedPartners: rejectedPartnersResult.count ?? 0,
     };
   },
 };

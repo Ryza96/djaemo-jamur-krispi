@@ -12,6 +12,10 @@ interface DashboardStats {
   weeklySales: Array<{ date: string; total: number }>;
   periodLabel: string;
   waitingRestockCount: number;
+  pendingReviewPartners: number;
+  resellerActivePartners: number;
+  dropshipperActivePartners: number;
+  rejectedPartners: number;
 }
 
 const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -84,6 +88,56 @@ export default function AdminDashboardPage() {
         value: loading ? "..." : customers.toLocaleString("id-ID"),
         description: "Terdaftar aktif",
         accent: "bg-violet-50 text-violet-700",
+      },
+    ];
+  }, [stats, loading]);
+
+  const partnerCards = useMemo(() => {
+    const pendingReview = stats?.pendingReviewPartners ?? 0;
+    const resellerActive = stats?.resellerActivePartners ?? 0;
+    const dropshipperActive = stats?.dropshipperActivePartners ?? 0;
+    const rejected = stats?.rejectedPartners ?? 0;
+
+    return [
+      {
+        title: "Pending Review",
+        value: loading ? "..." : pendingReview.toLocaleString("id-ID"),
+        description: loading
+          ? "Memuat data"
+          : pendingReview > 0
+            ? "Klik untuk review"
+            : "Tidak ada antrean review",
+        accent: loading
+          ? "bg-slate-100 text-slate-600"
+          : pendingReview > 0
+            ? "bg-amber-100 text-amber-800"
+            : "bg-emerald-50 text-emerald-700",
+        warning: !loading && pendingReview > 0,
+        reviewPath: "/admin/partners",
+      },
+      {
+        title: "Reseller Aktif",
+        value: loading ? "..." : resellerActive.toLocaleString("id-ID"),
+        description: "Partner aktif",
+        accent: "bg-emerald-50 text-emerald-700",
+        warning: false,
+        reviewPath: null,
+      },
+      {
+        title: "Dropshipper Aktif",
+        value: loading ? "..." : dropshipperActive.toLocaleString("id-ID"),
+        description: "Partner aktif",
+        accent: "bg-sky-50 text-sky-700",
+        warning: false,
+        reviewPath: null,
+      },
+      {
+        title: "Rejected",
+        value: loading ? "..." : rejected.toLocaleString("id-ID"),
+        description: "Pendaftaran ditolak",
+        accent: "bg-rose-50 text-rose-700",
+        warning: false,
+        reviewPath: null,
       },
     ];
   }, [stats, loading]);
@@ -222,6 +276,47 @@ export default function AdminDashboardPage() {
             <p className="mt-2 text-sm text-slate-500">{card.description}</p>
           </article>
         ))}
+      </section>
+
+      <section>
+        <div className="mb-5">
+          <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Partner</p>
+          <h3 className="mt-2 text-xl font-semibold text-slate-900">Statistik Partner</h3>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {partnerCards.map((card) => {
+            const reviewPath = card.reviewPath;
+            const cardClassName = `rounded-3xl bg-white p-5 shadow-sm shadow-slate-200 ${
+              card.warning ? "ring-1 ring-amber-300" : ""
+            }`;
+            const cardContent = (
+              <>
+                <div className={`inline-flex rounded-2xl px-3 py-1 text-xs font-semibold ${card.accent}`}>{card.title}</div>
+                <p className="mt-6 text-3xl font-semibold text-slate-900">{card.value}</p>
+                <p className="mt-2 text-sm text-slate-500">{card.description}</p>
+              </>
+            );
+
+            if (reviewPath) {
+              return (
+                <button
+                  key={card.title}
+                  type="button"
+                  onClick={() => router.push(reviewPath)}
+                  className={`${cardClassName} text-left transition hover:ring-1 hover:ring-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500`}
+                >
+                  {cardContent}
+                </button>
+              );
+            }
+
+            return (
+              <article key={card.title} className={cardClassName}>
+                {cardContent}
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
