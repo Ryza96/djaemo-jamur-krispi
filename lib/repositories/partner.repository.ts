@@ -14,6 +14,14 @@ export type PartnerType = "reseller" | "dropshipper";
 const PARTNER_PUBLIC_COLUMNS =
   "id, partner_type, username, full_name, phone, email, address, status, sales_channels, links, sales_plan, ktp_photo, selfie_photo, confirm_data, confirm_review, created_at, updated_at, reviewed_at, reviewed_by";
 
+/**
+ * Auth-only columns for the login lookup. Unlike PARTNER_PUBLIC_COLUMNS this
+ * includes `password_hash`; the result must stay server-side and must never
+ * be returned to the client.
+ */
+const PARTNER_AUTH_COLUMNS =
+  "id, partner_type, username, password_hash, full_name, phone, email, address, status, sales_channels, links, sales_plan, ktp_photo, selfie_photo, confirm_data, confirm_review, created_at, updated_at, reviewed_at, reviewed_by";
+
 export interface PartnerRow {
   id: string;
   partner_type: PartnerType;
@@ -34,6 +42,10 @@ export interface PartnerRow {
   updated_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+}
+
+export interface PartnerAuthRow extends PartnerRow {
+  password_hash: string;
 }
 
 export interface CreatePartnerParams {
@@ -89,6 +101,22 @@ export const PartnerRepository = {
 
     if (error) throw error;
     return (data ?? null) as PartnerRow | null;
+  },
+
+  /**
+   * Login lookup by username. The comparison stays case-sensitive to match
+   * the database column and idx_partners_username; no LOWER() is applied.
+   * Returns `password_hash`, so this row is only for server-side auth.
+   */
+  async findByUsernameForAuth(username: string): Promise<PartnerAuthRow | null> {
+    const { data, error } = await supabase
+      .from("partners")
+      .select(PARTNER_AUTH_COLUMNS)
+      .eq("username", username)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data ?? null) as PartnerAuthRow | null;
   },
 
   /**
