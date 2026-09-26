@@ -52,11 +52,35 @@ export function PartnerStatusView() {
         <div className="mb-6 text-center sm:mb-8">
           <h1 className="font-display text-[26px] font-semibold tracking-tight text-ink md:text-[30px]">Status Partner</h1>
           <p className="mt-2 text-sm text-muted">
-            {partner.email}
+            Profil akun Partner Anda
           </p>
         </div>
 
-        <PartnerStatusCard status={partner.status} />
+        <div className="rounded-4xl border border-ink/10 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="text-sm font-semibold text-foreground">Informasi Akun</h2>
+          <dl className="mt-4 space-y-3 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Nama Lengkap</dt>
+              <dd className="text-right font-medium text-foreground">{partner.name}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Username</dt>
+              <dd className="font-mono text-foreground">{partner.username}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Email</dt>
+              <dd className="break-all text-right text-foreground">{partner.email}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Jenis Partner</dt>
+              <dd className="text-right font-medium capitalize text-foreground">{partner.partnerType}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="mt-6">
+          <PartnerStatusCard status={partner.status} />
+        </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
           <Link

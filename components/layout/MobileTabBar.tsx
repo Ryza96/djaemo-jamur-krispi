@@ -44,7 +44,7 @@ const TABS: TabItem[] = [
   {
     id: "login",
     label: "Login",
-    href: "/login",
+    href: "/partner/login",
     match: (p) => p === "/login" || p.startsWith("/partner/login"),
     icon: (
       <svg viewBox="0 0 24 24" className={iconClass} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">

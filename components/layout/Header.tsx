@@ -114,7 +114,7 @@ export function Header() {
               {userMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-cream-2 bg-white py-2 shadow-lg">
                   <Link
-                    href="/login"
+                    href="/partner/login"
                     className="block px-4 py-3 text-sm font-medium text-ink transition-colors hover:bg-cream hover:text-ink"
                     onClick={() => setUserMenuOpen(false)}
                   >

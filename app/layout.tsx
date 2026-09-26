@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Manrope, Newsreader, IBM_Plex_Mono } from "next/font/google";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { ToastProvider } from "@/components/ui/Toast";
-import { PartnerAuthProvider } from "@/components/partner/PartnerAuthProvider";
 import { PublicShell } from "@/components/layout/PublicShell";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
@@ -68,9 +67,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <ToastProvider>
           <CartProvider>
-            <PartnerAuthProvider>
-              <PublicShell>{children}</PublicShell>
-            </PartnerAuthProvider>
+            <PublicShell>{children}</PublicShell>
           </CartProvider>
         </ToastProvider>
       </body>

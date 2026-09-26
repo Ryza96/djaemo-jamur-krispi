@@ -104,17 +104,38 @@ export const PartnerRepository = {
   },
 
   /**
-   * Login lookup by username. The comparison stays case-sensitive to match
-   * the database column and idx_partners_username; no LOWER() is applied.
+   * Login lookup by USERNAME or EMAIL (auto-detected).
+   * - identifier berisi "@" → treated as email, case-insensitive via
+   *   .ilike() (mengikuti unique index LOWER(email) migration 040).
+   * - selain itu           → treated as username, case-sensitive via .eq().
+   *
+   * Email branch sengaja TIDAK memakai .maybeSingle(): bila data lama di
+   * environment yang belum menjalankan 040 menghasilkan >1 baris, .maybeSingle()
+   * akan melempar error mentah. Query di bawah mengembalikan array; length !== 1
+   * diperlakukan sebagai "tidak ditemukan" agar login gagal dengan aman
+   * (tidak pernah memilih salah satu akun secara diam-diam).
+   *
    * Returns `password_hash`, so this row is only for server-side auth.
    */
-  async findByUsernameForAuth(username: string): Promise<PartnerAuthRow | null> {
+  async findByIdentifierForAuth(identifier: string): Promise<PartnerAuthRow | null> {
+    // ---- Branch 1: EMAIL (identifier mengandung "@") ----
+    if (identifier.includes("@")) {
+      const escaped = identifier.replace(/[\\%_]/g, (char) => `\\${char}`);
+      const { data, error } = await supabase
+        .from("partners")
+        .select(PARTNER_AUTH_COLUMNS)
+        .ilike("email", escaped)
+        .limit(2);
+      if (error) throw error;
+      return (data?.length === 1 ? data[0] : null) as PartnerAuthRow | null;
+    }
+
+    // ---- Branch 2: USERNAME (case-sensitive, .eq) ----
     const { data, error } = await supabase
       .from("partners")
       .select(PARTNER_AUTH_COLUMNS)
-      .eq("username", username)
+      .eq("username", identifier)
       .maybeSingle();
-
     if (error) throw error;
     return (data ?? null) as PartnerAuthRow | null;
   },

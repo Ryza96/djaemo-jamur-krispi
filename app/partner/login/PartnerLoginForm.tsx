@@ -9,7 +9,7 @@ import { usePartnerAuth } from "@/components/partner/PartnerAuthProvider";
 export function PartnerLoginForm() {
   const router = useRouter();
   const { login } = usePartnerAuth();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,7 +19,7 @@ export function PartnerLoginForm() {
     setError("");
     setIsSubmitting(true);
 
-    const result = await login(email, password);
+    const result = await login(identifier, password);
 
     if (result.success) {
       router.push("/partner/status");
@@ -49,19 +49,19 @@ export function PartnerLoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="partner-email" className="block text-sm font-medium text-foreground">
-                Email
+              <label htmlFor="partner-identifier" className="block text-sm font-medium text-foreground">
+                Username atau Email
               </label>
               <input
-                type="email"
-                id="partner-email"
-                name="email"
-                autoComplete="email"
+                type="text"
+                id="partner-identifier"
+                name="identifier"
+                autoComplete="username"
                 required
                 className="mt-2 block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:border-teal-deep focus:outline-none focus:ring-2 focus:ring-teal-deep/20"
-                placeholder="Masukkan email Anda"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Masukkan username atau email Anda"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
               />
             </div>
 

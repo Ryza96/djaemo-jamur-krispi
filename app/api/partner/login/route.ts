@@ -17,7 +17,7 @@ const DUMMY_TIMING_HASH =
   "$2b$10$qourL73e9C78Ia0/xhTVB.HDXX2FoqJmu/gsvm.D2ucTtJt/3ZIgS";
 
 export async function POST(request: Request) {
-  let body: { username?: string; password?: string } | null;
+  let body: { identifier?: string; username?: string; password?: string } | null;
 
   try {
     body = await request.json();
@@ -28,18 +28,23 @@ export async function POST(request: Request) {
     );
   }
 
-  const username =
-    typeof body?.username === "string" ? body.username.trim() : "";
+  const rawIdentifier =
+    typeof body?.identifier === "string"
+      ? body.identifier
+      : typeof body?.username === "string"
+        ? body.username
+        : "";
+  const identifier = rawIdentifier.trim();
   const password = typeof body?.password === "string" ? body.password : "";
 
-  if (!username || !password) {
+  if (!identifier || !password) {
     return NextResponse.json(
       { success: false, error: "Username and password are required." },
       { status: 400 },
     );
   }
 
-  const partner = await PartnerRepository.findByUsernameForAuth(username);
+  const partner = await PartnerRepository.findByIdentifierForAuth(identifier);
 
   if (!partner) {
     // Keep the username-not-found path close to the wrong-password path.
